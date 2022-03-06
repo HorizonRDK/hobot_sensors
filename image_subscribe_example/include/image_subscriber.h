@@ -15,13 +15,15 @@
 #include "sensor_msgs/msg/compressed_image.hpp"
 
 #ifndef IMAGE_SUBSCRIBE_EXAMPLE_INCLUDE_IMAGE_SUBSCRIBER_H_
+#define IMAGE_SUBSCRIBE_EXAMPLE_INCLUDE_IMAGE_SUBSCRIBER_H_
 
+using rclcpp::NodeOptions;
 using ImgCbType =
   std::function<void(const sensor_msgs::msg::Image::ConstSharedPtr &msg)>;
 
 class ImageSubscriber : public rclcpp::Node {
  public:
-  ImageSubscriber(ImgCbType sub_cb_fn = nullptr,
+  ImageSubscriber(const rclcpp::NodeOptions & node_options = NodeOptions(), ImgCbType sub_cb_fn = nullptr,
   std::string node_name = "img_sub", std::string topic_name = "");
   ~ImageSubscriber();
 
@@ -38,6 +40,7 @@ class ImageSubscriber : public rclcpp::Node {
   // 和sensor_msgs::msg::CompressedImage格式扩展订阅压缩图
   std::string topic_name_ = "/image_raw";
   std::string topic_name_compressed_ = "/image_raw/compressed";
+  std::string save_dir_ = "";
 
   std::chrono::high_resolution_clock::time_point sub_img_tp_;
   int sub_img_frameCount_ = 0;

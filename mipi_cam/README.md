@@ -38,4 +38,5 @@ rosdep install -i --from-path . --rosdistro foxy -y
 用户直接调用ros2 命令启动即可：
 ros2 run mipi_cam mipi_cam，node会发布image以及compressed格式图片。
 利用 rqt_image_view 可以查看发布的图片主题，也可以用图片消费节点。例如：这个repo下的example去直接获取图片进行推理等应用。
-
+可以设定图片的大小以及帧率，需要设备支持
+ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p image_width:=960 -p image_height:=540 -p video_device:=F37

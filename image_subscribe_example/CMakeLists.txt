@@ -39,24 +39,24 @@ link_directories(
   ${IMAGE_SUBSCRIBE_INSTALL_PATH}/lib
 )
 
-add_executable(${PROJECT_NAME}
+add_executable(subscribe_example
 src/example.cpp
 src/image_subscriber.cpp
 )
 
 ament_target_dependencies(
-  ${PROJECT_NAME}
+  subscribe_example
   rclcpp
   cv_bridge
   sensor_msgs
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(subscribe_example
 )
 
 # Install executables
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS subscribe_example
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 

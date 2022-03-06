@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
   RCLCPP_WARN(rclcpp::get_logger("example"), "This is mipi_cam example!");
 
-  auto node = std::make_shared<ImageSubscriber>();
+  rclcpp::NodeOptions opt;
+  auto node = std::make_shared<ImageSubscriber>(opt);
   RCLCPP_WARN(rclcpp::get_logger("example"), "ImageSubscriber init!");
 
   rclcpp::executors::SingleThreadedExecutor exec;
