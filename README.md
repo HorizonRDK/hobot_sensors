@@ -40,3 +40,5 @@ ros2 run mipi_cam mipi_cam，node会发布image以及compressed格式图片。
 利用 rqt_image_view 可以查看发布的图片主题，也可以用图片消费节点。例如：这个repo下的example去直接获取图片进行推理等应用。
 可以设定图片的大小以及帧率，需要设备支持
 ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p image_width:=960 -p image_height:=540 -p video_device:=F37
+### 注意：
+如果/image_raw/compressed topic没有发布成功，需要用包里 x3_prebuilt\lib\appsdk\hbmedia\libhbmedia.so库替换系统目录下 /usr/lib/hobot/hbmedia/libhbmedia.so ，x3_prebuilt\lib\appsdk\libturbojpeg.so.0 拷贝到 /usr/lib

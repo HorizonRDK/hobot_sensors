@@ -51,6 +51,6 @@ rosdep install -i --from-path . --rosdistro foxy -y
 export COLCON_CURRENT_PREFIX=./install
 source ./install/local_setup.sh
 ros2 run image_subscribe_example subscribe_example
-#可以输入参数进行订阅并保存图片：
+#可以输入参数进行订阅并保存图片：默认是不保存图片，除非设置了save_dir参数
 ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=/image_raw/compressed -p save_dir:=/userdata
 ```
