@@ -52,6 +52,7 @@ public:
     PIXEL_FORMAT_UYVY,
     PIXEL_FORMAT_MJPEG,
     PIXEL_FORMAT_YUVMONO10,
+    PIXEL_FORMAT_NV12,
     PIXEL_FORMAT_RGB24,
     PIXEL_FORMAT_GREY,
     PIXEL_FORMAT_UNKNOWN
@@ -62,7 +63,7 @@ public:
 
   // start camera
   bool start(
-    const std::string & dev, io_method io, pixel_format pf,
+    const std::string & dev, const std::string &outFormat, io_method io, pixel_format pf,
     int image_width, int image_height, int framerate);
   // shutdown camera
   bool shutdown(void);
@@ -102,7 +103,6 @@ private:
     size_t length;
   };
 
-
   int init_mjpeg_decoder(int image_width, int image_height);
   bool mjpeg2rgb(char * MJPEG, int len, char * RGB, int NumPixels);
   bool process_image(const void * src, int len, camera_image_t * dest);
@@ -114,6 +114,7 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   std::string camera_dev_;
   unsigned int pixelformat_;
+  std::string out_format_;
   bool monochrome_;
   io_method io_;
   int fd_;

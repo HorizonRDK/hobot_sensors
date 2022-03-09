@@ -10,9 +10,18 @@
 
 #include <cstring>
 #include <sstream>
+#include <opencv2/opencv.hpp>
 
+using namespace cv;
 namespace mipi_cam
 {
+unsigned long GetTickCount()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+}
+
 void monotonicToRealTime(const timespec & monotonic_time, timespec & real_time)
 {
   struct timespec real_sample1, real_sample2, monotonic_sample;
@@ -297,22 +306,12 @@ bool uyvy2rgb(char * YUV, char * RGB, int NumPixels)
   }
   return true;
 }
-inline void NV12_TO_RGB24(unsigned char *data, unsigned char *rgb, int width, int height) {
-    int index = 0;
-    unsigned char *ybase = data;
-    unsigned char *ubase = &data[width * height];
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            //YYYYYYYYUVUV
-            u_char Y = ybase[x + y * width];
-            u_char U = ubase[y / 2 * width + (x / 2) * 2];
-            u_char V = ubase[y / 2 * width + (x / 2) * 2 + 1];
 
-            rgb[index++] = Y + 1.402 * (V - 128); //R
-            rgb[index++] = Y - 0.34413 * (U - 128) - 0.71414 * (V - 128); //G
-            rgb[index++] = Y + 1.772 * (U - 128); //B
-        }
-    }
+inline void NV12_TO_RGB24(unsigned char *data, unsigned char *rgb, int width, int height) {
+  cv::Mat imgTmp;
+	cv::Mat frameMat = cv::Mat(height * 3 / 2, width, CV_8UC1, data, 0);
+	cv::cvtColor(frameMat, imgTmp, cv::COLOR_YUV2RGB_NV12);
+  memcpy(rgb, imgTmp.data, width * height * 3);
 }
 
 inline bool mono102mono8(char * RAW, char * MONO, int NumPixels)

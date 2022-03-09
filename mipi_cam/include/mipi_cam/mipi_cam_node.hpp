@@ -57,7 +57,6 @@ public:
   sensor_msgs::msg::CompressedImage::SharedPtr ros_img_compressed_;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr video_compressed_publisher_;
 
-
   // parameters
   std::string video_device_name_;
   std::string frame_id_;
@@ -69,6 +68,7 @@ public:
   // to discover them,
   // or guvcview
   std::string pixel_format_name_;
+  std::string out_format_name_; // 向外泵数据的格式，rgb8/mono8/nv12
   int image_width_;
   int image_height_;
   int framerate_;

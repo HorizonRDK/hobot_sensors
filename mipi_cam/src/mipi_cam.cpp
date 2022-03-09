@@ -93,7 +93,7 @@ int MipiCam::init_mjpeg_decoder(int image_width, int image_height)
 
 bool MipiCam::process_image(const void * src, int len, camera_image_t * dest)
 {
-  // // TODO(oal) return bool from all these
+  // TODO(oal) return bool from all these
   if (pixelformat_ == V4L2_PIX_FMT_YUYV) {
     if (monochrome_) {
       // actually format V4L2_PIX_FMT_Y16, but xioctl gets unhappy
@@ -190,18 +190,18 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate)
   struct v4l2_format fmt;
   unsigned int min;
   
-  strcpy(m_oCamInfo.devName,camera_dev_.c_str());//"F37");
+  // strcpy(m_oCamInfo.devName, camera_dev_.c_str());  // "F37");
+  snprintf(m_oCamInfo.devName, sizeof(m_oCamInfo.devName), "%s", camera_dev_.c_str());
   m_oCamInfo.fps = framerate;
   m_oCamInfo.height = image_height;
   m_oCamInfo.width = image_width;
   int nRet = m_pMipiDev->OpenCamera(&m_oCamInfo);
-  ROS_printf("[%s]->cam %s ret=%d.\r\n",__func__,m_oCamInfo.devName,nRet);
-  //fd_ = open(camera_dev_.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
+  ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
+  // fd_ = open(camera_dev_.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
 
   if (-1 == nRet) {
-    // RCLCPP_ERROR_STREAM(
-    //   rclcpp::get_logger("mipi_cam"),
-    //   "Cannot open '" << camera_dev_ << "': " << errno << ", " << strerror(errno));
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("mipi_cam"),
+       "Cannot open '" << camera_dev_ << "': " << errno << ", " << strerror(errno));
     return false;  // (EXIT_FAILURE);
   }
 
@@ -241,15 +241,16 @@ bool MipiCam::open_device(void)
   "grey" = PIXEL_FORMAT_GREY
 */
 bool MipiCam::start(
-  const std::string & dev, io_method io_method, pixel_format pixel_format,
+  const std::string & dev, const std::string &outFormat, io_method io_method, pixel_format pixel_format,
   int image_width, int image_height, int framerate)
 {
   camera_dev_ = dev;
+  out_format_ = outFormat;
   io_ = io_method;
   monochrome_ = false;
-  if (dev.find("/video")!= dev.npos)
+  if (dev.find("/video") != dev.npos)
   {
-    //说明找到了，当前不支持 usb  wuwlNG
+    // 说明找到了，当前不支持 usb  wuwlNG
     return false;
   }
   
@@ -332,7 +333,15 @@ bool MipiCam::shutdown(void)
   return true;
 }
 
-static int s_nSave = 0;
+void TestSave(char *pFilePath, char *imgData, int nDlen)
+{
+  FILE *yuvFd = fopen(pFilePath, "w+");
+  if (yuvFd) {
+    fwrite(imgData, 1, nDlen, yuvFd);
+    fclose(yuvFd);
+  }
+}
+
 bool MipiCam::get_image(
   builtin_interfaces::msg::Time & stamp,
   std::string & encoding, uint32_t & height, uint32_t & width,
@@ -342,48 +351,44 @@ bool MipiCam::get_image(
     return false;
   }
   // get the image
-  struct timespec time_start={0, 0};
+  struct timespec time_start = {0, 0};
+  int64 msStart = 0, msEnd = 0;
+  msStart = GetTickCount();
+  // m_pMipiDev->GetFrame((void**)&image_->image,(unsigned int *)&image_->image_size);
+  if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
+    reinterpret_cast<unsigned int*>(&image_->image_size)))
+    return false;
   clock_gettime(CLOCK_REALTIME, &time_start);
   stamp.sec = time_start.tv_sec;
   stamp.nanosec = time_start.tv_nsec;
-  //m_pMipiDev->GetFrame((void**)&image_->image,(unsigned int *)&image_->image_size);
-  if(m_pMipiDev->GetVpsFrame(1,&image_pub_->width,&image_pub_->height,(void**)&image_->image,(unsigned int *)&image_->image_size))
-    return false;
-  
   height = image_pub_->height;
   width = image_pub_->width;
   //这里出来都是 yuv 的
-  if (monochrome_) {
-    encoding = "mono8";
-    step = width;
+  step = width;
+  if (0 == out_format_.compare("nv12")) {
+    encoding = "nv12";
+    data.resize(image_->image_size);  // step * height);
+    memcpy(&data[0], image_->image, data.size());
   } else {
-    // TODO(oal) aren't there other encoding types?
-    encoding = "rgb8";
-    step = width * 3;
+    if (monochrome_) {
+      encoding = "mono8";
+    } else {
+      // TODO(oal) aren't there other encoding types?
+      encoding = "rgb8";
+      step = width * 3;
+    }
+    // jpeg，png---opencv 转 rgb8
+    process_image(image_->image, image_->image_size, image_pub_);
+    // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
+    // TestSave("/userdata/catkin_ws/test.rgb", image_pub_->image, image_pub_->image_size);
+    // TODO(oal) create an Image here and already have the memory allocated,
+    // eliminate this copy
+    data.resize(image_pub_->image_size);  // step * height);
+    memcpy(&data[0], image_pub_->image, data.size());
   }
-  //jpeg，png---opencv 转 rgb8
-  process_image(image_->image,image_->image_size,image_pub_);
-  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),"[%s]->enc=%s,step=%d,sz=%d.\n",__func__,encoding.c_str(),step,image_->image_size);
-  if (s_nSave==0)
-  {
-    s_nSave = 1;
-	  FILE *yuvFd = fopen("/userdata/catkin_ws/test.yuv", "w+");
-    if (yuvFd)
-    {
-      fwrite(image_->image,1,image_->image_size,yuvFd);
-      fclose(yuvFd);
-    }
-	  FILE *rgbFd = fopen("/userdata/catkin_ws/test.rgb", "w+");
-    if (rgbFd)
-    {
-      fwrite(image_pub_->image,1,image_pub_->image_size,rgbFd);
-      fclose(rgbFd);
-    }
-  }  
-  // TODO(oal) create an Image here and already have the memory allocated,
-  // eliminate this copy
-  data.resize(image_pub_->image_size);//step * height);
-  memcpy(&data[0], image_pub_->image, data.size());
+  msEnd = GetTickCount();
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
+    __func__, encoding.c_str(), step, image_->image_size , msStart, msEnd - msStart);
   return true;
 }
 

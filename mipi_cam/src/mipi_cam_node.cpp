@@ -14,12 +14,15 @@
 #include <stdarg.h>
 extern "C" int ROS_printf(char *fmt, ...)
 {
-	char logfile[255] = { 0 };
+  char buf[512] = { 0 };
 	va_list args;
 	va_start(args, fmt);
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), fmt, args);
+  vsprintf(buf, fmt, args);
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), fmt, args);
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "%s", buf);
 	va_end(args);
 }
+
 namespace mipi_cam
 {
 
@@ -27,8 +30,8 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
 :m_bIsInit(0) ,
   Node("mipi_cam", node_options),
   img_(new sensor_msgs::msg::Image()),
-  //img_compressed_(new sensor_msgs::msg::CompressedImage()),
-  //image_compressed_pub_(std::make_shared<image_transport::Publisher>(
+  // img_compressed_(new sensor_msgs::msg::CompressedImage()),
+  // image_compressed_pub_(std::make_shared<image_transport::Publisher>(
   //  create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed", 10))),
   //  image_transport::create_publisher(this, "image/compressed_image",  rclcpp::QoS{100}.get_rmw_qos_profile()))),
   image_pub_(std::make_shared<image_transport::CameraPublisher>(
@@ -46,17 +49,18 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   // declare params
   this->declare_parameter("camera_name", "default_cam");
   this->declare_parameter("camera_info_url", "");
-  this->declare_parameter("framerate", 30.0);//10.0);
+  this->declare_parameter("framerate", 30.0);  // 10.0);
   this->declare_parameter("frame_id", "default_cam");
-  this->declare_parameter("image_height", 1080);//480);
-  this->declare_parameter("image_width", 1920);//640);
+  this->declare_parameter("image_height", 1080);  // 480);
+  this->declare_parameter("image_width", 1920);  // 640);
   this->declare_parameter("io_method", "mmap");
   this->declare_parameter("pixel_format", "yuyv");
-  this->declare_parameter("video_device", "F37");//"IMX415");//"F37");//"/dev/video0");
-  //image_compressed_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed", 10);
+  this->declare_parameter("out_format", "rgb8");  // nv12
+  this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");//"/dev/video0");
+  // image_compressed_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed", 10);
   video_compressed_publisher_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed",5);
   get_params();
-  init(); //外部可能会调用了
+  init();  //外部可能会调用了
   ROS_printf("[%s]->mipinode init sucess.\n",__func__);
 }
 
@@ -64,6 +68,41 @@ MipiCamNode::~MipiCamNode()
 {
   RCLCPP_WARN(this->get_logger(), "shutting down");
   mipiCam_.shutdown();
+}
+
+void MipiCamNode::get_params()
+{
+  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
+  for (auto & parameter : parameters_client->get_parameters(
+      {"camera_name", "camera_info_url", "out_format", "frame_id", "framerate",
+        "image_height", "image_width", "io_method", "pixel_format", "video_device"}))
+  {
+    if (parameter.get_name() == "camera_name") {
+      RCLCPP_INFO(this->get_logger(), "camera_name value: %s", parameter.value_to_string().c_str());
+      camera_name_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "camera_info_url") {
+      camera_info_url_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "out_format") {
+      out_format_name_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "frame_id") {
+      frame_id_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "framerate") {
+      RCLCPP_WARN(this->get_logger(), "framerate: %f", parameter.as_double());
+      framerate_ = parameter.as_double();
+    } else if (parameter.get_name() == "image_height") {
+      image_height_ = parameter.as_int();
+    } else if (parameter.get_name() == "image_width") {
+      image_width_ = parameter.as_int();
+    } else if (parameter.get_name() == "io_method") {
+      io_method_name_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "pixel_format") {
+      pixel_format_name_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "video_device") {
+      video_device_name_ = parameter.value_to_string();
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Invalid parameter name: %s", parameter.get_name().c_str());
+    }
+  }
 }
 
 void MipiCamNode::service_capture(
@@ -107,7 +146,7 @@ void MipiCamNode::init()
   }
   
   img_->header.frame_id = frame_id_;
-  //img_compressed_->header.frame_id = frame_id_;
+  // img_compressed_->header.frame_id = frame_id_;
   RCLCPP_INFO(
     this->get_logger(), "[MipiCamNode::%s]->Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS", __func__,
     camera_name_.c_str(), video_device_name_.c_str(),
@@ -127,9 +166,9 @@ void MipiCamNode::init()
     rclcpp::shutdown();
     return;
   }
-  ROS_printf("===>[%s]->start cam.\n",__func__);
+  // ROS_printf("===>[%s]->start cam.\n",__func__);
   // start the camera
-  if(false==mipiCam_.start( video_device_name_.c_str(), io_method, pixel_format,
+  if (false == mipiCam_.start( video_device_name_.c_str(), out_format_name_.c_str(), io_method, pixel_format,
     image_width_, image_height_, framerate_)) {
     RCLCPP_ERROR_ONCE(this->get_logger(), "Don't support video dev '%s'", video_device_name_.c_str());
     rclcpp::shutdown();
@@ -145,43 +184,10 @@ void MipiCamNode::init()
   m_bIsInit = 1;
 }
 
-void MipiCamNode::get_params()
-{
-  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
-  for (auto & parameter : parameters_client->get_parameters(
-      {"camera_name", "camera_info_url", "frame_id", "framerate",
-        "image_height", "image_width", "io_method", "pixel_format", "video_device"}))
-  {
-    if (parameter.get_name() == "camera_name") {
-      RCLCPP_INFO(this->get_logger(), "camera_name value: %s", parameter.value_to_string().c_str());
-      camera_name_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "camera_info_url") {
-      camera_info_url_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "frame_id") {
-      frame_id_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "framerate") {
-      RCLCPP_WARN(this->get_logger(), "framerate: %f", parameter.as_double());
-      framerate_ = parameter.as_double();
-    } else if (parameter.get_name() == "image_height") {
-      image_height_ = parameter.as_int();
-    } else if (parameter.get_name() == "image_width") {
-      image_width_ = parameter.as_int();
-    } else if (parameter.get_name() == "io_method") {
-      io_method_name_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "pixel_format") {
-      pixel_format_name_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "video_device") {
-      video_device_name_ = parameter.value_to_string();
-    } else {
-      RCLCPP_WARN(this->get_logger(), "Invalid parameter name: %s", parameter.get_name().c_str());
-    }
-  }
-}
-
 bool MipiCamNode::take_and_send_image()
 {
   // grab the image
-  if (!mipiCam_.get_image( img_->header.stamp, img_->encoding, img_->height, img_->width,
+  if (!mipiCam_.get_image(img_->header.stamp, img_->encoding, img_->height, img_->width,
       img_->step, img_->data))
   {
     RCLCPP_ERROR(this->get_logger(), "grab failed");
@@ -191,16 +197,17 @@ bool MipiCamNode::take_and_send_image()
   auto ci = std::make_unique<sensor_msgs::msg::CameraInfo>(cinfo_->getCameraInfo());
   ci->header = img_->header;
   image_pub_->publish(*img_, *ci);
-  //publish compressed
-  //cv::Mat matImage_ = cv_bridge::toCvShare(img_, "rgb8")->image;
+
+  // publish compressed
+  // cv::Mat matImage_ = cv_bridge::toCvShare(img_, "rgb8")->image;
   /*cv::Mat matImage_(img_->data,true);
-  //cv::imwrite("/userdata/2Mat.jpg",matImage_);
-  //ROS_printf("[2]->jpg");
+  // cv::imwrite("/userdata/2Mat.jpg",matImage_);
+  // ROS_printf("[2]->jpg");
 
   ros_img_compressed_ = cv_bridge::CvImage(std_msgs::msg::Header(), "rgb8", matImage_).toCompressedImageMsg();
   video_compressed_publisher_->publish(*ros_img_compressed_);*/
   /*
-  //img_compressed_->header = std_msgs::Header();
+  // img_compressed_->header = std_msgs::Header();
   img_compressed_->header.stamp = img_->header.stamp;//ros::Time::now();
   img_compressed_->format = "jpeg";
   std::vector<uchar> encodeing;
@@ -215,6 +222,7 @@ bool MipiCamNode::take_and_send_image()
   return true;
 }
 
+#include "mipi_cam/usb_cam_utils.hpp"
 void MipiCamNode::update()
 {
   if (mipiCam_.is_capturing()) {
@@ -226,6 +234,7 @@ void MipiCamNode::update()
     }
     // auto diff = now() - t0;
     // INFO(diff.nanoseconds() / 1e6 << " " << int(t0.nanoseconds() / 1e9));
+    // RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),"[update]->start %ld \n", mipi_cam::GetTickCount());
   }
 }
 }  // namespace mipi_cam

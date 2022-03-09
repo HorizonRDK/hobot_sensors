@@ -39,6 +39,15 @@ rosdep install -i --from-path . --rosdistro foxy -y
 ros2 run mipi_cam mipi_cam，node会发布image以及compressed格式图片。
 利用 rqt_image_view 可以查看发布的图片主题，也可以用图片消费节点。例如：这个repo下的example去直接获取图片进行推理等应用。
 可以设定图片的大小以及帧率，需要设备支持
+video_device 目前支持 F37，IMX415，F37 默认分辨率是1920*1080；IMX415 是3840*2160，输入 image_width/image_height 参数可以更改输出的分辨率
+
 ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p image_width:=960 -p image_height:=540 -p video_device:=F37
+还支持参数有： out_format ，可以输入 nv12 ，支持发不出来的视频数据为 nv12 格式，默认为 rgb8 格式，例如：
+ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37
 ### 注意：
-如果/image_raw/compressed topic没有发布成功，需要用包里 x3_prebuilt\lib\appsdk\hbmedia\libhbmedia.so库替换系统目录下 /usr/lib/hobot/hbmedia/libhbmedia.so ，x3_prebuilt\lib\appsdk\libturbojpeg.so.0 拷贝到 /usr/lib
+如果/image_raw/compressed topic没有发布成功，需要用包里 x3_prebuilt/lib/appsdk/hbmedia/libhbmedia.so库替换系统目录下 /usr/lib/hobot/hbmedia/libhbmedia.so ，x3_prebuiltlib/appsdk/libturbojpeg.so.0 拷贝到 /usr/lib，x3_prebuilt/lib/sensorlib 拷贝到 /lib/sensorlib，需要设置环境变量：export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib/sensorlib 或者直接拷贝到 /usr/lib
+---
+cp x3_prebuilt/lib/appsdk/hbmedia/libhbmedia.so /usr/lib/hobot/hbmedia/
+cp x3_prebuiltlib/appsdk/libturbojpeg.so.0 /usr/lib
+cp x3_prebuilt/lib/sensorlib/* /usr/lib
+---
