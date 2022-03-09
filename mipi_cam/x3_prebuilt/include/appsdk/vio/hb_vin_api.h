@@ -44,40 +44,58 @@ enum HB_VIN_ERROR_CODE {
 };
 
 /*VIN  1000FC00  1001FC00----268565504*/
+/* 创建PIPE失败 */
 #define HB_ERR_VIN_CREATE_PIPE_FAIL		                             \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_CREATE_PIPE_FAIL)
+/* DEV(Sif)初始化失败 */
 #define HB_ERR_VIN_SIF_INIT_FAIL		                             \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_SIF_INIT_FAIL)
+/* DEV(Sif) start失败 */
 #define HB_ERR_VIN_DEV_START_FAIL                                    \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_DEV_START_FAIL)
+/*ISP start失败*/
 #define HB_ERR_VIN_PIPE_START_FAIL                                   \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_PIPE_START_FAIL)
+/*Chn不存在*/
 #define HB_ERR_VIN_CHN_UNEXIST                                       \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_CHN_UNEXIST)
+/*接口参数错误*/
 #define HB_ERR_VIN_INVALID_PARAM                                     \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_INVALID_PARAM)
+/*ISP初始化错误*/
 #define HB_ERR_VIN_ISP_INIT_FAIL                                     \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_ISP_INIT_FAIL)
+/*ISP破帧，isp驱动应该会有drop*/
 #define HB_ERR_VIN_ISP_FRAME_CORRUPTED                               \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_ISP_FRAME_CORRUPTED)
+/*DWE初始化失败*/
 #define HB_ERR_VIN_DWE_INIT_FAIL                                     \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_DWE_INIT_FAIL)
+/*SIF扩展属性初始化失败*/
 #define HB_ERR_VIN_SET_DEV_ATTREX_FAIL                               \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_SET_DEV_ATTREX_FAIL)
+/*马达初始化失败*/
 #define HB_ERR_VIN_LENS_INIT_FAIL                                    \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_LENS_INIT_FAIL)
+/*SIF回灌raw失败*/
 #define HB_ERR_VIN_SEND_PIPERAW_FAIL                                 \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_SEND_PIPERAW_FAIL)
+/*VIN模块有空指针*/
 #define HB_ERR_VIN_NULL_POINT                                        \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_NULL_POINT)
+/*获取ISP出来的数据失败*/
 #define HB_ERR_VIN_GET_CHNFRAME_FAIL                                 \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_GET_CHNFRAME_FAIL)
+/*获取SIF出来的数据失败*/
 #define HB_ERR_VIN_GET_DEVFRAME_FAIL                                 \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_GET_DEVFRAME_FAIL)
+/*使能MotionDetect失败*/
 #define HB_ERR_VIN_MD_ENABLE_FAIL                                    \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_MD_ENABLE_FAIL)
+/*关闭MotionDetect失败*/
 #define HB_ERR_VIN_MD_DISABLE_FAIL                                    \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_MD_DISABLE_FAIL)
+/*模式linear\DOL切换失败*/
 #define HB_ERR_VIN_SWITCH_SNS_TABLE_FAIL                              \
 		HB_DEF_ERR(HB_ID_VIN, ERR_VIN_SWITCH_SNS_TABLE_FAIL)
 		/*设置sif mclk或者vpuclk失败*/
@@ -91,27 +109,24 @@ typedef enum HB_VIN_DEV_INTF_MODE_E {
 } VIN_DEV_INTF_MODE_E;
 
 typedef struct HB_VIN_DEV_SIZE_S {
-	uint32_t  format;
-	uint32_t  width;
-	uint32_t  height;
-	uint32_t  pix_length;
+	uint32_t  format;   
+	uint32_t  width;    
+	uint32_t  height;   
+	uint32_t  pix_length;  //Length of each pixel
 } VIN_DEV_SIZE_S;
 
 typedef struct HB_VIN_MIPI_ATTR_S {
-	uint32_t  enable;
-	uint32_t  ipi_channels;
-	uint32_t  ipi_mode;
-	// uint32_t  vc_index;
-	// uint32_t  mipi_rx_index;
+	uint32_t  enable;  // Mipi enable, 0 is off, 1 is enabled
+	uint32_t  ipi_channels; // ipi_ Channels indicates that several channels are used. The default is 0. If the setting is 2, 0 and 1 are used
+	uint32_t  ipi_mode;    // When sensor is the ID method, dol2 is divided into two lines, and the value is 2. Dol3 is divided into three lines or one dol2 + line, and the value is 3
 	uint32_t  enable_mux_out;
-	// uint32_t  mux_out_index;
 	uint32_t  enable_frame_id;
 	uint32_t  enable_bypass;
-	uint32_t  enable_line_shift;
+	uint32_t  enable_line_shift;  //Unused
 	uint32_t  enable_id_decoder;
 	uint32_t  set_init_frame_id;
-	uint32_t  set_line_shift_count;
-	uint32_t  set_bypass_channels;
+	uint32_t  set_line_shift_count; //Unused
+	uint32_t  set_bypass_channels; //Unused
 	uint32_t  enable_pattern;
 } VIN_MIPI_ATTR_S;
 
@@ -119,7 +134,6 @@ typedef struct HB_VIN_DVP_ATTR_S {
 } VIN_DVP_ATTR_S;
 
 typedef struct HB_VIN_DEV_OUTPUT_DDR_S {
-	// uint32_t mux_out_enable_index;
 	uint32_t stride;
 	uint32_t buffer_num;
 	uint32_t frameDepth;
@@ -133,7 +147,7 @@ typedef struct HB_VIN_DEV_OUTPUT_ISP_S {
 	uint32_t set_dgain_long;
 	uint32_t short_maxexp_lines;
 	uint32_t medium_maxexp_lines;
-	uint32_t vc_short_seq;  // frame sequence mark in dol mode
+	uint32_t vc_short_seq;  		// frame sequence mark in dol mode
 	uint32_t vc_medium_seq;
 	uint32_t vc_long_seq;
 } VIN_DEV_OUTPUT_ISP_S;
@@ -159,7 +173,6 @@ typedef struct HB_VIN_DEV_ATTR_EX_S {
 }VIN_DEV_ATTR_EX_S;
 
 typedef struct HB_VIN_DEV_ATTR_S {
-	// VIN_DEV_INTF_MODE_E   enIntfMode;
 	VIN_DEV_SIZE_S        stSize;
 	union
 	{
@@ -204,7 +217,7 @@ typedef struct HB_VIN_PIPE_ATTR_S {
 	uint32_t  frameDepth;
 	VIN_PIPE_SENSOR_MODE_E snsMode;
 	VIN_PIPE_SIZE_S stSize;
-	VIN_PIPE_CFA_PATTERN_E cfaPattern;
+	VIN_PIPE_CFA_PATTERN_E cfaPattern; //Data format layout, consistent with sensor
 	uint32_t   temperMode;
 	uint32_t   ispBypassEn;
 	uint32_t   ispAlgoState;

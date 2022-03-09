@@ -50,6 +50,12 @@ typedef struct HB_MIPI_DESERIAL_INFO_T {
 	int bus_num;
 	int deserial_addr;
 	char *deserial_name;
+	int power_mode;
+	int power_delay;
+	int gpio_num;
+	int gpio_pin[GPIO_NUM];
+	int gpio_level[GPIO_NUM];
+	uint32_t serdes_index;
 }MIPI_DESERIAL_INFO_T;
 
 typedef enum HB_MIPI_INPUT_MODE_E {
@@ -83,6 +89,8 @@ typedef struct HB_MIPI_SNS_INFO_S {
 	int extra_mode;
 	int deserial_index;
 	int deserial_port;
+	int power_mode;
+	int power_delay;
 	int gpio_num;
 	int gpio_pin[GPIO_NUM];
 	int gpio_level[GPIO_NUM];
@@ -135,7 +143,6 @@ extern int HB_MIPI_SensorBindSerdes(MIPI_SENSOR_INFO_S *snsInfo,
 extern int HB_MIPI_SensorBindMipi(MIPI_SENSOR_INFO_S *snsInfo, uint32_t mipiIdx);
 extern int HB_MIPI_SetExtraMode(MIPI_SENSOR_INFO_S *snsInfo, uint32_t ExtraMode);
 extern int HB_MIPI_InitSensor(uint32_t devId, MIPI_SENSOR_INFO_S *snsInfo);
-// extern int HB_MIPI_MipiBindSerdes(uint32_t mipiIdx, uint32_t serdesId);
 extern int HB_MIPI_DeinitSensor(uint32_t devId);
 extern int HB_MIPI_ResetSensor(uint32_t devId);
 extern int HB_MIPI_UnresetSensor(uint32_t devId);

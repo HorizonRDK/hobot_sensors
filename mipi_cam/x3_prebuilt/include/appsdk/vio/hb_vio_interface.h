@@ -45,6 +45,12 @@ typedef enum VIO_INFO_TYPE_S {
 	HB_VIO_PYM_IMG_INFO,
 	HB_VIO_ISP_IMG_INFO,
 	HB_VIO_PYM_V2_IMG_INFO,
+	HB_VIO_IPU_US_ROI_INFO,
+	HB_VIO_IPU_DS0_ROI_INFO,
+	HB_VIO_IPU_DS1_ROI_INFO,
+	HB_VIO_IPU_DS2_ROI_INFO,
+	HB_VIO_IPU_DS3_ROI_INFO,
+	HB_VIO_IPU_DS4_ROI_INFO,
 	HB_VIO_INFO_MAX
 } VIO_INFO_TYPE_E;
 
@@ -87,6 +93,7 @@ typedef enum VIO_DATA_TYPE_S {
 	HB_VIO_CIM_RAW_DATA,
 	HB_VIO_CIM_YUV_DATA,
 	HB_VIO_EMBED_DATA,
+	HB_VIO_IPU_ALL_CHN_DATA,
 	HB_VIO_DATA_TYPE_MAX
 } VIO_DATA_TYPE_E;
 
@@ -145,6 +152,11 @@ typedef struct hb_vio_buffer_s {
 	image_info_t img_info;
 	address_info_t img_addr;
 } hb_vio_buffer_t;
+
+typedef struct ipu_all_chn_s {
+	int valid[HB_VIO_IPU_US_DATA+1];
+	hb_vio_buffer_t buf[HB_VIO_IPU_US_DATA+1];
+}ipu_all_chn_t;
 
 // special buffer type, multi image data output,
 // but all channel output alloc one ion buffer avoid buf fragment
@@ -426,17 +438,48 @@ int hb_vio_run_gdc_opt(uint32_t pipeline_id,
 					   hb_vio_buffer_t * dst_img_info,
 					   int rotate);
 
+
+/*ipu channel    osd
+ *   us 0      ==> osd 0
+ *   ds 0      ==> osd 1
+ *   ds 1      ==> osd 2
+ *   ds 2      ==> osd 3
+ *   ds 3      ==> osd 4
+ *   ds 4      ==> osd 5
+ */
+int hb_vio_init_osd_layer(uint32_t pipeline_id, uint32_t osd_layer,
+		osd_box_t osd_data[3]);
+int hb_vio_deinit_osd_layer(uint32_t pipeline_id, uint32_t osd_layer);
+int hb_vio_get_osd_addr(uint32_t pipeline_id, uint32_t osd_layer,
+			address_info_t(*osd_map_buf)[3]);
+int hb_vio_update_osd(uint32_t pipeline_id, uint32_t osd_layer, uint32_t enable,
+		      uint32_t colour_invert_enable);
+int hb_vio_set_osd_sta(uint32_t pipeline_id, uint32_t osd_layer,
+		       uint8_t osd_sta_level[3], osd_sta_box_t osd_sta[8]);
+int hb_vio_get_osd_sta(uint32_t pipeline_id, uint32_t osd_layer,
+		       uint16_t osd_sta_bin_value[8][4]);
+int hb_vio_osd_draw_word(osd_draw_word_t *osd_draw_word_data);
+
 int hb_vio_free_ipubuf(uint32_t pipeline_id, hb_vio_buffer_t * dst_img_info);
 int hb_vio_free_gdcbuf(uint32_t pipeline_id, hb_vio_buffer_t * dst_img_info);
+int hb_vio_free_sifbuf(uint32_t pipeline_id, hb_vio_buffer_t *dst_img_info);
+int hb_vio_free_ispbuf(uint32_t pipeline_id, hb_vio_buffer_t *dst_img_info);
 
 int hb_vio_free_pymbuf(uint32_t pipeline_id, VIO_DATA_TYPE_E data_type,
 		    void *img_info);
 int hb_vio_run_pym(uint32_t pipeline_id, hb_vio_buffer_t * src_img_info);
 int hb_vio_run_gdc(uint32_t pipeline_id, hb_vio_buffer_t * src_img_info,
 		       hb_vio_buffer_t * dst_img_info, int rotate);
+int hb_vio_free_ipubuf_all(uint32_t pipeline_id, ipu_all_chn_t *ipu_all_chn);
 
 void vio_dis_crop_set(uint32_t pipe_id, uint32_t info, void *data,
 							 void *userdata);
+int hb_vio_send_isp_in_order(uint32_t pipeline_id, uint8_t *order,
+		int *timeout);
+
+int hb_vio_run_raw(uint32_t pipeline_id,
+			hb_vio_buffer_t * feedback_src, int timeout);
+
 
 // for debug
 int hb_vio_raw_dump(uint32_t pipeline_id, hb_vio_buffer_t * raw_img,
@@ -447,8 +490,15 @@ int hb_vio_raw_feedback(uint32_t pipeline_id, hb_vio_buffer_t * feedback_src,
 int hb_vio_motion_detect(uint32_t pipeline_id);
 int hb_vio_enable_md(uint32_t pipeline_id);
 int hb_vio_disable_md(uint32_t pipeline_id);
+int hb_vio_sif_fps_ctrl(uint32_t pipe, uint32_t skip_frame, uint32_t in_fps,
+										uint32_t out_fps, uint32_t dump_raw);
 
 int hb_vio_wait_init(uint32_t pipeline_id, int time);
+int hb_vio_dump_frame_state(uint32_t pipe);
+
+int hb_vio_ipi_reset(uint32_t pipeline_id);
+int hb_vio_mipi_hw_cfg_reset(uint32_t pipeline_id);
+
 #ifdef __cplusplus
 }
 #endif

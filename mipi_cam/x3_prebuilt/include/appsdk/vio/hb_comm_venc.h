@@ -1960,6 +1960,81 @@ typedef struct HB_VENC_3DNR_PARAMS {
  */
 	uint32_t nr_noise_sigmaCr;
 } VENC_3DNR_PARAMS;
+
+typedef struct HB_VENC_SMART_BG_ENC_PARAMS {
+/**
+ * It enables background detection.
+ * The valid numbers are as follows.
+ *     0 : disable
+ *     1 : enable
+ *
+ * - Note: It's unchangable RDO parameters in the same sequence.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 0
+ */
+	uint32_t bg_detect_enable;
+
+/**
+ * It specifies the threshold of max difference that is used in s2me block.
+ * It is valid when background detection is on.
+ * Values[0~255]
+ *
+ * - Note: It's changable RDO parameters.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 8
+ */
+	int32_t bg_threshold_diff;
+
+/**
+ * It specifies the threshold of mean difference that is used in s2me block.
+ * It is valid  when background detection is on.
+ * Values[0~255]
+ *
+ * - Note: It's changable RDO parameters.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 1
+ */
+	int32_t bg_threshold_mean_diff;
+
+/**
+ * It specifies the minimum lambda QP value to be used in the background area.
+ * Values[0~51]
+ *
+ * - Note: It's changable RDO parameters.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 32
+ */
+	int32_t bg_lambda_qp;
+
+/**
+ * It specifies the difference between the lambda QP value of background and 
+ * the lambda QP value of foreground.
+ * Values[-16~15]
+ *
+ * - Note: It's changable RDO parameters.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 3
+ */
+	int32_t bg_delta_qp;
+
+/**
+ * It disables s2me_fme (only for AVC encoder).
+ * The valid numbers are as follows.
+ *     0 : enable
+ *     1 : disable
+ *
+ * - Note: It's changable RDO parameters.
+ * - Encoding: Support.
+ * - Decoding: Unsupport.
+ * - Default: 0
+ */
+	uint32_t s2fme_disable;
+} VENC_SMART_BG_ENC_PARAMS;
 /*************************VENC_advanced_ATTR_S  end **************************/
 
 #ifdef __cplusplus

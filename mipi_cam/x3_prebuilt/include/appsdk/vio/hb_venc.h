@@ -925,6 +925,11 @@ int32_t HB_VENC_GetAverageQp(VENC_CHN VeChn, int *averageQp);
 int32_t HB_VENC_Get3DNRParam(VENC_CHN VeChn, VENC_3DNR_PARAMS *param);
 int32_t HB_VENC_Set3DNRParam(VENC_CHN VeChn, VENC_3DNR_PARAMS *param);
 
+int32_t HB_VENC_GetSmartBgEncParam(VENC_CHN VeChn,
+                        VENC_SMART_BG_ENC_PARAMS *param);
+int32_t HB_VENC_SetSmartBgEncParam(VENC_CHN VeChn,
+                        VENC_SMART_BG_ENC_PARAMS *param);
+
 /*****************************************************************************
  * 函数描述:。
  * 输入参数:

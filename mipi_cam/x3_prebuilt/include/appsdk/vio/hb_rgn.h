@@ -89,6 +89,17 @@ typedef enum HB_RGN_TYPE_PARAM_E        /*region type*/
     RGN_TYPE_MAX
 } RGN_TYPE_E;
 
+/*
+ * RGN and VPS: channel correspondence
+ * RGN      VPS
+ * 0   --->  5
+ * 1   --->  0
+ * 2   --->  1
+ * 3   --->  2
+ * 4   --->  3
+ * 5   --->  4
+ * 6   --->  group
+ */
 typedef enum HB_RGN_CHN_ID_ATTR_E      /*ipu channel region attached to*/
 {
 	CHN_US,
@@ -165,10 +176,10 @@ typedef struct HB_RGN_RECT_ATTR_S       /*rectangle attribute*/
     uint32_t u32Height;               /*height of rectangle*/
 } RGN_RECT_S;
 
-typedef struct HB_RGN_POLYGON_ATTR_S       /*rectangle attribute*/
+typedef struct HB_RGN_POLYGON_ATTR_S        /*polygon attribute*/
 {
-    uint32_t u32SideNum;
-    RGN_POINT_S stVertex[POLYGON_MAX_SIDE];
+    uint32_t u32SideNum;                    /*side number of polygon*/
+    RGN_POINT_S stVertex[POLYGON_MAX_SIDE]; /*vertex of polygon*/
 } RGN_POLYGON_S;
 
 typedef struct HB_RGN_OVERLAY_ATTR_S    /*overlay region attribute*/
@@ -210,15 +221,15 @@ typedef struct HB_RGN_COVER_CHN_ATTR_PRO_S          // channel cover region
     union
     {
         RGN_RECT_S stRect;                        /*rectangle of cover region*/
-        RGN_POLYGON_S stPolygon;
+        RGN_POLYGON_S stPolygon;                  /*polygon of cover region*/
     };
     uint32_t u32Color;                        /*color of cover region*/
 }RGN_COVER_CHN_PRO_S;
 
 typedef struct HB_RGN_MOASIC_CHN_ATTR_S          // moasic attribute
 {
-    RGN_RECT_S stRect;
-    uint32_t stPixelBlock;
+    RGN_RECT_S stRect;                           /*rectangle of moasic region*/
+    uint32_t stPixelBlock;                       /*reserved*/
 }RGN_MOASIC_CHN_S;
 
 typedef union HB_RGN_CHN_ATTR_PRO_U                 /*channel region attribute*/
@@ -368,29 +379,40 @@ int32_t HB_RGN_SetSta(const RGN_CHN_S *pstChn, uint8_t astStaLevel[3],
 /*get the value of statistics*/
 int32_t HB_RGN_GetSta(const RGN_CHN_S *pstChn, uint16_t astStaValue[8][4]);
 
+/*attach region to pym*/
 int32_t HB_RGN_AttachToPym(RGN_HANDLE Handle, const RGN_CHN_S *pstChn,
                             const RGN_CHN_ATTR_S *pstChnAttr);
 
 int32_t HB_RGN_AttachToPymEx(RGN_HANDLE Handle, const RGN_CHN_S *pstChn,
                             const RGN_CHN_ATTR_EX_S *pstChnAttr);
 
+/*detach region from pym*/
 int32_t HB_RGN_DetachFromPym(RGN_HANDLE Handle, const RGN_CHN_S *pstChn);
 
+/*set color map to pym*/
 int32_t HB_RGN_SetPymColorMap(uint32_t aColorMap[15]);
 
+/*set attribute of y statistics in pym*/
 int32_t HB_RGN_SetPymSta(const RGN_CHN_S *pstChn, uint8_t astStaLevel[3],
                              RGN_STA_S astStaAttr[8]);
 
+/*get the value of statistics in pym*/
 int32_t HB_RGN_GetPymSta(const RGN_CHN_S *pstChn, uint16_t astStaValue[8][4]);
 
+/*attach region to a yuv buffer*/
 int32_t HB_RGN_AddToYUV(RGN_HANDLE Handle, hb_vio_buffer_t *vio_buffer,
                             const RGN_CHN_ATTR_S *pstChnAttr);
 
 int32_t HB_RGN_AddToYUVEx(RGN_HANDLE Handle, hb_vio_buffer_t *vio_buffer,
                             const RGN_CHN_ATTR_EX_S *pstChnAttr);
 
+/*set display level of region*/
 int32_t HB_RGN_SetDisplayLevel(RGN_HANDLE Handle, const RGN_CHN_S *pstChn,
                             uint32_t osd_level);
+
+/*set background transparent of yuv420 pixel format region*/
+int32_t HB_RGN_SetYuvBgtrans(RGN_HANDLE Handle, uint8_t enable,
+                            uint32_t key_color);
 
 #ifdef __cplusplus
 }

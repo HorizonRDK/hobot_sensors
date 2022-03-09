@@ -724,6 +724,55 @@ typedef struct HB_ISP_AWB_DEFAULT_PARAM_S {
 	uint16_t u16Ct30Pos;
 } ISP_AWB_DEFAULT_PARAM_S;
 
+typedef struct HB_ISP_AE_CONTROL {
+	uint32_t u32AeControl[9];
+	uint16_t u16AeControlHdrTarget[8][2];
+} ISP_AE_CONTROL;
+
+typedef struct HB_ISP_AE_CORRECTION {
+	uint8_t u8AeCorrection[12];
+	uint32_t u32AeEXPCorrection[12];
+} ISP_AE_CORRECTION;
+
+typedef struct HB_ISP_EXP_RATIO_ADJ {
+	uint16_t u16ExpRatioAdj[4][2];
+} ISP_EXP_RATIO_ADJ;
+
+typedef struct HB_ISP_EXP_PAT_LUTS {
+	uint16_t u16ExpPatLuts[2][10];
+} ISP_EXP_PAT_LUTS;
+
+typedef struct HB_ISP_AWB_MAX_BGAIN {
+	uint16_t u16AwbBgMaxGain[3][2];
+} ISP_AWB_BG_MAX_GAIN;
+
+typedef struct HB_ISP_CCM_SATURA_STRENG {
+	uint16_t u16CcmSatStre[9][2];
+} ISP_CCM_SATURA_STRENG;
+
+typedef struct HB_ISP_MT_ABSOLUTE_LS {
+	uint16_t u16AbsoluteLsACcm[9];
+	uint16_t u16AbsoluteLsD40Ccm[9];
+	uint16_t u16AbsoluteLsD50Ccm[9];
+	uint16_t u16AbsoluteLsU30Ccm[9];
+} ISP_MT_ABSOLUTE_LS;
+
+typedef struct HB_ISP_CCM_ONE_GAIN_THRESHOLD {
+	uint16_t u16CcmOneGainThreshold;
+} ISP_CCM_ONE_GAIN_THRESHOLD;
+
+typedef struct HB_ISP_GAMMA_EV1 {
+	uint16_t u16GammaEv1[129];
+} ISP_GAMMA_EV1;
+
+typedef struct HB_ISP_GAMMA_EV2 {
+	uint16_t u16GammaEv2[129];
+} ISP_GAMMA_EV2;
+
+typedef struct HB_ISP_GAMMA_THRESHOLD {
+	uint32_t u32GammaThreshold[3];
+} ISP_GAMMA_THRESHOLD;
+
 extern int HB_ISP_SetSkyCtrlAttr(uint8_t pipeId, const ISP_SKY_PARAM_S *pstSkyCtrlAttr);
 extern int HB_ISP_GetSkyCtrlAttr(uint8_t pipeId, ISP_SKY_PARAM_S *pstSkyCtrlAttr);
 extern int HB_ISP_SetMixLightAttr(uint8_t pipeId, const ISP_MIX_LIGHT_PARAM_S *pstMixLightAttr);
@@ -744,6 +793,28 @@ extern int HB_ISP_SetAwbPosStatusAttr(uint8_t pipeId, const ISP_AWB_POS_STATUS_S
 extern int HB_ISP_GetAwbPosStatusAttr(uint8_t pipeId, ISP_AWB_POS_STATUS_S *pstPosAttr);
 extern int HB_ISP_SetAwbLightSourceAttr(uint8_t pipeId, const ISP_AWB_LIGHT_SOURCE_S *pstLightAttr);
 extern int HB_ISP_GetAwbLightSourceAttr(uint8_t pipeId, ISP_AWB_LIGHT_SOURCE_S *pstLightAttr);
+extern int HB_ISP_SetAEControl(uint8_t pipeId, const ISP_AE_CONTROL *pstAeControl);
+extern int HB_ISP_GetAEControl(uint8_t pipeId, ISP_AE_CONTROL *pstAeControl);
+extern int HB_ISP_SetAECorrection(uint8_t pipeId, const ISP_AE_CORRECTION *pstAeCorrection);
+extern int HB_ISP_GetAECorrection(uint8_t pipeId, ISP_AE_CORRECTION *pstAeCorrection);
+extern int HB_ISP_SetExposureRatioAdjustment(uint8_t pipeId, const ISP_EXP_RATIO_ADJ *pstExpRatioAdj);
+extern int HB_ISP_GetExposureRatioAdjustment(uint8_t pipeId, ISP_EXP_RATIO_ADJ *pstExpRatioAdj);
+extern int HB_ISP_SetExposurePartitionLuts(uint8_t pipeId, const ISP_EXP_PAT_LUTS *pstExpPatLuts);
+extern int HB_ISP_GetExposurePartitionLuts(uint8_t pipeId, ISP_EXP_PAT_LUTS *pstExpPatLuts);
+extern int HB_ISP_SetAwbBgMaxGain(uint8_t pipeId, const ISP_AWB_BG_MAX_GAIN *pstAwbBgMaxGain);
+extern int HB_ISP_GetAwbBgMaxGain(uint8_t pipeId, ISP_AWB_BG_MAX_GAIN *pstAwbBgMaxGain);
+extern int HB_ISP_SetCcmSaturationStrength(uint8_t pipeId, const ISP_CCM_SATURA_STRENG *pstCcmSatStre);
+extern int HB_ISP_GetCcmSaturationStrength(uint8_t pipeId, ISP_CCM_SATURA_STRENG *pstCcmSatStre);
+extern int HB_ISP_SetCcmMtLs(uint8_t pipeId, const ISP_MT_ABSOLUTE_LS *pstMtAbsoluteLs);
+extern int HB_ISP_GetCcmMtLs(uint8_t pipeId, ISP_MT_ABSOLUTE_LS *pstMtAbsoluteLs);
+extern int HB_ISP_SetCcmAttr(uint8_t pipeId, const ISP_CCM_ONE_GAIN_THRESHOLD *pstOneGainThreshold);
+extern int HB_ISP_GetCcmAttr(uint8_t pipeId, ISP_CCM_ONE_GAIN_THRESHOLD *pstOneGainThreshold);
+extern int HB_ISP_SetGammaEv1(uint8_t pipeId, const ISP_GAMMA_EV1 *pstGammaEv1);
+extern int HB_ISP_GetGammaEv1(uint8_t pipeId, ISP_GAMMA_EV1 *pstGammaEv1);
+extern int HB_ISP_SetGammaEv2(uint8_t pipeId, const ISP_GAMMA_EV2 *pstGammaEv2);
+extern int HB_ISP_GetGammaEv2(uint8_t pipeId, ISP_GAMMA_EV2 *pstGammaEv2);
+extern int HB_ISP_SetGammaThreshold(uint8_t pipeId, const ISP_GAMMA_THRESHOLD *pstGammaThd);
+extern int HB_ISP_GetGammaThreshold(uint8_t pipeId, ISP_GAMMA_THRESHOLD *pstGammaThd);
 
 
 typedef struct HB_ISP_WDR_OFFSET_S {
@@ -807,6 +878,8 @@ extern int HB_ISP_GetAfStatus(uint8_t pipeId, ISP_AF_STATUS_E *pstAfStatusAttr);
 extern int HB_ISP_GetAfInfo(uint8_t pipeId, ISP_AF_LENS_INFO_S *ptrLenInfo);
 extern int HB_ISP_SetAfManualPos(uint8_t pipeId, ISP_AF_MODE_E stAfModeAttr, uint32_t pos);
 extern int HB_ISP_SetAfSpeed(uint8_t pipeId, uint32_t speed);
+extern int HB_ISP_SetFlickerStatus(uint8_t pipeId, uint32_t flicker_enable, uint32_t flicker_frequency);
+extern int HB_ISP_GetFlickerStatus(uint8_t pipeId, uint32_t *flicker_enable, uint32_t *flicker_frequency);
 
 extern int HB_ISP_SetAeAttrEx(uint8_t pipeId, const ISP_AE_ATTR_EX_S *pstAeAttrEx);
 extern int HB_ISP_GetAeAttrEx(uint8_t pipeId, ISP_AE_ATTR_EX_S *pstAeAttrEx);
@@ -820,5 +893,24 @@ extern int HB_ISP_SetAeWeight(uint8_t pipeId, AE_ZONES_WEIGHT_S *pstAeWeightLUT)
 
 extern int HB_ISP_GetAeMinIntertime(uint8_t pipeId, uint32_t *pstAeMinTime);
 extern int HB_ISP_SetAeMinIntertime(uint8_t pipeId, uint32_t stAeMinTime);
+
+extern int HB_ISP_GetAwbAvgCoeff(uint8_t pipeId, uint8_t *Coeff);
+extern int HB_ISP_SetAwbAvgCoeff(uint8_t pipeId, uint8_t Coeff);
+
+typedef enum HB_ISP_AWB_MODE_E {
+	AWB_MODE_AUTO = 0,
+	AWB_MODE_MANUAL = 1,
+	AWB_MODE_USER_0 = 2,
+	AWB_MODE_USER_1 = 3,
+	AWB_MODE_USER_2 = 4,
+	AWB_MODE_USER_3 = 5,
+	AWB_MODE_USER_4 = 6,
+	AWB_MODE_USER_5 = 7,
+	AWB_MODE_USER_6 = 8,
+} ISP_AWB_MODE_E;
+
+extern int HB_GetAwbTemperatureInfo(uint8_t pipeId, uint32_t *temper);
+extern int HB_GetAwbModeInfo(uint8_t pipeId, ISP_AWB_MODE_E *ptrAwbMode);
+extern int HB_SetAwbModeInfo(uint8_t pipeId, ISP_AWB_MODE_E AwbMode);
 
 #endif

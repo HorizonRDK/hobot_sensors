@@ -263,7 +263,6 @@ int HB_VPS_SetGrpAttr(int VpsGrp, const VPS_GRP_ATTR_S *grpAttr);
 
 int HB_VPS_SetGrpRotate(int VpsGrp, ROTATION_E enRotation);
 int HB_VPS_GetGrpRotate(int VpsGrp, ROTATION_E *enRotation);
-int HB_VPS_SetGrpRotateRepeat(int VpsGrp, ROTATION_E enRotation);
 int HB_VPS_SetGrpGdc(int VpsGrp, char* buf_addr, uint32_t buf_len,
 								ROTATION_E enRotation);
 int HB_VPS_SetChnGdc(int VpsGrp, int VpsChn, char* buf_addr, uint32_t buf_len,
@@ -293,9 +292,6 @@ int HB_VPS_SendFrame(int VpsGrp, void* videoFrame, int ms);
 int HB_VPS_SendFirstFrame(int VpsGrp, RECT_S *rect, void *videoFrame);
 int HB_VPS_SendMiddleFrame(int VpsGrp, RECT_S *rect, void *videoFrame);
 int HB_VPS_SendLastFrame(int VpsGrp, RECT_S *rect, void *videoFrame);
-static inline int VPS_SendFrameOpt(int VpsGrp, RECT_S *rect, void *videoFrame,
-		uint16_t first, uint16_t last);
-
 int HB_VPS_GetChnFrame(int VpsGrp, int VpsChn, void *videoFrame, int ms);
 int HB_VPS_GetChnFrame_Cond(int VpsGrp, int VpsChn, void *videoFrame,
 		int ms, int time);

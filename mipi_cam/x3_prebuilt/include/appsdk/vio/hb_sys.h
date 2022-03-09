@@ -47,6 +47,6 @@ extern int HB_SYS_Bind_Layer(const SYS_MOD_S *pstSrcMod,
 extern int HB_SYS_UnBind_Layer(const SYS_MOD_S *pstSrcMod,
 		const SYS_MOD_S *pstDstMod);
 
-
+int HB_SYS_DumpFrameState(int pipeId);
 
 #endif
