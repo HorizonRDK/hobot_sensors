@@ -117,4 +117,10 @@ install(
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install sensor libs
+install(
+  DIRECTORY x3_prebuilt/lib/sensorlib/
+  DESTINATION sensorlib
+)
+
 ament_package()
