@@ -45,6 +45,9 @@ class ImageSubscriber : public rclcpp::Node {
   std::chrono::high_resolution_clock::time_point sub_img_tp_;
   int sub_img_frameCount_ = 0;
   std::mutex frame_stat_mtx_;
+  std::chrono::high_resolution_clock::time_point sub_imgraw_tp_;
+  int sub_imgraw_frameCount_ = 0;
+  std::mutex frame_statraw_mtx_;
 
   void topic_callback(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   void topic_compressed_callback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr msg);

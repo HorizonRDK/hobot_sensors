@@ -46,6 +46,21 @@ ImageSubscriber::ImageSubscriber(const rclcpp::NodeOptions& node_options, ImgCbT
 
 ImageSubscriber::~ImageSubscriber() {}
 
+#include <sys/times.h>
+// 返回ms
+int32_t tool_calc_time_laps(struct timespec &time_start, struct timespec &time_end)
+{
+  int32_t nRetMs = 0;
+  if (time_end.tv_nsec < time_start.tv_nsec)
+  {
+    nRetMs = (time_end.tv_sec - time_start.tv_sec - 1) * 1000 +
+     (1000000000 + time_end.tv_nsec - time_start.tv_nsec) / 1000000;
+  } else {
+    nRetMs = (time_end.tv_sec - time_start.tv_sec) * 1000 + (time_end.tv_nsec - time_start.tv_nsec) / 1000000;
+  }
+  return nRetMs;
+}
+
 void ImageSubscriber::topic_compressed_callback(
   const sensor_msgs::msg::CompressedImage::ConstSharedPtr img_msg) {
   RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv compressed img");
@@ -62,12 +77,18 @@ void ImageSubscriber::topic_compressed_callback(
       sub_img_tp_ = std::chrono::system_clock::now();
     }
   }
+  struct timespec time_now = {0, 0}, time_in = {0, 0};
+  clock_gettime(CLOCK_REALTIME, &time_now);
+  time_in.tv_nsec = img_msg->header.stamp.nanosec;
+  time_in.tv_sec = img_msg->header.stamp.sec;
 
   std::stringstream ss;
-  ss << "Recved compressed img format: " << img_msg->format
-  << ", frame_id: " << img_msg->header.frame_id
+  ss << "Recv compressed img: " << img_msg->format
+  //<< ", w: " << img_msg->width
+  //<< ", h: " << img_msg->height
   << ", stamp: " << img_msg->header.stamp.sec
   << "." << img_msg->header.stamp.nanosec
+  << ", tmlaps(ms): " << tool_calc_time_laps(time_in, time_now)
   << ", data size: " << img_msg->data.size();
   RCLCPP_INFO(rclcpp::get_logger("img_sub"), "%s", ss.str().c_str());
 
@@ -86,30 +107,46 @@ void ImageSubscriber::topic_callback(
     const sensor_msgs::msg::Image::ConstSharedPtr msg) {
   RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv img");
   // todo
+  /* // raw 过大，不保存
   if (save_dir_.length() > 0) {
-    std::string fname = save_dir_ + "/compressed_img_" +
+    std::string fname = save_dir_ + "/raw_img_" +
       std::to_string(msg->header.stamp.sec) + "." +
       std::to_string(msg->header.stamp.nanosec) + msg->encoding;
     std::ofstream ofs(fname);
     ofs.write(reinterpret_cast<const char*>(msg->data.data()),
       msg->data.size());
-  }
-  return;
+  }*/
+  struct timespec time_now = {0, 0}, time_in = {0, 0};
+  clock_gettime(CLOCK_REALTIME, &time_now);
+  time_in.tv_nsec = msg->header.stamp.nanosec;
+  time_in.tv_sec = msg->header.stamp.sec;
+
+  std::stringstream ss;
+  ss << "Recv raw img: " << msg->encoding
+  << ", w: " << msg->width
+  << ", h: " << msg->height
+  << ", stamp: " << msg->header.stamp.sec
+  << "." << msg->header.stamp.nanosec
+  << ", tmlaps(ms): " << tool_calc_time_laps(time_in, time_now)
+  << ", data size: " << msg->data.size();
+  RCLCPP_INFO(rclcpp::get_logger("img_sub"), "%s", ss.str().c_str());
+
   {
-    auto tp_now = std::chrono::system_clock::now();
-    std::unique_lock<std::mutex> lk(frame_stat_mtx_);
-    sub_img_frameCount_++;
+    auto tp_raw_now = std::chrono::system_clock::now();
+    std::unique_lock<std::mutex> lk(frame_statraw_mtx_);
+    sub_imgraw_frameCount_++;
     auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        tp_now - sub_img_tp_).count();
+                        tp_raw_now - sub_imgraw_tp_).count();
     if (interval >= 1000) {
       RCLCPP_WARN(rclcpp::get_logger("img_sub"),
-      "Sub img fps = %d", sub_img_frameCount_);
-      sub_img_frameCount_ = 0;
-      sub_img_tp_ = std::chrono::system_clock::now();
+      "Sub imgRaw fps = %d", sub_imgraw_frameCount_);
+      sub_imgraw_frameCount_ = 0;
+      sub_imgraw_tp_ = std::chrono::system_clock::now();
     }
   }
 
   if (img_cb_) {
     img_cb_(msg);
   }
+  return;
 }

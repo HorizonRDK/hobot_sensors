@@ -23,9 +23,11 @@ Mipi_cam Node package是地平线机器人开发平台的一部分，基于地�
 项目依赖开源的package，需要手动安装：
 
 ```
-# 方法1:使用apt 安装，以cv_bridge 为例：
+# 方法1:使用apt 安装：
+sudo apt-get install ros-foxy-camera-info-manager 
+sudo apt-get install ros-foxy-image-transport-plugins
 sudo apt-get install ros-foxy-cv-bridge -y
-# 方法2：使用 rosdep检查并自动安装pkg依赖：
+# 方法2：使用 rosdep检查并自动安装pkg依赖，由于使用的是国外源会导致概率性的安装失败，建议选用第一种：
 #安装 rosdep
 sudo apt-get install python3-pip
 sudo pip install rosdep

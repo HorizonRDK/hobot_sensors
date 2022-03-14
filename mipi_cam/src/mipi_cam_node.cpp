@@ -170,7 +170,7 @@ void MipiCamNode::init()
   // start the camera
   if (false == mipiCam_.start( video_device_name_.c_str(), out_format_name_.c_str(), io_method, pixel_format,
     image_width_, image_height_, framerate_)) {
-    RCLCPP_ERROR_ONCE(this->get_logger(), "Don't support video dev '%s'", video_device_name_.c_str());
+    RCLCPP_ERROR_ONCE(this->get_logger(), "video dev '%s' config err", video_device_name_.c_str());
     rclcpp::shutdown();
     return;
   }
