@@ -21,22 +21,11 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(cv_bridge REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 include_directories(include
 ${PROJECT_SOURCE_DIR}
-)
-
-set(IMAGE_SUBSCRIBE_INSTALL_PATH "../install/image_subscribe")
-message("IMAGE_SUBSCRIBE_INSTALL_PATH: " ${IMAGE_SUBSCRIBE_INSTALL_PATH})
-include_directories(
-  ${IMAGE_SUBSCRIBE_INSTALL_PATH}/include
-)
-
-link_directories(
-  ${IMAGE_SUBSCRIBE_INSTALL_PATH}/lib
 )
 
 add_executable(subscribe_example
@@ -47,7 +36,6 @@ src/image_subscriber.cpp
 ament_target_dependencies(
   subscribe_example
   rclcpp
-  cv_bridge
   sensor_msgs
 )
 

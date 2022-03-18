@@ -6,22 +6,6 @@
 #ifndef MIPI_CAM__MIPI_CAM_HPP_
 #define MIPI_CAM__MIPI_CAM_HPP_
 
-#include <asm/types.h>          /* for videodev2.h */
-
-extern "C"
-{
-#include <linux/videodev2.h>
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-#include <libavutil/mem.h>
-}
-
-// legacy reasons
-#include <libavcodec/version.h>
-#if LIBAVCODEC_VERSION_MAJOR < 55
-#define AV_CODEC_ID_MJPEG CODEC_ID_MJPEG
-#endif
-
 #include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
@@ -103,9 +87,10 @@ private:
     size_t length;
   };
 
-  int init_mjpeg_decoder(int image_width, int image_height);
   bool mjpeg2rgb(char * MJPEG, int len, char * RGB, int NumPixels);
+#ifdef IMAGE_TRANSPORT_PKG_ENABLED
   bool process_image(const void * src, int len, camera_image_t * dest);
+#endif
   bool uninit_device(void);
   bool init_device(int image_width, int image_height, int framerate);
   bool close_device(void);
@@ -120,11 +105,6 @@ private:
   int fd_;
   buffer * buffers_;
   unsigned int n_buffers_;
-  AVFrame * avframe_camera_;
-  AVFrame * avframe_rgb_;
-  AVCodec * avcodec_;
-  AVDictionary * avoptions_;
-  AVCodecContext * avcodec_context_;
   int avframe_camera_size_;
   int avframe_rgb_size_;
   camera_image_t * image_pub_;

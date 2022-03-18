@@ -18,9 +18,16 @@ Mipi_cam Node package是地平线机器人开发平台的一部分，基于地�
 ## 编译
 编译环境确认：
 - 当前编译终端设置ROS环境变量：source /opt/ros/foxy/setup.bash。
-- 已安装ROS2编译工具colcon，安装的ROS不包含编译工具colcon，需要手动安装colcon。命令：apt update ;apt install python3-colcon-common-extensions
-编译：colcon build --packages-select mipi_cam
-项目依赖开源的package，需要手动安装：
+- 已安装ROS2编译工具colcon，安装的ROS不包含编译工具colcon，需要手动安装colcon。命令：`apt update ;apt install python3-colcon-common-extensions`。
+- 支持两种编译方式：
+  - 只发布nv12格式图片，不依赖第三方pkg
+  - 支持发布压缩格式图片，依赖第三方pkg
+
+- 编译：
+  - 只发布nv12格式图片：`colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=OFF`
+  - 支持发布压缩格式图片：`colcon build --packages-select mipi_cam`或`colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=ON`。
+  - 发布压缩格式图片依赖的开源package，需要手动安装：
+
 
 ```
 # 方法1:使用apt 安装：
@@ -72,5 +79,4 @@ node会发布/image_raw和/image_raw/compressed两个topic，分别对应rgb8和
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
 ---
-
 

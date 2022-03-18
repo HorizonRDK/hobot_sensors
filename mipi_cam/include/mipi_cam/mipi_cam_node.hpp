@@ -12,17 +12,18 @@
 #include <memory>
 #include <string>
 
-//#include "ros/ros.h"
-//#include "sensor_msgs/CompressedImage.h"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 
+#ifdef IMAGE_TRANSPORT_PKG_ENABLED
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
 #include "camera_info_manager/camera_info_manager.hpp"
 #include "image_transport/image_transport.hpp"
 #include "compressed_image_transport/compressed_publisher.h"
+#endif
+
 #include "sensor_msgs/msg/image.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include <std_msgs/msg/string.hpp>
@@ -49,11 +50,13 @@ public:
 
   // shared image message
   sensor_msgs::msg::Image::UniquePtr img_;
- // sensor_msgs::msg::CompressedImage::UniquePtr img_compressed_;
+
+#ifdef IMAGE_TRANSPORT_PKG_ENABLED
   std::shared_ptr<image_transport::CameraPublisher> image_pub_;
-  //std::shared_ptr<image_transport::Publisher> image_compressed_pub_;
-  //image_transport::Publisher image_compressed_pub_;
-  
+#else
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
+#endif
+
   sensor_msgs::msg::CompressedImage::SharedPtr ros_img_compressed_;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr video_compressed_publisher_;
 
@@ -68,20 +71,17 @@ public:
   // to discover them,
   // or guvcview
   std::string pixel_format_name_;
-  std::string out_format_name_; // 向外泵数据的格式，rgb8/mono8/nv12
+  std::string out_format_name_;
   int image_width_;
   int image_height_;
   int framerate_;
   int m_bIsInit;
 
-  // TODO(oal) use v4l2ucp for these?
-  // int exposure_, brightness_, contrast_, saturation_, sharpness_, focus_,
-  //    white_balance_, gain_;
-  // bool autofocus_, autoexposure_, auto_white_balance_;
-
   std::string camera_name_;
   std::string camera_info_url_;
+#ifdef IMAGE_TRANSPORT_PKG_ENABLED
   std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
+#endif
 
   rclcpp::TimerBase::SharedPtr timer_;
   // rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_capture_;
