@@ -4,6 +4,7 @@
 ---
 通过阅读本文档，用户可以在地平线X3开发板上轻松抓取mipi摄像头的视频流数据，并通过ROS平台发布满足ROS标准的图片数据，供其他ROS Node订阅获取。目前支持F37、IMX415 mipi标准设备。
 Mipi_cam Node package是地平线机器人开发平台的一部分，基于地平线VIO和ROS2 Node进行二次开发，为应用开发提供简单易用的摄像头数据采集功能的功能，避免重复开发获取视频的工作。
+支持share mem
 # Build
 ---
 
@@ -15,6 +16,8 @@ Mipi_cam Node package是地平线机器人开发平台的一部分，基于地�
 ## package说明
 ---
 源码包含mipi_cam package。mipi_cam 编译完成后，头文件、动态库以及依赖安装在install/mipi_cam 路径。
+-DTROS=OFF表示不使用share mem，-DTROS=ON表示使用share mem
+
 ## 编译
 编译环境确认：
 - 当前编译终端设置ROS环境变量：source /opt/ros/foxy/setup.bash。
@@ -78,5 +81,12 @@ node会发布/image_raw和/image_raw/compressed两个topic，分别对应rgb8和
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
+使用 io_method 参数设置发布图像采用的方式，目前 hbmem 发布的主题是固定的：hbmem_img
+
+`ros2 run mipi_cam mipi_cam --ros-args -p io_method:=hbmem`
+
+sub端也需要指明topic 为 hbmem_img，才可以接收 hbmem 传过来的数据：
+
+`ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=hbmem_img`
 ---
 

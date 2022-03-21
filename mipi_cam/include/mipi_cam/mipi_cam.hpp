@@ -58,6 +58,10 @@ public:
     builtin_interfaces::msg::Time & stamp, 
     std::string & encoding,
     uint32_t & height, uint32_t & width, uint32_t & step, std::vector<uint8_t> & data);
+  bool get_image_mem(
+    uint64_t & stamp,
+    std::array<uint8_t, 12> & encoding,
+    uint32_t & height, uint32_t & width, uint32_t & step, std::array<uint8_t, 6220800> & data, uint32_t & data_size);
 
   void get_formats();  // std::vector<usb_cam::msg::Format>& formats);
 

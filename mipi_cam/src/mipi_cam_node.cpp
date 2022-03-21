@@ -158,12 +158,28 @@ void MipiCamNode::init()
     pixel_format_name_.c_str(), framerate_);
   // set the IO method
   MipiCam::io_method io_method = MipiCam::io_method_from_string(io_method_name_);
+#ifdef USING_HBMEM
+  if (io_method_name_.compare("hbmem") != 0) {
+    if (io_method == MipiCam::IO_METHOD_UNKNOWN) {
+      RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_node"), "Unknown IO method '%s'", io_method_name_.c_str());
+      rclcpp::shutdown();
+      return;
+    }
+  } else {
+    // 创建hbmempub
+    // publisher_hbmem_ = this->create_publisher_hbmem<hbmem_msgs::msg::SampleMessage>(
+    publisher_hbmem_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
+        "hbmem_img", 10);
+  }
+#else
   if (io_method == MipiCam::IO_METHOD_UNKNOWN) {
     RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_node"),
     "Unknown IO method '%s'", io_method_name_.c_str());
     rclcpp::shutdown();
     return;
   }
+#endif
+
   // set the pixel format
   MipiCam::pixel_format pixel_format = MipiCam::pixel_format_from_string(pixel_format_name_);
   if (pixel_format == MipiCam::PIXEL_FORMAT_UNKNOWN) {
@@ -185,10 +201,14 @@ void MipiCamNode::init()
   // TODO(oal) should this check a little faster than expected frame rate?
   // TODO(oal) how to do small than ms, or fractional ms- std::chrono::nanoseconds?
   const int period_ms = 1000.0 / framerate_;
-  timer_ = this->create_wall_timer( std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
-    std::bind(&MipiCamNode::update, this));
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("mipi_node"),
-  "starting timer " << period_ms);
+  if (io_method_name_.compare("hbmem") != 0) {
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
+      std::bind(&MipiCamNode::update, this));
+  } else {
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
+      std::bind(&MipiCamNode::hbmem_update, this));
+  }
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("mipi_node"), "starting timer " << period_ms);
   m_bIsInit = 1;
 }
 
@@ -249,6 +269,31 @@ void MipiCamNode::update()
     // RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),"[update]->start %ld \n", mipi_cam::GetTickCount());
   }
 }
+
+void MipiCamNode::hbmem_update()
+{
+#ifdef USING_HBMEM
+  if (mipiCam_.is_capturing()) {
+    auto loanedMsg = publisher_hbmem_->borrow_loaned_message();
+    auto& msg = loanedMsg.get();
+    if (!mipiCam_.get_image_mem(msg.time_stamp, msg.encoding, msg.height, msg.width,
+      msg.step, msg.data, msg.data_size))
+    {
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "hbmem_update grab img failed");
+      return;
+    }
+    /*auto time_now =
+        std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
+    msg.index = count_;
+    msg.time_stamp = time_now;
+    RCLCPP_INFO(this->get_logger(), "message: %d", msg.index);*/
+    publisher_hbmem_->publish(std::move(loanedMsg));
+  }
+#endif
+}
+
 }  // namespace mipi_cam
 
 #ifdef IMAGE_TRANSPORT_PKG_ENABLED

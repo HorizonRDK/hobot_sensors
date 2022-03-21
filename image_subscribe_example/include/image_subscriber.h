@@ -14,6 +14,10 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 
+#ifdef USING_HBMEM
+#include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
+#endif
+
 #ifndef IMAGE_SUBSCRIBE_EXAMPLE_INCLUDE_IMAGE_SUBSCRIBER_H_
 #define IMAGE_SUBSCRIBE_EXAMPLE_INCLUDE_IMAGE_SUBSCRIBER_H_
 
@@ -40,7 +44,14 @@ class ImageSubscriber : public rclcpp::Node {
   // 和sensor_msgs::msg::CompressedImage格式扩展订阅压缩图
   std::string topic_name_ = "/image_raw";
   std::string topic_name_compressed_ = "/image_raw/compressed";
+  // 默认目录为空，表示不保存
   std::string save_dir_ = "";
+  // 默认为空，表示正常sub，hbmem，表示用 hbmem sub
+  // std::string io_method_ = "";
+#ifdef USING_HBMEM
+  rclcpp::SubscriptionHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
+      hbmem_subscription_;
+#endif
 
   std::chrono::high_resolution_clock::time_point sub_img_tp_;
   int sub_img_frameCount_ = 0;
@@ -51,6 +62,8 @@ class ImageSubscriber : public rclcpp::Node {
 
   void topic_callback(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   void topic_compressed_callback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr msg);
+  // void hbmem_topic_callback(const hbmem_msgs::msg::SampleMessage::SharedPtr msg) const;
+  void hbmem_topic_callback(const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg);
 };
 
 #define IMAGE_SUBSCRIBER_H_

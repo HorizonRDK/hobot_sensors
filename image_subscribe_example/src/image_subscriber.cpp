@@ -24,24 +24,34 @@ ImageSubscriber::ImageSubscriber(const rclcpp::NodeOptions& node_options, ImgCbT
     RCLCPP_WARN(rclcpp::get_logger("ImageSubscriber"),
      "Update save_dir: %s", save_dir_.c_str());
   }
-
   if (!topic_name.empty()) {
     topic_name_ = topic_name;
   }
-  RCLCPP_WARN(rclcpp::get_logger("ImageSubscriber"),
-  "Create subscription with topic_name: %s", topic_name_.c_str());
-  if (topic_name_.compare(topic_name_compressed_) != 0) {
-    subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-        topic_name_, 10,
-        std::bind(&ImageSubscriber::topic_callback, this,
+  if (topic_name_.find("hbmem") == std::string::npos) {
+    RCLCPP_WARN(rclcpp::get_logger("ImageSubscriber"),
+      "Create subscription with topic_name: %s", topic_name_.c_str());
+    if (topic_name_.compare(topic_name_compressed_) != 0) {
+      subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
+          topic_name_, 10,
+          std::bind(&ImageSubscriber::topic_callback, this,
+                    std::placeholders::_1));
+    }
+    subscription_compressed_ =
+        this->create_subscription<sensor_msgs::msg::CompressedImage>(
+        topic_name_compressed_, 10,
+        std::bind(&ImageSubscriber::topic_compressed_callback, this,
                   std::placeholders::_1));
+  } else {
+#ifdef USING_HBMEM
+    hbmem_subscription_ =
+        this->create_subscription_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
+            topic_name_, 10,
+            std::bind(&ImageSubscriber::hbmem_topic_callback, this,
+                      std::placeholders::_1));
+    RCLCPP_WARN(rclcpp::get_logger("ImageSubscriber"),
+      "Create hbmem_subscription with topic_name: %s, sub = %p", topic_name_.c_str(), hbmem_subscription_);
+#endif
   }
-
-  subscription_compressed_ =
-      this->create_subscription<sensor_msgs::msg::CompressedImage>(
-      topic_name_compressed_, 10,
-      std::bind(&ImageSubscriber::topic_compressed_callback, this,
-                std::placeholders::_1));
 }
 
 ImageSubscriber::~ImageSubscriber() {}
@@ -101,6 +111,37 @@ void ImageSubscriber::topic_compressed_callback(
   ofs.write(reinterpret_cast<const char*>(img_msg->data.data()),
     img_msg->data.size());
   }
+}
+
+void TestSave(char *pFilePath, char *imgData, int nDlen)
+{
+  FILE *yuvFd = fopen(pFilePath, "w+");
+  if (yuvFd) {
+    fwrite(imgData, 1, nDlen, yuvFd);
+    fclose(yuvFd);
+  }
+}
+// static int s_nSave = 0;
+void ImageSubscriber::hbmem_topic_callback(
+    const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg) {
+#ifdef USING_HBMEM
+  struct timespec time_now = {0, 0}, time_in = {0, 0};
+  clock_gettime(CLOCK_REALTIME, &time_now);
+  uint64_t mNow = (time_now.tv_sec * 1000 + time_now.tv_nsec / 1000000);
+
+  std::stringstream ss;
+  ss << "Recv raw img: " << msg->encoding.data()
+  << ", w: " << msg->width
+  << ", h: " << msg->height
+  << ", tmlaps(ms): " << (mNow - msg->time_stamp)    // tool_calc_time_laps(time_in, time_now)
+  << ", data size: " << msg->data_size;
+  /* if (0 == s_nSave) {
+    TestSave("/userdata/test.rgb", (char*)msg->data.data(), msg->data.size());
+    s_nSave = 1;
+  }
+  */
+  RCLCPP_INFO(rclcpp::get_logger("hbmem_img_sub"), "%s", ss.str().c_str());
+#endif
 }
 
 void ImageSubscriber::topic_callback(

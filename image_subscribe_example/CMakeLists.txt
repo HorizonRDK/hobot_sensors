@@ -15,6 +15,13 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+OPTION(TROS    "TROS work environment"    ON)
+
+if(TROS)
+add_definitions(-DUSING_HBMEM)
+find_package(hbm_img_msgs REQUIRED)
+endif()
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -33,11 +40,21 @@ src/example.cpp
 src/image_subscriber.cpp
 )
 
+if(TROS)
 ament_target_dependencies(
   subscribe_example
   rclcpp
   sensor_msgs
+  hbm_img_msgs
 )
+else()
+ament_target_dependencies(
+  subscribe_example
+  rclcpp
+  cv_bridge
+  sensor_msgs
+)
+endif()
 
 target_link_libraries(subscribe_example
 )

@@ -28,6 +28,11 @@
 #include "std_srvs/srv/set_bool.hpp"
 #include <std_msgs/msg/string.hpp>
 
+#ifdef USING_HBMEM
+#include "hb_mem_mgr.h"
+#include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
+#endif
+
 namespace mipi_cam
 {
 class MipiCamNode : public rclcpp::Node
@@ -39,6 +44,7 @@ public:
   void init();
   void get_params();
   void update();
+  void hbmem_update();
   bool take_and_send_image();
 
   void service_capture(
@@ -56,6 +62,10 @@ public:
 #else
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
 #endif
+#ifdef USING_HBMEM
+  rclcpp::TimerBase::SharedPtr timer_hbmem_;
+  rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr publisher_hbmem_;
+#endif
 
   sensor_msgs::msg::CompressedImage::SharedPtr ros_img_compressed_;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr video_compressed_publisher_;
@@ -64,7 +74,8 @@ public:
   std::string video_device_name_;
   std::string frame_id_;
 
-  std::string io_method_name_;
+  std::string io_method_name_;  // hbmem zero mem copy
+  size_t count_;
   // these parameters all have to be a combination supported by the device
   // Use
   // v4l2-ctl --device=0 --list-formats-ext

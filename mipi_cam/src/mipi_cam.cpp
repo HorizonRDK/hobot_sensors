@@ -343,6 +343,55 @@ bool MipiCam::get_image(
   return true;
 }
 
+bool MipiCam::get_image_mem(
+  uint64_t & stamp,
+  std::array<uint8_t, 12> & encoding,
+  uint32_t & height, uint32_t & width, uint32_t & step, std::array<uint8_t, 6220800> & data, uint32_t & data_size)
+{
+  if ((image_->width == 0) || (image_->height == 0)) {
+    return false;
+  }
+  // get the image
+  struct timespec time_start = {0, 0};
+  int64 msStart = 0, msEnd = 0;
+  msStart = GetTickCount();
+  if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
+    reinterpret_cast<unsigned int*>(&image_->image_size)))
+    return false;
+  clock_gettime(CLOCK_REALTIME, &time_start);
+  // stamp.sec = time_start.tv_sec;
+  // stamp.nanosec = time_start.tv_nsec;
+  stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
+  height = image_pub_->height;
+  width = image_pub_->width;
+  //这里出来都是 yuv 的
+  step = width;
+  if (0 == out_format_.compare("nv12")) {
+    memcpy(encoding.data(), "nv12", strlen("nv12"));
+    data_size = image_->image_size;  // step * height);
+    memcpy(data.data(), image_->image, data_size);
+  } else {
+    if (monochrome_) {
+      memcpy(encoding.data(), "mono8", strlen("mono8"));
+    } else {
+      // TODO(oal) aren't there other encoding types?
+      memcpy(encoding.data(), "rgb8", strlen("rgb8"));
+      step = width * 3;
+    }
+    // jpeg，png---opencv 转 rgb8
+    process_image(image_->image, image_->image_size, image_pub_);
+    // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
+    // TestSave("/userdata/catkin_ws/test.rgb", image_pub_->image, image_pub_->image_size);
+    // TODO(oal) create an Image here and already have the memory allocated,
+    // eliminate this copy
+    data_size = image_pub_->image_size;  // step * height);
+    memcpy(data.data(), image_pub_->image, data_size);
+  }
+  msEnd = GetTickCount();
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->hbmem enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
+    __func__, encoding.data(), step, image_->image_size , msStart, msEnd - msStart);
+  return true;
+}
 void MipiCam::get_formats()  // std::vector<mipi_cam::msg::Format>& formats)
 {
 }

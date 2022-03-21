@@ -6,6 +6,8 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
+OPTION(TROS    "TROS work environment"    ON)
+
 # Using image_transport pkg to publish compressed img with default config
 # 
 # Publishing nv12 img only and do not depend on image_transport pkg:
@@ -31,6 +33,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 add_compile_options(-w)
+if(TROS)
+add_definitions(-DUSING_HBMEM)
+find_package(hbm_img_msgs REQUIRED)
+endif()
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -60,10 +66,18 @@ include_directories(include
   ${SYS_ROOT}/usr/include/vio/
 )
 
+if(TROS)
 link_directories(
   ${SYS_ROOT}/usr/lib/hobot/
   ${SYS_ROOT}/usr/lib/hobot/hbmedia/
 )
+else()
+link_directories(
+  ${SYS_ROOT}/usr/lib/hobot/
+  ${SYS_ROOT}/usr/lib/hobot/hbmedia/
+  /opt/ros/foxy/lib
+)
+endif()
 
 ## Build the mipi camera library
 add_executable(${PROJECT_NAME}
@@ -106,11 +120,25 @@ target_link_libraries(${PROJECT_NAME}
   #avutil
 )
 
+if(TROS)
 ament_target_dependencies(
   ${PROJECT_NAME}
   rclcpp
   sensor_msgs
+  hbm_img_msgs
   )
+else()
+ament_target_dependencies(
+  ${PROJECT_NAME}
+  #roscpp
+  cv_bridge
+  rclcpp
+  sensor_msgs
+  image_transport
+  camera_info_manager
+  image_transport_plugins
+  )
+endif()
 
 if (${IMAGE_TRANSPORT_PKG})
   ament_target_dependencies(
