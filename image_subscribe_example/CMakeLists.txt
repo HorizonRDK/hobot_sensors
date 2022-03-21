@@ -35,12 +35,22 @@ include_directories(include
 ${PROJECT_SOURCE_DIR}
 )
 
+message("SYS_ROOT is " ${SYS_ROOT})
+if(TROS)
+link_directories(
+  ${SYS_ROOT}/usr/lib/hobot/
+)
+endif()
+
 add_executable(subscribe_example
 src/example.cpp
 src/image_subscriber.cpp
 )
 
 if(TROS)
+target_link_libraries(subscribe_example
+  hbmem ion alog
+)
 ament_target_dependencies(
   subscribe_example
   rclcpp

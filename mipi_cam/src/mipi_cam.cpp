@@ -353,8 +353,12 @@ bool MipiCam::get_image_mem(
   }
   // get the image
   struct timespec time_start = {0, 0};
-  int64 msStart = 0, msEnd = 0;
-  msStart = GetTickCount();
+  uint64_t msStart = 0, msEnd = 0;
+  {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    msStart = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+  }
   if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
     reinterpret_cast<unsigned int*>(&image_->image_size)))
     return false;
@@ -371,6 +375,7 @@ bool MipiCam::get_image_mem(
     data_size = image_->image_size;  // step * height);
     memcpy(data.data(), image_->image, data_size);
   } else {
+#ifdef IMAGE_TRANSPORT_PKG_ENABLED
     if (monochrome_) {
       memcpy(encoding.data(), "mono8", strlen("mono8"));
     } else {
@@ -386,8 +391,13 @@ bool MipiCam::get_image_mem(
     // eliminate this copy
     data_size = image_pub_->image_size;  // step * height);
     memcpy(data.data(), image_pub_->image, data_size);
+#endif
   }
-  msEnd = GetTickCount();
+  {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    msEnd = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+  }
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->hbmem enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
     __func__, encoding.data(), step, image_->image_size , msStart, msEnd - msStart);
   return true;

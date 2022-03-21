@@ -19,8 +19,9 @@ OPTION(TROS    "TROS work environment"    ON)
 #   --cmake-force-configure \
 #   --cmake-args \
 #   --no-warn-unused-cli \
-#   -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake
-#   -DIMAGE_TRANSPORT_PKG=OFF
+#   -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
+#   -DIMAGE_TRANSPORT_PKG=OFF \
+#   -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker/
 option(IMAGE_TRANSPORT_PKG "using image_transport pkg" ON)
 if (${IMAGE_TRANSPORT_PKG})
   add_definitions(-DIMAGE_TRANSPORT_PKG_ENABLED)
@@ -58,7 +59,7 @@ endif ()
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARY_DIRS})
 
-set(SYS_ROOT "")
+# set(SYS_ROOT "")
 message("SYS_ROOT is " ${SYS_ROOT})
 include_directories(include
   src/x3
@@ -120,24 +121,16 @@ target_link_libraries(${PROJECT_NAME}
   #avutil
 )
 
+ament_target_dependencies(
+  ${PROJECT_NAME}
+  rclcpp
+  sensor_msgs
+  )
+
 if(TROS)
-ament_target_dependencies(
-  ${PROJECT_NAME}
-  rclcpp
-  sensor_msgs
-  hbm_img_msgs
-  )
-else()
-ament_target_dependencies(
-  ${PROJECT_NAME}
-  #roscpp
-  cv_bridge
-  rclcpp
-  sensor_msgs
-  image_transport
-  camera_info_manager
-  image_transport_plugins
-  )
+target_link_libraries(${PROJECT_NAME}
+  hbmem
+)
 endif()
 
 if (${IMAGE_TRANSPORT_PKG})

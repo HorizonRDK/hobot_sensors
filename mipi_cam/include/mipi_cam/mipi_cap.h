@@ -37,8 +37,6 @@ typedef struct {
 	pthread_t m_rgn_thread;//tsThread		m_rgn_thread;
 	pthread_t		m_vot_thread;//tsThread		m_vot_thread;
 
-	struct uvc_context	*uvc_ctx;
-
 	int			m_dst_width; // 输出给usb host的图像宽度
 	int			m_dst_height; // 输出给usb host的图像高度
 	int			m_dst_stride; // 输出给usb host的图像的字节宽度
@@ -64,15 +62,9 @@ private:
 	int mf37_dol2_vin_param_init(x3_vin_info_t* vin_info);
     int mimx415_linear_vin_param_init(x3_vin_info_t* vin_info);
     int x3_cam_uninit(void);
-    int x3_usb_cam_param_get(CAM_PARAM_E type, char* val, unsigned int* length);
-    int x3_usb_cam_param_set(CAM_PARAM_E type, char* val, unsigned int length);
     int x3_usb_cam_stop(void);
     int x3_usb_cam_start(void);
     int init_param(void);
-    int x3_guvc_stop(x3_usb_cam_t* x3_usb_cam);
-    int x3_guvc_start(x3_usb_cam_t* x3_usb_cam);
-    void x3_guvc_uninit(x3_usb_cam_t* x3_usb_cam);
-    int x3_guvc_init(x3_usb_cam_t *x3_usb_cam);
 private:
 	virtual int doCapStreamLoop();
 	virtual int childStart();
