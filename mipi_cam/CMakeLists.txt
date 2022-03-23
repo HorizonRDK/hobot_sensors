@@ -6,7 +6,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-OPTION(TROS    "TROS work environment"    ON)
+OPTION(SHARED_MEM    "SHARED_MEM work environment"    OFF)
 
 # Using image_transport pkg to publish compressed img with default config
 # 
@@ -34,7 +34,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 add_compile_options(-w)
-if(TROS)
+if(SHARED_MEM)
 add_definitions(-DUSING_HBMEM)
 find_package(hbm_img_msgs REQUIRED)
 endif()
@@ -67,7 +67,7 @@ include_directories(include
   ${SYS_ROOT}/usr/include/vio/
 )
 
-if(TROS)
+if(SHARED_MEM)
 link_directories(
   ${SYS_ROOT}/usr/lib/hobot/
   ${SYS_ROOT}/usr/lib/hobot/hbmedia/
@@ -129,7 +129,7 @@ ament_target_dependencies(
   sensor_msgs
   )
 
-if(TROS)
+if(SHARED_MEM)
 target_link_libraries(${PROJECT_NAME}
   hbmem
 )

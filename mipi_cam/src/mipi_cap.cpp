@@ -30,7 +30,11 @@ MipiDevice::MipiDevice()
     this->n_buffers = 0;
     this->m_curCaptureIdx = -1;
 }
-
+int MipiDevice::get_available_pipeid()
+{
+    // 一种文件保存信息，一种是共享内存
+    return 0;
+}
 /******************************* F37 方案 **********************************/
 int MipiDevice::mf37_linear_vin_param_init(x3_vin_info_t* vin_info)
 {
@@ -44,7 +48,7 @@ int MipiDevice::mf37_linear_vin_param_init(x3_vin_info_t* vin_info)
 
 	// 单目的使用dev_id 和 pipe_id 都设置成0
 	vin_info->dev_id = 0;
-	vin_info->pipe_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
 	vin_info->enable_dev_attr_ex = 0;
 
 	return 0;
@@ -61,8 +65,8 @@ int MipiDevice::mf37_dol2_vin_param_init(x3_vin_info_t* vin_info)
 	vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;//VIN_OFFLINE_VPS_OFFINE;
 
 	// 单目的使用dev_id 和 pipe_id 都设置成0
-	vin_info->dev_id = 0;
-	vin_info->pipe_id = 0;
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
 	vin_info->enable_dev_attr_ex = 0;
 
 	return 0;
@@ -80,7 +84,7 @@ int MipiDevice::mimx415_linear_vin_param_init(x3_vin_info_t* vin_info)
 
 	// 单目的使用dev_id 和 pipe_id 都设置成0
 	vin_info->dev_id = 0;
-	vin_info->pipe_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
 	vin_info->enable_dev_attr_ex = 0;
 
 	return 0;
@@ -157,38 +161,6 @@ vp_err:
 	return -1;
 }
 
-/*
-static void *send_yuv_to_vot(void *ptr) {
-	tsThread *privThread = (tsThread*)ptr;
-	int ret = 0;
-	hb_vio_buffer_t vps_out_buf;
-	VOT_FRAME_INFO_S pstVotFrame;
-
-	x3_modules_info_t *info = (x3_modules_info_t *)privThread->pvThreadData;
-	mThreadSetName(privThread, __func__);
-	while(privThread->eState == E_THREAD_RUNNING) {
-		memset(&vps_out_buf, 0, sizeof(hb_vio_buffer_t));
-		ret = HB_VPS_GetChnFrame(info->m_vps_infos.m_vps_info[0].m_vps_grp_id,
-				3, &vps_out_buf, 300);
-		if (ret != 0) {
-			ROS_printf("HB_VPS_GetChnFrame error %d!!!\n", ret);
-			continue;
-		}
-		// 把yuv（1080P）数据发给vot显示
-		// 数据结构转换
-		memset(&pstVotFrame, 0, sizeof(VOT_FRAME_INFO_S));
-		pstVotFrame.addr = vps_out_buf.img_addr.addr[0]; // y分量虚拟地址
-		pstVotFrame.addr_uv = vps_out_buf.img_addr.addr[1]; // uv分量虚拟地址
-		pstVotFrame.size = 1920*1080*3/2; // 帧大小 1920*1088的帧需要强制成1920*1080
-		// 发送数据帧到vo模块
-		x3_vot_sendframe(&pstVotFrame);
-		HB_VPS_ReleaseChnFrame(info->m_vps_infos.m_vps_info[0].m_vps_grp_id,
-				3, &vps_out_buf);
-	}
-	mThreadFinish(privThread);
-	return NULL;
-}*/
-
 int MipiDevice::init_param(void)
 {
 	int ret = 0;
@@ -246,18 +218,6 @@ int MipiDevice::init_param(void)
 		//m_oX3UsbCam.m_infos.m_vot_enable = 1;
 	}*/
 #endif
-	/*
-	// 3. rgn 配置
-	m_oX3UsbCam.m_infos.m_rgn_enable = 1;
-	ret = x3_rgn_timestamp_param_init(&m_oX3UsbCam.m_infos.m_rgn_info, 0, 0);
-	// 4. bpu算法模型
-	if (g_x3_config.usb_cam_solution.pipeline.alog_id != 0) {
-		m_oX3UsbCam.m_infos.m_bpu_enable = 1;
-		m_oX3UsbCam.m_infos.m_bpu_info.m_alog_id = g_x3_config.usb_cam_solution.pipeline.alog_id;
-	}
-	// vot 配置
-	ret |= vot_param_init(&m_oX3UsbCam.m_infos.m_vot_info);
-	*/
 	ROS_printf("[%s]-> w:h=%d:%d ,fps=%d sucess.\n",__func__,width,height,fps);
 	return ret;
 }
@@ -269,15 +229,6 @@ int MipiDevice::x3_cam_uninit(void) {
 				m_oX3UsbCam.m_infos.m_vin_info.vin_vps_mode);
 	}
 #endif
-/*
-	if (m_oX3UsbCam.m_infos.m_rgn_enable) {
-		x3_rgn_uninit(m_oX3UsbCam.m_infos.m_rgn_info.m_rgn_handle,
-				&m_oX3UsbCam.m_infos.m_rgn_info.m_rgn_chn);
-	}
-	if (m_oX3UsbCam.m_infos.m_bpu_enable) {
-		x3_bpu_predict_callback_unregister(m_oX3UsbCam.m_infos.m_bpu_info.m_bpu_handle);
-		x3_bpu_predict_unint(m_oX3UsbCam.m_infos.m_bpu_info.m_bpu_handle);
-	}*/
 	if (m_oX3UsbCam.m_infos.m_vps_enable) {
 		for (i = 0; i < m_oX3UsbCam.m_infos.m_vps_infos.m_group_num; i++)
 			x3_vps_uninit_wrap(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[i]);
@@ -285,13 +236,8 @@ int MipiDevice::x3_cam_uninit(void) {
 	if (m_oX3UsbCam.m_infos.m_vin_enable) {
 		x3_vin_deinit(&m_oX3UsbCam.m_infos.m_vin_info);
 	}
-/*
-	if (m_oX3UsbCam.m_infos.m_vot_enable)
-		x3_vot_deinit();
-*/
 	x3_vp_deinit();
 	HB_VENC_Module_Uninit();
-	//print_debug_infos();
 	return 0;
 }
 
@@ -319,21 +265,6 @@ int MipiDevice::x3_usb_cam_start(void) {
 			return -3003;
 		}
 	}
-/*
-	// 启动算法模块
-	if (m_oX3UsbCam.m_infos.m_bpu_enable) {
-		x3_bpu_predict_start(m_oX3UsbCam.m_infos.m_bpu_info.m_bpu_handle);
-		ROS_printf("x3_bpu_predict_start ok!");
-	}
-	// 启动osd 时间戳线程
-	if (m_oX3UsbCam.m_infos.m_rgn_enable) {
-		m_oX3UsbCam.m_rgn_thread.pvThreadData = (void*)&m_oX3UsbCam.m_infos.m_rgn_info.m_rgn_handle;
-		mThreadStart(x3_rgn_set_timestamp_thread, &m_oX3UsbCam.m_rgn_thread, E_THREAD_JOINABLE);
-	}
-	if (m_oX3UsbCam.m_infos.m_vot_enable) {
-		m_oX3UsbCam.m_vot_thread.pvThreadData = (void*)infos;
-		mThreadStart(send_yuv_to_vot, &m_oX3UsbCam.m_vot_thread, E_THREAD_JOINABLE);
-	}*/
 	print_debug_infos();
 	return 0;
 }
@@ -342,17 +273,6 @@ int MipiDevice::x3_usb_cam_stop(void)
 {
 	int i = 0, ret = 0;
 	x3_modules_info_t * infos = &m_oX3UsbCam.m_infos;
-/*
-	if (m_oX3UsbCam.m_infos.m_vot_enable) {
-		mThreadStop(&m_oX3UsbCam.m_vot_thread);
-	}
-	if (m_oX3UsbCam.m_infos.m_bpu_enable) {
-		x3_bpu_predict_stop(m_oX3UsbCam.m_infos.m_bpu_info.m_bpu_handle);
-	}
-	// 停止osd线程
-	if (m_oX3UsbCam.m_infos.m_rgn_enable) {
-		mThreadStop(&m_oX3UsbCam.m_rgn_thread);
-	}*/
 	if (m_oX3UsbCam.m_infos.m_vin_enable) {
 		x3_vin_stop(&m_oX3UsbCam.m_infos.m_vin_info);
 	}
@@ -376,7 +296,7 @@ extern "C" int time_cost_ms(struct timeval *start, struct timeval *end);
 int MipiDevice::doCapStreamLoop()
 {
 	return 0;
-	struct timeval time_now = { 0 };
+	/*struct timeval time_now = { 0 };
 	struct timeval time_next = { 0 };
 	int size = -1, ret = 0;
 	int time_ms = 0;
@@ -416,8 +336,8 @@ int MipiDevice::doCapStreamLoop()
 		if(ret<0)
 			break;
 	} while (1);
-	
 	return 0;
+	*/
 }
 
 int MipiDevice::childStart()

@@ -327,7 +327,6 @@ bool MipiCam::get_image(
     process_image(image_->image, image_->image_size, image_pub_);
     // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
     // TestSave("/userdata/catkin_ws/test.rgb", image_pub_->image, image_pub_->image_size);
-    // TODO(oal) create an Image here and already have the memory allocated,
     // eliminate this copy
     data.resize(image_pub_->image_size);  // step * height);
     memcpy(&data[0], image_pub_->image, data.size());
@@ -363,8 +362,6 @@ bool MipiCam::get_image_mem(
     reinterpret_cast<unsigned int*>(&image_->image_size)))
     return false;
   clock_gettime(CLOCK_REALTIME, &time_start);
-  // stamp.sec = time_start.tv_sec;
-  // stamp.nanosec = time_start.tv_nsec;
   stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
   height = image_pub_->height;
   width = image_pub_->width;
@@ -437,25 +434,4 @@ MipiCam::pixel_format MipiCam::pixel_format_from_string(const std::string & str)
     return PIXEL_FORMAT_UNKNOWN;
   }
 }
-#if 0
-std::string MipiCam::pixel_format_to_string(__u32 pixelformat)
-{
-  if (str == "yuyv") {
-    return PIXEL_FORMAT_YUYV;
-    return "yuyv";
-  } else if (str == "uyvy") {
-    return PIXEL_FORMAT_UYVY;
-  } else if (str == "mjpeg") {
-    return PIXEL_FORMAT_MJPEG;
-  } else if (str == "yuvmono10") {
-    return PIXEL_FORMAT_YUVMONO10;
-  } else if (str == "rgb24") {
-    return PIXEL_FORMAT_RGB24;
-  } else if (str == "grey") {
-    return PIXEL_FORMAT_GREY;
-  } else {
-    return PIXEL_FORMAT_UNKNOWN;
-  }
-}
-#endif
 }  // namespace mipi_cam

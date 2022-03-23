@@ -63,7 +63,9 @@ class ImageSubscriber : public rclcpp::Node {
   void topic_callback(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   void topic_compressed_callback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr msg);
   // void hbmem_topic_callback(const hbmem_msgs::msg::SampleMessage::SharedPtr msg) const;
+#ifdef USING_HBMEM
   void hbmem_topic_callback(const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg);
+#endif
 };
 
 #define IMAGE_SUBSCRIBER_H_

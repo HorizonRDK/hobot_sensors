@@ -17,22 +17,13 @@ typedef struct {
 	x3_vin_info_t		m_vin_info; // 包括 sensor、 mipi、isp、 ldc、dis的配置
 	int 				m_vps_enable;
 	x3_vps_infos_t		m_vps_infos; // vps的配置，支持多个vps group
-	/*int 				m_pym_enable;*/
-	/*x3_pmy_info_t		m_pym_info; // pym 各层配置*/
 	int 				m_venc_enable;
 	x3_venc_info_t		m_venc_info; // H264、H265、Jpeg、MJpeg编码通道配置
 	int 				m_vdec_enable;
 	x3_vdec_info_t		m_vdec_info; // H264、H265解码通道配置
-	//int 				m_vot_enable;
-	//x3_vot_info_t		m_vot_info; // x3的视频输出（vo、iar）配置
-	//int 				m_rgn_enable;
-	//x3_rgn_info_t		m_rgn_info; // 设置一个时间戳的osd
-	//int 				m_bpu_enable;
-	//x3_bpu_info_t		m_bpu_info; // 设置bpu运行的模型
 } x3_modules_info_t;
 
 typedef struct {
-	//x3_modules_info_t* 	m_infos; // X3 各媒体模块配置
     x3_modules_info_t 	m_infos; // X3 各媒体模块配置
 	pthread_t m_rgn_thread;//tsThread		m_rgn_thread;
 	pthread_t		m_vot_thread;//tsThread		m_vot_thread;
@@ -55,8 +46,8 @@ public:
     MipiDevice();
     int OpenCamera(const TCamInfo* pCamInfo);
     int GetFrame(void **, unsigned int*);
-	//如果有 vps ，就 输出vps 的分层数据
-    int GetVpsFrame(int nChnID,int *nVOutW,int *nVOutH,void **, unsigned int*);
+    // 如果有 vps ，就 输出vps 的分层数据
+    int GetVpsFrame(int nChnID, int *nVOutW, int *nVOutH, void **, unsigned int*);
 private:
 	int mf37_linear_vin_param_init(x3_vin_info_t* vin_info);
 	int mf37_dol2_vin_param_init(x3_vin_info_t* vin_info);
@@ -65,6 +56,8 @@ private:
     int x3_usb_cam_stop(void);
     int x3_usb_cam_start(void);
     int init_param(void);
+    // 得到可用的 pipe_id,0-7,进程id 对应 pipe_id,假设pipe_id对应的进程已不存在，则使用id，并更新为当前进程id
+    int get_available_pipeid();
 private:
 	virtual int doCapStreamLoop();
 	virtual int childStart();

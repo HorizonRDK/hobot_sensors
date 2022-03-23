@@ -15,9 +15,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-OPTION(TROS    "TROS work environment"    ON)
+OPTION(SHARED_MEM    "SHARED_MEM work environment"    OFF)
 
-if(TROS)
+if(SHARED_MEM)
 add_definitions(-DUSING_HBMEM)
 find_package(hbm_img_msgs REQUIRED)
 endif()
@@ -36,7 +36,7 @@ ${PROJECT_SOURCE_DIR}
 )
 
 message("SYS_ROOT is " ${SYS_ROOT})
-if(TROS)
+if(SHARED_MEM)
 link_directories(
   ${SYS_ROOT}/usr/lib/hobot/
 )
@@ -47,7 +47,7 @@ src/example.cpp
 src/image_subscriber.cpp
 )
 
-if(TROS)
+if(SHARED_MEM)
 target_link_libraries(subscribe_example
   hbmem ion alog
 )
@@ -61,7 +61,6 @@ else()
 ament_target_dependencies(
   subscribe_example
   rclcpp
-  cv_bridge
   sensor_msgs
 )
 endif()

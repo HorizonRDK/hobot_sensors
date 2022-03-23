@@ -122,9 +122,9 @@ void TestSave(char *pFilePath, char *imgData, int nDlen)
   }
 }
 // static int s_nSave = 0;
+#ifdef USING_HBMEM
 void ImageSubscriber::hbmem_topic_callback(
     const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg) {
-#ifdef USING_HBMEM
   struct timespec time_now = {0, 0}, time_in = {0, 0};
   clock_gettime(CLOCK_REALTIME, &time_now);
   uint64_t mNow = (time_now.tv_sec * 1000 + time_now.tv_nsec / 1000000);
@@ -141,8 +141,8 @@ void ImageSubscriber::hbmem_topic_callback(
   }
   */
   RCLCPP_INFO(rclcpp::get_logger("hbmem_img_sub"), "%s", ss.str().c_str());
-#endif
 }
+#endif
 
 void ImageSubscriber::topic_callback(
     const sensor_msgs::msg::Image::ConstSharedPtr msg) {
