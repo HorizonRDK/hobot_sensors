@@ -25,6 +25,7 @@
   <depend>image_transport</depend>
   <depend>image_transport_plugins</depend>
   <depend>v4l-utils</depend>
+  <depend>hbm_img_msgs</depend>
 
   <depend>ffmpeg</depend>
 

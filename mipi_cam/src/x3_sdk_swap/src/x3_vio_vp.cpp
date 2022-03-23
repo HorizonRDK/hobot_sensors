@@ -11,8 +11,8 @@
 
 //#include "vio/hb_sys.h"
 //#include "vio/hb_vp_api.h"
-#include "hb_sys.h"
-#include "hb_vp_api.h"
+#include "vio/hb_sys.h"
+#include "vio/hb_vp_api.h"
 
 #include "x3_vio_vp.h"
 

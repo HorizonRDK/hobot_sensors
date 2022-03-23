@@ -22,7 +22,7 @@ OPTION(TROS    "TROS work environment"    ON)
 #   -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
 #   -DIMAGE_TRANSPORT_PKG=OFF \
 #   -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker/
-option(IMAGE_TRANSPORT_PKG "using image_transport pkg" ON)
+option(IMAGE_TRANSPORT_PKG "using image_transport pkg" OFF)
 if (${IMAGE_TRANSPORT_PKG})
   add_definitions(-DIMAGE_TRANSPORT_PKG_ENABLED)
   message("using image_transport pkg")
@@ -107,8 +107,10 @@ add_executable(${PROJECT_NAME}
 # ament_auto_add_library(${PROJECT_NAME}_node SHARED
 #   src/mipi_cam_node.cpp
 # )
-set(BASE_LIBRARIES pthread vio cam uvc dl)
-set(X3_HAPI_LIB guvc isp_algo  z avformat hbmedia turbojpeg isp iar tinyalsa avcodec avutil ion multimedia cjson diag gdcbin)
+# set(BASE_LIBRARIES pthread vio cam uvc dl)
+set(BASE_LIBRARIES pthread vio cam dl)
+# set(X3_HAPI_LIB guvc isp_algo  z avformat hbmedia turbojpeg isp iar tinyalsa avcodec avutil ion multimedia cjson diag gdcbin)
+set(X3_HAPI_LIB isp_algo z hbmedia turbojpeg isp ion multimedia iar tinyalsa cjson diag gdcbin)
 
 target_link_libraries(${PROJECT_NAME}
   ${BASE_LIBRARIES} ${X3_HAPI_LIB}

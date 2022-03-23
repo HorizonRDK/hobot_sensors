@@ -12,8 +12,8 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
-#include "hb_mipi_api.h"
-#include "hb_vin_api.h"
+#include "vio/hb_mipi_api.h"
+#include "vio/hb_vin_api.h"
 
 extern MIPI_SENSOR_INFO_S SENSOR_4LANE_IMX415_30FPS_10BIT_LINEAR_INFO;
 extern MIPI_ATTR_S MIPI_4LANE_SENSOR_IMX415_30FPS_10BIT_LINEAR_ATTR;

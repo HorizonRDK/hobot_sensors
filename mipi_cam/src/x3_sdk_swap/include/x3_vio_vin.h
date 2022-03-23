@@ -8,8 +8,8 @@
 
 #include "stdint.h"
 #include "stddef.h"
-#include "hb_vio_interface.h"
-#include "hb_mode.h"
+#include "vio/hb_vio_interface.h"
+#include "vio/hb_mode.h"
 #include "x3_sdk_wrap.h"
 
 #ifdef __cplusplus

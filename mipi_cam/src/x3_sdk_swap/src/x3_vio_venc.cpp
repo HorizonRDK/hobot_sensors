@@ -11,10 +11,10 @@
 #include <pthread.h>
 
 //#include "hb_comm_venc.h"
-#include "hb_vdec.h"
+#include "vio/hb_vdec.h"
 //#include "hb_venc.h"
-#include "hb_vp_api.h"
-#include "hb_vio_interface.h"
+#include "vio/hb_vp_api.h"
+#include "vio/hb_vio_interface.h"
 //#include "utils/utils_log.h"
 //#include "logging.h"
 

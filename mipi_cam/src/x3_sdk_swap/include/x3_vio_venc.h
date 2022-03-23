@@ -8,8 +8,8 @@
 
 #include <stdio.h>
 
-#include "hb_comm_venc.h"
-#include "hb_venc.h"
+#include "vio/hb_comm_venc.h"
+#include "vio/hb_venc.h"
 
 #ifdef __cplusplus
 extern "C" {

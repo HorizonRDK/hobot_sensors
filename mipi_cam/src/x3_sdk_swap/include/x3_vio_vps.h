@@ -5,8 +5,8 @@
  ***************************************************************************/
 #ifndef X3_VIO_VPS_H_
 #define x3_VIO_VPS_H_
-#include "hb_vps_api.h"
-#include "hb_vio_interface.h"
+#include "vio/hb_vps_api.h"
+#include "vio/hb_vio_interface.h"
 
 #ifdef __cplusplus
 extern "C" {

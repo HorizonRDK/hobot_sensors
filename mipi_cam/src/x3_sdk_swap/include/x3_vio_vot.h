@@ -6,7 +6,7 @@
 #ifndef X3_VIO_VOT_H_
 #define X3_VIO_VOT_H_
 
-#include "hb_common_vot.h"
+#include "vio/hb_common_vot.h"
 
 #include "x3_sdk_wrap.h"
 
