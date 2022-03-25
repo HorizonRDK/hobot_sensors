@@ -10,31 +10,9 @@ Mipi_cam Node package是地平线机器人开发平台的一部分，基于地�
 ## Dependency
 
 依赖库：
-
-- opencv:3.4.5
-
 ros package：
-- image_transport_plugins
-- camera_info_manager
-- cv_bridge
 - sensor_msgs
 - hbm_img_msgs
-
-其中 image_transport_plugins/camera_info_manager/cv_bridge 为ROS开源的package，需要手动安装，具体安装方法：
-```
-# 方法1:使用apt 安装：
-sudo apt-get install ros-foxy-camera-info-manager 
-sudo apt-get install ros-foxy-image-transport-plugins
-sudo apt-get install ros-foxy-cv-bridge -y
-# 方法2：使用 rosdep检查并自动安装pkg依赖，由于使用的是国外源会导致概率性的安装失败，建议选用第一种：
-#安装 rosdep
-sudo apt-get install python3-pip
-sudo pip install rosdep
-sudo rosdep init
-rosdep update
-#在ros 的工程路径下执行安装依赖，需要指定pkg所在路径。默认为所有pkg安装依赖，也可以指定为某个pkg安装依赖：
-rosdep install -i --from-path . --rosdistro foxy -y
-```
 
 ## 开发环境
 - 编程语言：C/C++
@@ -48,19 +26,11 @@ rosdep install -i --from-path . --rosdistro foxy -y
 ## 编译
 支持在X3 Ubuntu系统上编译和在PC上使用docker交叉编译两种方式，并支持通过编译选项控制编译pkg的依赖和pkg的功能。
 ### 编译选项
-
-1、IMAGE_TRANSPORT_PKG
-
-- image_transport_plugin pkg依赖的使能开关，默认关闭（OFF），编译时使用-DIMAGE_TRANSPORT_PKG=ON命令打开。
-- 如果打开，编译和运行会依赖image_transport相关 pkg，支持发布compressed topic。
-- 如果关闭，编译和运行不依赖image_transport相关 pkg，只支持发布原始图片。
-
-2、SHARED_MEM
+1、SHARED_MEM
 
 - shared mem（共享内存传输）使能开关，默认关闭（OFF），编译时使用-DSHARED_MEM=ON命令打开。
 - 如果打开，编译和运行会依赖hbm_img_msgs pkg，并且需要使用tros进行编译。
 - 如果关闭，编译和运行不依赖hbm_img_msgs pkg，支持使用原生ros和tros进行编译。
-- 对于shared mem通信方式，当前不支持compressed topic。
 
 ### X3 Ubuntu系统上编译
 1、编译环境确认
@@ -70,8 +40,8 @@ rosdep install -i --from-path . --rosdistro foxy -y
 - 已依赖pkg ，详见 Dependency 部分
 
 2、编译：
-  - 只发布支持share mem的 hbmem_img主题的图片：`colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=OFF -DSHARED_MEM=ON`
-  - 支持发布压缩格式图片：`colcon build --packages-select mipi_cam`或`colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=ON`。
+  - 只发布支持share mem的 hbmem_img主题的图片：`colcon build --packages-select mipi_cam --cmake-args -DSHARED_MEM=ON`
+  - 支持发布ROS标准图片：`colcon build --packages-select mipi_cam`。
 
 
 ### docker交叉编译
@@ -97,9 +67,8 @@ rosdep install -i --from-path . --rosdistro foxy -y
      --no-warn-unused-cli \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
      -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker \
-     -DIMAGE_TRANSPORT_PKG=OFF \
      -DSHARED_MEM=ON
-- 编译选项中关闭了 image_transport pkg依赖，打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。
+- 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。
      
   ```
 
@@ -125,7 +94,7 @@ source ./install/local_setup.sh
 ros2 run mipi_cam mipi_cam
 ```
 
-node会发布/image_raw和/image_raw/compressed两个topic，分别对应rgb8和mjpeg格式图片，使用 share mem 发布主题：hbmem_img
+node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布主题：hbmem_img
 
 利用 rqt_image_view 可以查看发布的图片主题，也可以用图片消费节点。例如：这个repo下的example去直接获取图片进行推理等应用。
 
@@ -137,7 +106,7 @@ node会发布/image_raw和/image_raw/compressed两个topic，分别对应rgb8和
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
-使用out_format参数设置发布图片的编码方式，默认是rgb8和mjpeg编码方式，支持nv12格式（/image_raw topic），例如使用F37 sensor发布960x540分辨率的nv12格式图片：
+使用out_format参数设置发布图片的编码方式，默认是rgb8 编码方式，支持nv12格式（/image_raw topic），例如使用F37 sensor发布960x540分辨率的nv12格式图片：
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
@@ -147,3 +116,23 @@ node会发布/image_raw和/image_raw/compressed两个topic，分别对应rgb8和
 
 ---
 
+# Attention
+目前设备出来的数据默认为nv12，转rgb8 格式，目前没有用cv，1920*1080 性能耗时 100ms 左右，压缩图需要用中继的方式支持：
+ros2 run image_transport republish [in_transport] in:=<in_base_topic> [out_transport] out:=<out_base_topic>
+例如：
+ros2 run image_transport republish raw compressed --ros-args --remap in:=/image_raw --remap out/compressed:=/image_raw/compressed
+则会有 compressed 的话题，利用 sub 端可以订阅到压缩图片话题，例如：
+ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=/image_raw/compressed
+日志显示：
+```
+root@xj3ubuntu:/userdata/cc_ws/tros_ws# ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=/image_raw/compressed
+[WARN] [1648302887.615608845] [example]: This is image_subscriber example!
+[WARN] [1648302887.699318639] [ImageSubscriber]: Update sub_img_topic with topic_name: /image_raw/compressed
+[WARN] [1648302887.701353516] [ImageSubscriber]: Update save_dir: 
+[WARN] [1648302887.701502469] [ImageSubscriber]: Create subscription with topic_name: /image_raw/compressed
+[WARN] [1648302887.705133283] [example]: ImageSubscriber init!
+[WARN] [1648302887.706179033] [example]: ImageSubscriber add_node!
+[INFO] [1648302889.318928227] [img_sub]: Recv compressed img
+[WARN] [1648302889.319329711] [img_sub]: Sub compressed img fps = 1
+[INFO] [1648302889.319478247] [img_sub]: Recv compressed img: rgb8; jpeg compressed bgr8, stamp: 1648302889.92334955, tmlaps(ms): 227, data size: 33813
+```

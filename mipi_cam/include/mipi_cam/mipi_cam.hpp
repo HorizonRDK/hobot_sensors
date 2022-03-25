@@ -92,9 +92,7 @@ private:
   };
 
   bool mjpeg2rgb(char * MJPEG, int len, char * RGB, int NumPixels);
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
   bool process_image(const void * src, int len, camera_image_t * dest);
-#endif
   bool uninit_device(void);
   bool init_device(int image_width, int image_height, int framerate);
   bool close_device(void);

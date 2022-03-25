@@ -3,16 +3,14 @@
  * Copyright 2020 Horizon Robotics, Inc.
  * All rights reserved.
  ***************************************************************************/
-#ifndef MIPI_CAM__USB_CAM_UTILS_HPP_
-#define MIPI_CAM__USB_CAM_UTILS_HPP_
+#ifndef MIPI_CAM__VIDEO_UTILS_HPP_
+#define MIPI_CAM__VIDEO_UTILS_HPP_
 
 #include <sys/ioctl.h>
 
 #include <cstring>
 #include <sstream>
-#include <opencv2/opencv.hpp>
 
-using namespace cv;
 namespace mipi_cam
 {
 unsigned long GetTickCount()
@@ -307,11 +305,97 @@ bool uyvy2rgb(char * YUV, char * RGB, int NumPixels)
   return true;
 }
 
-inline void NV12_TO_RGB24(unsigned char *data, unsigned char *rgb, int width, int height) {
-  cv::Mat imgTmp;
-	cv::Mat frameMat = cv::Mat(height * 3 / 2, width, CV_8UC1, data, 0);
-	cv::cvtColor(frameMat, imgTmp, cv::COLOR_YUV2RGB_NV12);
-  memcpy(rgb, imgTmp.data, width * height * 3);
+#include <arm_neon.h>
+const uint8_t Y_SUBS[8] = { 16, 16, 16, 16, 16, 16, 16, 16 };
+const uint8_t UV_SUBS[8] = { 128, 128, 128, 128, 128, 128, 128, 128 };
+inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width, int height) {
+  unsigned char *src = (unsigned char*)_src;
+  unsigned char *RGBOut = (unsigned char*)_RGBOut;
+
+  int i, j;
+  int nWH = width * height;
+  unsigned char *pY1 = src;
+  unsigned char *pY2 = src + width;
+  unsigned char *pUV = src + nWH;
+
+  uint8x8_t Y_SUBvec = vld1_u8(Y_SUBS);
+  uint8x8_t UV_SUBvec = vld1_u8(UV_SUBS);
+
+  // int width2 = width >> 1;
+  int width3 = (width << 2) - width;
+  int width9 = (width << 3) + width;
+  unsigned char *RGBOut1 = RGBOut;
+  unsigned char *RGBOut2 = RGBOut1 + width3;
+  // unsigned char *RGBOut1 = RGBOut + 3 * width * (height - 2);
+  // unsigned char *RGBOut2 = RGBOut1 + width3;
+
+  unsigned char tempUV[8];
+  // YUV 4:2:0
+  #pragma omp parallel for num_threads(4)
+  for (j = 0; j < height; j += 2) {
+      for (i = 0; i < width; i += 8) {
+          tempUV[0] = pUV[1];
+          tempUV[1] = pUV[3];
+          tempUV[2] = pUV[5];
+          tempUV[3] = pUV[7];
+
+          tempUV[4] = pUV[0];
+          tempUV[5] = pUV[2];
+          tempUV[6] = pUV[4];
+          tempUV[7] = pUV[6];
+
+          pUV += 8;
+          uint8x8_t nUVvec = vld1_u8(tempUV);
+          int16x8_t nUVvec16 = vmovl_s8((int8x8_t)vsub_u8(nUVvec, UV_SUBvec));  // 减后区间-128到127
+          int16x4_t V_4 = vget_low_s16((int16x8_t)nUVvec16);
+          int16x4x2_t V16x4x2 = vzip_s16(V_4, V_4);
+          // int16x8_t V16x8_;
+          // memcpy(&V16x8_, &V16x4x2, 16);
+          // int16x8_t* V16x8 = (int16x8_t*)(&V16x8_);
+          int16x8_t* V16x8 = reinterpret_cast<int16x8_t*>(&V16x4x2);
+          int16x4_t U_4 = vget_high_s16(nUVvec16);
+          int16x4x2_t U16x4x2 = vzip_s16(U_4, U_4);
+
+          int16x8_t* U16x8 = reinterpret_cast<int16x8_t*>(&U16x4x2);
+
+          // 公式1
+          int16x8_t VV1 = vmulq_n_s16(*V16x8, 102);
+          int16x8_t UU1 = vmulq_n_s16(*U16x8, 129);
+          int16x8_t VVUU1 = vmlaq_n_s16(vmulq_n_s16(*V16x8, 52), *U16x8, 25);
+
+          uint8x8_t nYvec;
+          uint8x8x3_t RGB;
+          uint16x8_t Y16;
+          // 上行
+          nYvec = vld1_u8(pY1);
+          pY1 += 8;
+          // 公式1
+          Y16 = vmulq_n_u16(vmovl_u8(vqsub_u8(nYvec, Y_SUBvec)), 74);  // 公式1
+
+          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
+          RGB.val[1] = vqmovun_s16(vshrq_n_s16((int16x8_t)vsubq_u16(Y16, (uint16x8_t)VVUU1), 6));
+          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
+          vst3_u8(RGBOut1, RGB);
+          RGBOut1 += 24;
+
+          // 下行
+          nYvec = vld1_u8(pY2);
+          pY2 += 8;
+          // 公式1
+          Y16 = vmulq_n_u16(vmovl_u8(vqsub_u8(nYvec, Y_SUBvec)), 74);  // 公式1
+          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
+          RGB.val[1] = vqmovun_s16(vshrq_n_s16((int16x8_t)vsubq_u16(Y16, (uint16x8_t)VVUU1), 6));
+          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
+          vst3_u8(RGBOut2, RGB);
+          RGBOut2 += 24;
+      }
+      RGBOut1 += width3;
+      RGBOut2 += width3;
+      // RGBOut1 -= width9;
+      // RGBOut2 -= width9;
+      pY1 += width;
+      pY2 += width;
+  }
 }
 
 inline bool mono102mono8(char * RAW, char * MONO, int NumPixels)

@@ -15,15 +15,6 @@
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/opencv.hpp>
-
-#include "camera_info_manager/camera_info_manager.hpp"
-#include "image_transport/image_transport.hpp"
-#include "compressed_image_transport/compressed_publisher.h"
-#endif
-
 #include "sensor_msgs/msg/image.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include <std_msgs/msg/string.hpp>
@@ -57,11 +48,7 @@ public:
   // shared image message
   sensor_msgs::msg::Image::UniquePtr img_;
 
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-  std::shared_ptr<image_transport::CameraPublisher> image_pub_;
-#else
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
-#endif
 #ifdef USING_HBMEM
   rclcpp::TimerBase::SharedPtr timer_hbmem_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr publisher_hbmem_;
@@ -90,9 +77,6 @@ public:
 
   std::string camera_name_;
   std::string camera_info_url_;
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-  std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
-#endif
 
   rclcpp::TimerBase::SharedPtr timer_;
   // rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_capture_;

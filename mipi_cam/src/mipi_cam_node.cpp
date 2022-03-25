@@ -30,16 +30,9 @@ namespace mipi_cam
 MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
 :m_bIsInit(0) ,
   Node("mipi_cam", node_options),
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-  image_pub_(std::make_shared<image_transport::CameraPublisher>(
-      image_transport::create_camera_publisher(this, "image_raw",
-      rclcpp::QoS{100}.get_rmw_qos_profile()))),
-#endif
   img_(new sensor_msgs::msg::Image())
 {
-#ifndef IMAGE_TRANSPORT_PKG_ENABLED
   image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
-#endif
   // declare params
   this->declare_parameter("camera_name", "default_cam");
   this->declare_parameter("camera_info_url", "");
@@ -130,23 +123,6 @@ void MipiCamNode::init()
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-  // load the camera info
-  cinfo_.reset(new camera_info_manager::CameraInfoManager(this, camera_name_, camera_info_url_));
-  // check for default camera info
-  if (!cinfo_->isCalibrated()) {
-    cinfo_->setCameraName(video_device_name_);
-    sensor_msgs::msg::CameraInfo camera_info;
-    camera_info.header.frame_id = img_->header.frame_id;
-    camera_info.width = image_width_;
-    camera_info.height = image_height_;
-    cinfo_->setCameraInfo(camera_info);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("mipi_node"),
-    "[wuwl]->Calibrated "<< video_device_name_ << " frameID="
-    << img_->header.frame_id
-    << " width="<< image_width_ << " height=" << image_height_);
-  }
-#endif
   img_->header.frame_id = frame_id_;
   // img_compressed_->header.frame_id = frame_id_;
   RCLCPP_INFO(
@@ -159,24 +135,10 @@ void MipiCamNode::init()
   // set the IO method
   MipiCam::io_method io_method = MipiCam::io_method_from_string(io_method_name_);
 #ifdef USING_HBMEM
-  if (io_method_name_.compare("hbmem") != 0) {
-    if (io_method == MipiCam::IO_METHOD_UNKNOWN) {
-      RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_node"), "Unknown IO method '%s'", io_method_name_.c_str());
-      rclcpp::shutdown();
-      return;
-    }
-  } else {
+  if (io_method_name_.compare("hbmem") == 0) {
     // 创建hbmempub
-    // publisher_hbmem_ = this->create_publisher_hbmem<hbmem_msgs::msg::SampleMessage>(
     publisher_hbmem_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
         "hbmem_img", 10);
-  }
-#else
-  if (io_method == MipiCam::IO_METHOD_UNKNOWN) {
-    RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_node"),
-    "Unknown IO method '%s'", io_method_name_.c_str());
-    rclcpp::shutdown();
-    return;
   }
 #endif
 
@@ -222,13 +184,7 @@ bool MipiCamNode::take_and_send_image()
     return false;
   }
   // INFO(img_->data.size() << " " << img_->width << " " << img_->height << " " << img_->step);
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-  auto ci = std::make_unique<sensor_msgs::msg::CameraInfo>(cinfo_->getCameraInfo());
-  ci->header = img_->header;
-  image_pub_->publish(*img_, *ci);
-#else
   image_pub_->publish(*img_);
-#endif
 
   // publish compressed
   // cv::Mat matImage_ = cv_bridge::toCvShare(img_, "rgb8")->image;
@@ -295,8 +251,3 @@ void MipiCamNode::hbmem_update()
 }
 
 }  // namespace mipi_cam
-
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-#include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(mipi_cam::MipiCamNode)
-#endif

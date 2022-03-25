@@ -5,9 +5,7 @@
  ***************************************************************************/
 #define __STDC_CONSTANT_MACROS
 #include "mipi_cam/mipi_cam.hpp"
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
-#include "mipi_cam/usb_cam_utils.hpp"
-#endif
+#include "mipi_cam/video_utils.hpp"
 
 #include <unistd.h>
 #include <errno.h>
@@ -26,9 +24,7 @@
 #include <fcntl.h>              /* low-level i/o */
 #include <iostream>
 // #include <mipi_cam/msg/formats.hpp>
-
 // #include <sensor_msgs/fill_image.h>
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,7 +45,6 @@ MipiCam::~MipiCam()
   shutdown();
 }
 
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
 bool MipiCam::process_image(const void * src, int len, camera_image_t * dest)
 {
   // TODO(oal) return bool from all these
@@ -84,7 +79,6 @@ bool MipiCam::process_image(const void * src, int len, camera_image_t * dest)
 
   return true;
 }
-#endif
 
 bool MipiCam::is_capturing()
 {
@@ -202,13 +196,6 @@ bool MipiCam::start(
   camera_dev_ = dev;
   out_format_ = outFormat;
 
-#ifndef IMAGE_TRANSPORT_PKG_ENABLED
-  if (0 != out_format_.compare("nv12")) {
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-    "Image transport pkg is unable, support nv12 img encoding only!");
-    return false;
-  }
-#endif
   io_ = io_method;
   monochrome_ = false;
   if (dev.find("/video") != dev.npos)
@@ -299,7 +286,6 @@ bool MipiCam::get_image(
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msStart = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  // m_pMipiDev->GetFrame((void**)&image_->image,(unsigned int *)&image_->image_size);
   if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
     reinterpret_cast<unsigned int*>(&image_->image_size)))
     return false;
@@ -315,7 +301,6 @@ bool MipiCam::get_image(
     data.resize(image_->image_size);  // step * height);
     memcpy(&data[0], image_->image, data.size());
   } else {
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
     if (monochrome_) {
       encoding = "mono8";
     } else {
@@ -330,7 +315,6 @@ bool MipiCam::get_image(
     // eliminate this copy
     data.resize(image_pub_->image_size);  // step * height);
     memcpy(&data[0], image_pub_->image, data.size());
-#endif
   }
   {
     struct timespec ts;
@@ -372,7 +356,6 @@ bool MipiCam::get_image_mem(
     data_size = image_->image_size;  // step * height);
     memcpy(data.data(), image_->image, data_size);
   } else {
-#ifdef IMAGE_TRANSPORT_PKG_ENABLED
     if (monochrome_) {
       memcpy(encoding.data(), "mono8", strlen("mono8"));
     } else {
@@ -382,13 +365,9 @@ bool MipiCam::get_image_mem(
     }
     // jpeg，png---opencv 转 rgb8
     process_image(image_->image, image_->image_size, image_pub_);
-    // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
-    // TestSave("/userdata/catkin_ws/test.rgb", image_pub_->image, image_pub_->image_size);
-    // TODO(oal) create an Image here and already have the memory allocated,
     // eliminate this copy
     data_size = image_pub_->image_size;  // step * height);
     memcpy(data.data(), image_pub_->image, data_size);
-#endif
   }
   {
     struct timespec ts;
@@ -405,6 +384,9 @@ void MipiCam::get_formats()  // std::vector<mipi_cam::msg::Format>& formats)
 
 MipiCam::io_method MipiCam::io_method_from_string(const std::string & str)
 {
+  // all did't support
+  return IO_METHOD_UNKNOWN;
+  /*
   if (str == "mmap") {
     return IO_METHOD_MMAP;
   } else if (str == "read") {
@@ -413,7 +395,7 @@ MipiCam::io_method MipiCam::io_method_from_string(const std::string & str)
     return IO_METHOD_USERPTR;
   } else {
     return IO_METHOD_UNKNOWN;
-  }
+  }*/
 }
 
 MipiCam::pixel_format MipiCam::pixel_format_from_string(const std::string & str)

@@ -13,13 +13,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>camera_info_manager</depend>
-  <depend>builtin_interfaces</depend>
-  <depend>image_transport</depend>
-  <depend>image_transport_plugins</depend>
   <depend>hbm_img_msgs</depend>
-
-  <depend>ffmpeg</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

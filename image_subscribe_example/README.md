@@ -57,8 +57,8 @@ SHARED_MEM
 - 已依赖pkg ，详见 Dependency 部分
 
 2、编译：
-  - 只订阅share mem 方式发布的图片：`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=ON`
-  - 支持发布压缩格式图片：`colcon build --packages-select image_subscribe_example`或`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=OFF`。
+  - 订阅share mem 方式发布的图片：`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=ON`
+  - 支持订阅ROS2标准格式图片：`colcon build --packages-select image_subscribe_example`或`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=OFF`。
 
 ### docker交叉编译
 
