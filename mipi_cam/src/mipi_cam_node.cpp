@@ -44,12 +44,11 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("pixel_format", "yuyv");
   this->declare_parameter("out_format", "rgb8");  // nv12
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");//"/dev/video0");
-  // image_compressed_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed", 10);
-  video_compressed_publisher_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed",5);
+  // video_compressed_publisher_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed",5);
   get_params();
   init();  //外部可能会调用了
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
-  "[%s]->mipinode init sucess.\n", __func__);
+    "[%s]->mipinode init sucess.\n", __func__);
 }
 
 MipiCamNode::~MipiCamNode()
@@ -185,31 +184,8 @@ bool MipiCamNode::take_and_send_image()
   }
   // INFO(img_->data.size() << " " << img_->width << " " << img_->height << " " << img_->step);
   image_pub_->publish(*img_);
-
-  // publish compressed
-  // cv::Mat matImage_ = cv_bridge::toCvShare(img_, "rgb8")->image;
-  /*cv::Mat matImage_(img_->data,true);
-  // cv::imwrite("/userdata/2Mat.jpg",matImage_);
-  // ROS_printf("[2]->jpg");
-
-  ros_img_compressed_ = cv_bridge::CvImage(std_msgs::msg::Header(), "rgb8", matImage_).toCompressedImageMsg();
-  video_compressed_publisher_->publish(*ros_img_compressed_);*/
-  /*
-  // img_compressed_->header = std_msgs::Header();
-  img_compressed_->header.stamp = img_->header.stamp;//ros::Time::now();
-  img_compressed_->format = "jpeg";
-  std::vector<uchar> encodeing;
-  cv::imencode(".jpg", img_->data, encodeing);
-  encodeing.swap(img_compressed_->data);
-  sensor_msgs::msg::CompressedImage compressImg;
-  
-  //compressed_output_image.data.resize(compressed_buffer_size);
-  //memcpy(&compressed_output_image.data[0], compressed_buffer, compressed_buffer_size);
-  image_compressed_pub_.publish(compressImg);//*img_compressed_);
-  */
   return true;
 }
-
 void MipiCamNode::update()
 {
   if (mipiCam_.is_capturing()) {
@@ -218,36 +194,39 @@ void MipiCamNode::update()
     // auto t0 = now();
     if (!take_and_send_image()) {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
-      "USB camera did not respond in time.");
+      "mipi camera did not respond in time.");
     }
     // auto diff = now() - t0;
     // INFO(diff.nanoseconds() / 1e6 << " " << int(t0.nanoseconds() / 1e9));
     // RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),"[update]->start %ld \n", mipi_cam::GetTickCount());
   }
 }
-
 void MipiCamNode::hbmem_update()
 {
 #ifdef USING_HBMEM
   if (mipiCam_.is_capturing()) {
     auto loanedMsg = publisher_hbmem_->borrow_loaned_message();
-    auto& msg = loanedMsg.get();
-    if (!mipiCam_.get_image_mem(msg.time_stamp, msg.encoding, msg.height, msg.width,
-      msg.step, msg.data, msg.data_size))
-    {
-      RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "hbmem_update grab img failed");
-      return;
+    if (loanedMsg.is_valid()) {
+      auto& msg = loanedMsg.get();
+      if (!mipiCam_.get_image_mem(msg.time_stamp, msg.encoding, msg.height, msg.width,
+        msg.step, msg.data, msg.data_size))
+      {
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "hbmem_update grab img failed");
+        return;
+      }
+      msg.index = mSendIdx++;
+      /*auto time_now =
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              std::chrono::high_resolution_clock::now().time_since_epoch())
+              .count();
+      msg.index = count_;
+      msg.time_stamp = time_now;
+      RCLCPP_INFO(this->get_logger(), "message: %d", msg.index);*/
+      publisher_hbmem_->publish(std::move(loanedMsg));
+    } else {
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "borrow_loaned_message failed");
     }
-    /*auto time_now =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
-    msg.index = count_;
-    msg.time_stamp = time_now;
-    RCLCPP_INFO(this->get_logger(), "message: %d", msg.index);*/
-    publisher_hbmem_->publish(std::move(loanedMsg));
   }
 #endif
 }
-
 }  // namespace mipi_cam

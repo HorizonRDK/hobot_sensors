@@ -331,7 +331,7 @@ inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width
 
   unsigned char tempUV[8];
   // YUV 4:2:0
-  #pragma omp parallel for num_threads(4)
+  // #pragma omp parallel for num_threads(4)
   for (j = 0; j < height; j += 2) {
       for (i = 0; i < width; i += 8) {
           tempUV[0] = pUV[1];
@@ -355,7 +355,6 @@ inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width
           int16x8_t* V16x8 = reinterpret_cast<int16x8_t*>(&V16x4x2);
           int16x4_t U_4 = vget_high_s16(nUVvec16);
           int16x4x2_t U16x4x2 = vzip_s16(U_4, U_4);
-
           int16x8_t* U16x8 = reinterpret_cast<int16x8_t*>(&U16x4x2);
 
           // 公式1

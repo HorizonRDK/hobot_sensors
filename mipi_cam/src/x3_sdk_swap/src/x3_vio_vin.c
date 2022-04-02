@@ -380,7 +380,7 @@ void x3_vin_stop(x3_vin_info_t *vin_info)
 	HB_VIN_DisableDev(vin_info->dev_id);	  // thread stop && sif stop
 	HB_VIN_StopPipe(vin_info->pipe_id);	  // isp stop
 	HB_VIN_DisableChn(vin_info->pipe_id, 1); // dwe stop
-	ROS_printf("ok!\n");
+    ROS_printf("x3_vin_stop ok!\n");
 }
 
 void x3_vin_deinit(x3_vin_info_t *vin_info) {
@@ -390,7 +390,7 @@ void x3_vin_deinit(x3_vin_info_t *vin_info) {
 
 	x3_mipi_deinit(vin_info->snsinfo.sensorInfo.entry_index);
 	x3_sensor_deinit(vin_info->dev_id);
-	ROS_printf("ok!");
+    ROS_printf("x3_vin_deinit ok!");
 }
 
 int x3_vin_feedback(int pipeId, hb_vio_buffer_t *feedback_buf) {

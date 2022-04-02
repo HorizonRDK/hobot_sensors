@@ -110,12 +110,12 @@ int x3_vps_start(uint32_t vpsGrpId) {
 
 void x3_vps_stop(int vpsGrpId) {
 	HB_VPS_StopGrp(vpsGrpId);
-	ROS_printf("ok!\n");
+    ROS_printf("x3_vps_stop ok!\n");
 }
 
 void x3_vps_deinit(int vpsGrpId) {
 	HB_VPS_DestroyGrp(vpsGrpId);
-	ROS_printf("ok!");
+    ROS_printf("x3_vps_stop ok!");
 }
 
 int x3_vps_input(uint32_t vpsGrpId, hb_vio_buffer_t *buffer) {

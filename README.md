@@ -41,6 +41,7 @@ ros package：
 
 2、编译：
   - 只发布支持share mem的 hbmem_img主题的图片：`colcon build --packages-select mipi_cam --cmake-args -DSHARED_MEM=ON`
+  这个需要先配置 TROS 环境，例如：`source /opt/tros/setup.bash`
   - 支持发布ROS标准图片：`colcon build --packages-select mipi_cam`。
 
 
@@ -68,8 +69,7 @@ ros package：
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
      -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker \
      -DSHARED_MEM=ON
-- 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。
-     
+- 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。     
   ```
 
 - 其中SYS_ROOT为交叉编译系统依赖路径，此路径具体地址详见第1步“编译环境确认”的交叉编译说明。
@@ -136,3 +136,5 @@ root@xj3ubuntu:/userdata/cc_ws/tros_ws# ros2 run image_subscribe_example subscri
 [WARN] [1648302889.319329711] [img_sub]: Sub compressed img fps = 1
 [INFO] [1648302889.319478247] [img_sub]: Recv compressed img: rgb8; jpeg compressed bgr8, stamp: 1648302889.92334955, tmlaps(ms): 227, data size: 33813
 ```
+注意：此项功能，需要安装 ros包 image_transport_plugins，利用命令：
+sudo apt-get install ros-foxy-image-transport-plugins

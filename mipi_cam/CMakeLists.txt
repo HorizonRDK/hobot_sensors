@@ -50,13 +50,13 @@ include_directories(include
 
 if(SHARED_MEM)
 link_directories(
-  ${SYS_ROOT}/usr/lib/hobot/
-  ${SYS_ROOT}/usr/lib/hobot/hbmedia/
+  ${SYS_ROOT}/usr/lib/
+  ${SYS_ROOT}/usr/lib/hbmedia/
 )
 else()
 link_directories(
-  ${SYS_ROOT}/usr/lib/hobot/
-  ${SYS_ROOT}/usr/lib/hobot/hbmedia/
+  ${SYS_ROOT}/usr/lib/
+  ${SYS_ROOT}/usr/lib/hbmedia/
   /opt/ros/foxy/lib
 )
 endif()

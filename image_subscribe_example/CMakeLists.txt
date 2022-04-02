@@ -20,6 +20,7 @@ OPTION(SHARED_MEM    "SHARED_MEM work environment"    OFF)
 if(SHARED_MEM)
 add_definitions(-DUSING_HBMEM)
 find_package(hbm_img_msgs REQUIRED)
+add_definitions(-DSHARED_MEM_MSG)
 endif()
 
 # find dependencies
@@ -38,7 +39,7 @@ ${PROJECT_SOURCE_DIR}
 message("SYS_ROOT is " ${SYS_ROOT})
 if(SHARED_MEM)
 link_directories(
-  ${SYS_ROOT}/usr/lib/hobot/
+  ${SYS_ROOT}/usr/lib/
 )
 endif()
 

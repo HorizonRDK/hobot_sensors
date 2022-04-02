@@ -1,3 +1,8 @@
+/***************************************************************************
+ * COPYRIGHT NOTICE
+ * Copyright 2020 Horizon Robotics, Inc.
+ * All rights reserved.
+ ***************************************************************************/
 #ifndef VIDEO_COMM_H
 #define VIDEO_COMM_H
  extern "C" {
@@ -53,7 +58,10 @@ class CVideoComm
 private:
 	/* data */
 public:
-	CVideoComm(/* args */):m_nDevStat(0){};
+    CVideoComm(/* args */)
+    : m_nDevStat(0), m_pidCam(-1)
+    {
+    }
 	~CVideoComm(){};
 	virtual int StartStream(CapFrame_Callback_t pFrameCB,void *pArg){
 		if (0!=m_nDevStat && pFrameCB && 0==childStart()) {
@@ -74,13 +82,14 @@ public:
 	};
 	virtual int StopStream(){
 		/* if has user callback, needs to join the streaming_loop thread */
-		if (m_cbCapFrame && m_pidCam) {
+        if (m_cbCapFrame && -1 != m_pidCam) {
 			m_bThrdQuit = 1;
 		    int r = pthread_join(m_pidCam, NULL);
 			if (r < 0) {
 				ROS_printf("streaming_loop pthread join failed\n");
 				return -100;
 			}
+            m_pidCam = -1;
 			return childStop();
 		}
 		return -1;

@@ -58,6 +58,7 @@ SHARED_MEM
 
 2、编译：
   - 订阅share mem 方式发布的图片：`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=ON`
+  这个需要先配置 TROS 环境，例如：`source /opt/tros/setup.bash`
   - 支持订阅ROS2标准格式图片：`colcon build --packages-select image_subscribe_example`或`colcon build --packages-select image_subscribe_example --cmake-args -DSHARED_MEM=OFF`。
 
 ### docker交叉编译
@@ -65,7 +66,7 @@ SHARED_MEM
 1、编译环境确认
 
 - 在docker中编译，并且docker中已经安装好tros。docker安装、交叉编译说明、tros编译和部署说明：http://gitlab.hobot.cc/robot_dev_platform/robot_dev_config/blob/dev/README.md
-- 已编译hbm_img_msgs package（编译方法见Dependency部分）
+- 已编译hbm_img_msgs package
 
 2、编译
 

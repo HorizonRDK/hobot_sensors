@@ -109,29 +109,31 @@ bool MipiCam::start_capturing(void)
 bool MipiCam::uninit_device(void)
 {
   unsigned int i;
+  if (buffers_) {
+    switch (io_) {
+      case IO_METHOD_READ:
+        free(buffers_[0].start);
+        break;
 
-  switch (io_) {
-    case IO_METHOD_READ:
-      free(buffers_[0].start);
-      break;
-
-    case IO_METHOD_MMAP:
-      for (i = 0; i < n_buffers_; ++i) {
-        if (-1 == munmap(buffers_[i].start, buffers_[i].length)) {
-          std::cerr << "error, quitting, TODO throw " << errno << std::endl;
-          return false;  // ("munmap");
+      case IO_METHOD_MMAP:
+        for (i = 0; i < n_buffers_; ++i) {
+          if (-1 == munmap(buffers_[i].start, buffers_[i].length)) {
+            std::cerr << "error, quitting, TODO throw " << errno << std::endl;
+            return false;  // ("munmap");
+          }
         }
-      }
-      break;
+        break;
 
-    case IO_METHOD_USERPTR:
-      for (i = 0; i < n_buffers_; ++i) {
-        free(buffers_[i].start);
-      }
-      break;
+      case IO_METHOD_USERPTR:
+        for (i = 0; i < n_buffers_; ++i) {
+          free(buffers_[i].start);
+        }
+        break;
+    }
+
+    free(buffers_);
+    buffers_ = NULL;
   }
-
-  free(buffers_);
   return true;
 }
 
@@ -161,6 +163,7 @@ bool MipiCam::close_device(void)
 {
   if (m_pMipiDev!=NULL)
   {
+    ROS_printf("[%s]->cam %p stop.\r\n", __func__, m_pMipiDev);
     m_pMipiDev->StopStream();
     delete m_pMipiDev;
     m_pMipiDev = NULL;
@@ -177,6 +180,7 @@ bool MipiCam::open_device(void)
     //   "Cannot open '" << camera_dev_ << "': " << errno << ", " << strerror(errno));
     return false;  // (EXIT_FAILURE);
   }
+  ROS_printf("[%s]->cam %p new.\r\n", __func__, m_pMipiDev);
   
   return true;
 }
@@ -227,7 +231,6 @@ bool MipiCam::start(
     return false;
   }
   image_ = reinterpret_cast<camera_image_t *>(calloc(1, sizeof(camera_image_t)));
-
   image_->width = image_width;
   image_->height = image_height;
   image_->bytes_per_pixel = 3;  // corrected 11/10/15 (BYTES not BITS per pixel)
@@ -246,6 +249,7 @@ bool MipiCam::start(
 
 bool MipiCam::shutdown(void)
 {
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->start.\n", __func__);
   stop_capturing();
   uninit_device();
   close_device();
@@ -258,6 +262,7 @@ bool MipiCam::shutdown(void)
     free(image_pub_);
   }
   image_pub_ = NULL;
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->end.\n", __func__);
   return true;
 }
 
@@ -270,6 +275,7 @@ void TestSave(char *pFilePath, char *imgData, int nDlen)
   }
 }
 
+static int s_nIdx = 0;
 bool MipiCam::get_image(
   builtin_interfaces::msg::Time & stamp,
   std::string & encoding, uint32_t & height, uint32_t & width,
@@ -311,7 +317,11 @@ bool MipiCam::get_image(
     // jpeg，png---opencv 转 rgb8
     process_image(image_->image, image_->image_size, image_pub_);
     // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
-    // TestSave("/userdata/catkin_ws/test.rgb", image_pub_->image, image_pub_->image_size);
+    /*++s_nIdx;
+    if (s_nIdx > 30) {
+      TestSave("/userdata/cc_ws/tros_ws/test.rgb", image_pub_->image, image_pub_->image_size);
+      abort();
+    }*/
     // eliminate this copy
     data.resize(image_pub_->image_size);  // step * height);
     memcpy(&data[0], image_pub_->image, data.size());

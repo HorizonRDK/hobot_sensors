@@ -44,6 +44,7 @@ class MipiDevice :public CVideoComm
 {
 public:
     MipiDevice();
+    ~MipiDevice();
     int OpenCamera(const TCamInfo* pCamInfo);
     int GetFrame(void **, unsigned int*);
     // 如果有 vps ，就 输出vps 的分层数据
@@ -53,8 +54,8 @@ private:
 	int mf37_dol2_vin_param_init(x3_vin_info_t* vin_info);
     int mimx415_linear_vin_param_init(x3_vin_info_t* vin_info);
     int x3_cam_uninit(void);
-    int x3_usb_cam_stop(void);
-    int x3_usb_cam_start(void);
+    int x3_mipi_cam_stop(void);
+    int x3_mipi_cam_start(void);
     int init_param(void);
     // 得到可用的 pipe_id,0-7,进程id 对应 pipe_id,假设pipe_id对应的进程已不存在，则使用id，并更新为当前进程id
     int get_available_pipeid();
@@ -77,6 +78,7 @@ private:
     buffer* buffers;
 	
   	std::vector<pym_buffer_t> buffers_;
+    int mState;  // 0 empty, 1 run ,2 stop
 
     unsigned int n_buffers;
     int m_curCaptureIdx;		//正在读取的帧序号	

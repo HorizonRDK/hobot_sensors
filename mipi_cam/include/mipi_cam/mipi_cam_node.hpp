@@ -9,6 +9,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+// #include <vector>
 #include <memory>
 #include <string>
 
@@ -50,13 +51,14 @@ public:
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
 #ifdef USING_HBMEM
+  int32_t mSendIdx = 0;
   rclcpp::TimerBase::SharedPtr timer_hbmem_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr publisher_hbmem_;
 #endif
-
+/*
   sensor_msgs::msg::CompressedImage::SharedPtr ros_img_compressed_;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr video_compressed_publisher_;
-
+*/
   // parameters
   std::string video_device_name_;
   std::string frame_id_;
@@ -79,6 +81,11 @@ public:
   std::string camera_info_url_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  // 滑动窗口测方差 ， 20 s ，标准帧率
+  /*std::vector<int> m_vecFps;
+  int m_nMinFps;
+  int m_nMaxFps;
+  int m_nVarianceFps;*/
   // rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_capture_;
 };
 }  // namespace usb_cam

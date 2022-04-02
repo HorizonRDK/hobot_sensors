@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "include/image_subscriber.h"
 #include <fstream>
+// #include "statistics_tracker.hpp"
 
 ImageSubscriber::ImageSubscriber(const rclcpp::NodeOptions& node_options, ImgCbType sub_cb_fn,
   std::string node_name, std::string topic_name)
@@ -42,7 +43,7 @@ ImageSubscriber::ImageSubscriber(const rclcpp::NodeOptions& node_options, ImgCbT
         std::bind(&ImageSubscriber::topic_compressed_callback, this,
                   std::placeholders::_1));
   } else {
-#ifdef USING_HBMEM
+#ifdef SHARED_MEM_MSG
     hbmem_subscription_ =
         this->create_subscription_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
             topic_name_, 10,
@@ -73,7 +74,7 @@ int32_t tool_calc_time_laps(struct timespec &time_start, struct timespec &time_e
 
 void ImageSubscriber::topic_compressed_callback(
   const sensor_msgs::msg::CompressedImage::ConstSharedPtr img_msg) {
-  RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv compressed img");
+  // RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv compressed img");
   {
     auto tp_now = std::chrono::system_clock::now();
     std::unique_lock<std::mutex> lk(frame_stat_mtx_);
@@ -94,8 +95,8 @@ void ImageSubscriber::topic_compressed_callback(
 
   std::stringstream ss;
   ss << "Recv compressed img: " << img_msg->format
-  //<< ", w: " << img_msg->width
-  //<< ", h: " << img_msg->height
+  // << ", w: " << img_msg->width
+  // << ", h: " << img_msg->height
   << ", stamp: " << img_msg->header.stamp.sec
   << "." << img_msg->header.stamp.nanosec
   << ", tmlaps(ms): " << tool_calc_time_laps(time_in, time_now)
@@ -122,31 +123,69 @@ void TestSave(char *pFilePath, char *imgData, int nDlen)
   }
 }
 // static int s_nSave = 0;
-#ifdef USING_HBMEM
+#ifdef SHARED_MEM_MSG
 void ImageSubscriber::hbmem_topic_callback(
     const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg) {
   struct timespec time_now = {0, 0}, time_in = {0, 0};
+  int32_t nLapsFrm = 0;
   clock_gettime(CLOCK_REALTIME, &time_now);
   uint64_t mNow = (time_now.tv_sec * 1000 + time_now.tv_nsec / 1000000);
 
+  nLapsFrm = mNow - msg->time_stamp;
+  // m_vecHbmLatency.push_back(nLapsFrm);
   std::stringstream ss;
   ss << "Recv raw img: " << msg->encoding.data()
   << ", w: " << msg->width
   << ", h: " << msg->height
-  << ", tmlaps(ms): " << (mNow - msg->time_stamp)    // tool_calc_time_laps(time_in, time_now)
+  << ", tmlaps(ms): " << nLapsFrm
   << ", data size: " << msg->data_size;
+  RCLCPP_INFO(rclcpp::get_logger("hbmem_img_sub"), "%s", ss.str().c_str());
   /* if (0 == s_nSave) {
     TestSave("/userdata/test.rgb", (char*)msg->data.data(), msg->data.size());
     s_nSave = 1;
   }
   */
-  RCLCPP_INFO(rclcpp::get_logger("hbmem_img_sub"), "%s", ss.str().c_str());
+  {
+    auto tp_raw_now = std::chrono::system_clock::now();
+    std::unique_lock<std::mutex> lk(frame_stathbm_mtx_);
+    sub_imghbm_frameCount_++;
+    auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        tp_raw_now - sub_imghbm_tp_).count();
+    if (interval >= 1000) {
+      /*if (sub_imghbm_frameCount_ > 1)
+        m_vecHbmFps.push_back(sub_imghbm_frameCount_);
+      // 滑动窗口，计算方差
+      int nSize = m_vecHbmFps.size();
+      if (nSize > 40) {
+        std::stringstream ss;
+        performance_test::StatisticsTracker statisHbmFps(m_vecHbmFps);
+        performance_test::StatisticsTracker statisHbmLatency(m_vecHbmLatency);
+        m_vecHbmLatency.clear();
+        m_vecHbmFps.clear();
+        ss << "Recv hbmImg: " << msg->encoding.data()
+        << ", w: " << msg->width
+        << ", h: " << msg->height
+        << ", minfps: " << statisHbmFps.min()
+        << ", maxfps: " << statisHbmFps.max()
+        << ", meadfps: " << statisHbmFps.mean()
+        << ", variancefps: " << statisHbmFps.variance()
+        << ", minLatency: " << statisHbmFps.min()
+        << ", maxLatency: " << statisHbmFps.max()
+        << ", meadLatency: " << statisHbmFps.mean()
+        << ", varianceLatency: " << statisHbmFps.variance()
+        << ", data size: " << msg->data_size;
+        RCLCPP_INFO(rclcpp::get_logger("img_sub"), "%s", ss.str().c_str());
+      }*/
+      sub_imghbm_frameCount_ = 0;
+      sub_imghbm_tp_ = std::chrono::system_clock::now();
+    }
+  }
 }
 #endif
 
 void ImageSubscriber::topic_callback(
     const sensor_msgs::msg::Image::ConstSharedPtr msg) {
-  RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv img");
+  // RCLCPP_INFO(rclcpp::get_logger("img_sub"), "Recv img");
   // todo
   /* // raw 过大，不保存
   if (save_dir_.length() > 0) {
@@ -157,20 +196,22 @@ void ImageSubscriber::topic_callback(
     ofs.write(reinterpret_cast<const char*>(msg->data.data()),
       msg->data.size());
   }*/
+  std::stringstream ss;
   struct timespec time_now = {0, 0}, time_in = {0, 0};
+  int32_t nLapsFrm = 0;
   clock_gettime(CLOCK_REALTIME, &time_now);
   time_in.tv_nsec = msg->header.stamp.nanosec;
   time_in.tv_sec = msg->header.stamp.sec;
-
-  std::stringstream ss;
+  nLapsFrm = tool_calc_time_laps(time_in, time_now);
   ss << "Recv raw img: " << msg->encoding
   << ", w: " << msg->width
   << ", h: " << msg->height
   << ", stamp: " << msg->header.stamp.sec
   << "." << msg->header.stamp.nanosec
-  << ", tmlaps(ms): " << tool_calc_time_laps(time_in, time_now)
+  << ", tmlaps(ms): " << nLapsFrm
   << ", data size: " << msg->data.size();
   RCLCPP_INFO(rclcpp::get_logger("img_sub"), "%s", ss.str().c_str());
+  // m_vecLatency.push_back(nLapsFrm);
 
   {
     auto tp_raw_now = std::chrono::system_clock::now();
@@ -179,8 +220,30 @@ void ImageSubscriber::topic_callback(
     auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
                         tp_raw_now - sub_imgraw_tp_).count();
     if (interval >= 1000) {
-      RCLCPP_WARN(rclcpp::get_logger("img_sub"),
-      "Sub imgRaw fps = %d", sub_imgraw_frameCount_);
+      /*if (sub_imgraw_frameCount_ > 1)
+        m_vecFps.push_back(sub_imgraw_frameCount_);
+      // 滑动窗口，计算方差
+      int nSize = m_vecFps.size();
+      if (nSize > 40) {
+        performance_test::StatisticsTracker statisFps(m_vecFps);
+        performance_test::StatisticsTracker statisLatency(m_vecLatency);
+        m_vecLatency.clear();
+        m_vecFps.clear();
+        std::stringstream ss;
+        ss << "Recv rawImg: " << msg->encoding
+        << ", w: " << msg->width
+        << ", h: " << msg->height
+        << ", minfps: " << statisFps.min()
+        << ", maxfps: " << statisFps.max()
+        << ", meadfps: " << statisFps.mean()
+        << ", variancefps: " << statisFps.variance()
+        << ", minLatency: " << statisFps.min()
+        << ", maxLatency: " << statisFps.max()
+        << ", meadLatency: " << statisFps.mean()
+        << ", varianceLatency: " << statisFps.variance()
+        << ", data size: " << msg->data.size();
+        RCLCPP_INFO(rclcpp::get_logger("img_sub"), "%s", ss.str().c_str());
+      }*/
       sub_imgraw_frameCount_ = 0;
       sub_imgraw_tp_ = std::chrono::system_clock::now();
     }
