@@ -40,23 +40,18 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-# set(SYS_ROOT "")
-message("SYS_ROOT is " ${SYS_ROOT})
 include_directories(include
   src/x3
   src/x3_sdk_swap/include
-  ${SYS_ROOT}/usr/include/vio/
 )
 
 if(SHARED_MEM)
 link_directories(
-  ${SYS_ROOT}/usr/lib/
-  ${SYS_ROOT}/usr/lib/hbmedia/
+  ${CMAKE_SYSROOT}/usr/lib/hbmedia/
 )
 else()
 link_directories(
-  ${SYS_ROOT}/usr/lib/
-  ${SYS_ROOT}/usr/lib/hbmedia/
+  ${CMAKE_SYSROOT}/usr/lib/hbmedia/
   /opt/ros/foxy/lib
 )
 endif()
@@ -85,7 +80,7 @@ add_executable(${PROJECT_NAME}
 )
 
 set(BASE_LIBRARIES pthread vio cam dl)
-set(X3_HAPI_LIB isp_algo z hbmedia turbojpeg isp ion multimedia iar tinyalsa cjson diag gdcbin)
+set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
 
 target_link_libraries(${PROJECT_NAME}
   ${BASE_LIBRARIES} ${X3_HAPI_LIB}
