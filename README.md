@@ -67,15 +67,13 @@ ros package：
      --cmake-args \
      --no-warn-unused-cli \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
-     -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker \
      -DSHARED_MEM=ON
 - 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。     
   ```
 
-- 其中SYS_ROOT为交叉编译系统依赖路径，此路径具体地址详见第1步“编译环境确认”的交叉编译说明。
-
 
 # Usage
+## X3 Ubuntu系统
 用户直接调用ros2 命令启动即可：
 
 ```
@@ -116,6 +114,22 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 
 ---
 
+## X3 linaro系统
+
+把在docker 交叉编译的install 目录拷贝到linaro 系统下，例如:/userdata
+需要首先指定依赖库的路径，例如：
+`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/userdata/install/lib`
+
+修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以
+
+运行 mipi_cam
+```
+// 默认参数方式
+/userdata/install/lib/mipi_cam/mipi_cam
+// 传参方式
+#/userdata/install/lib/mipi_cam/mipi_cam --ros-args -p image_width:=960 -p image_height:=540
+
+```
 # Attention
 目前设备出来的数据默认为nv12，转rgb8 格式，目前没有用cv，1920*1080 性能耗时 100ms 左右，压缩图需要用中继的方式支持：
 ros2 run image_transport republish [in_transport] in:=<in_base_topic> [out_transport] out:=<out_base_topic>
@@ -138,3 +152,5 @@ root@xj3ubuntu:/userdata/cc_ws/tros_ws# ros2 run image_subscribe_example subscri
 ```
 注意：此项功能，需要安装 ros包 image_transport_plugins，利用命令：
 sudo apt-get install ros-foxy-image-transport-plugins
+
+

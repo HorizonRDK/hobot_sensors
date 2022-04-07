@@ -308,7 +308,7 @@ bool uyvy2rgb(char * YUV, char * RGB, int NumPixels)
 #include <arm_neon.h>
 const uint8_t Y_SUBS[8] = { 16, 16, 16, 16, 16, 16, 16, 16 };
 const uint8_t UV_SUBS[8] = { 128, 128, 128, 128, 128, 128, 128, 128 };
-inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width, int height) {
+inline void NV12_TO_BGR24(unsigned char *_src, unsigned char *_RGBOut, int width, int height) {
   unsigned char *src = (unsigned char*)_src;
   unsigned char *RGBOut = (unsigned char*)_RGBOut;
 
@@ -371,9 +371,9 @@ inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width
           // 公式1
           Y16 = vmulq_n_u16(vmovl_u8(vqsub_u8(nYvec, Y_SUBvec)), 74);  // 公式1
 
-          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
+          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
           RGB.val[1] = vqmovun_s16(vshrq_n_s16((int16x8_t)vsubq_u16(Y16, (uint16x8_t)VVUU1), 6));
-          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
+          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
           vst3_u8(RGBOut1, RGB);
           RGBOut1 += 24;
 
@@ -382,9 +382,9 @@ inline void NV12_TO_RGB24(unsigned char *_src, unsigned char *_RGBOut, int width
           pY2 += 8;
           // 公式1
           Y16 = vmulq_n_u16(vmovl_u8(vqsub_u8(nYvec, Y_SUBvec)), 74);  // 公式1
-          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
+          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)UU1), 6));
           RGB.val[1] = vqmovun_s16(vshrq_n_s16((int16x8_t)vsubq_u16(Y16, (uint16x8_t)VVUU1), 6));
-          RGB.val[2] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
+          RGB.val[0] = vqmovun_s16(vshrq_n_s16((int16x8_t)vaddq_u16(Y16, (uint16x8_t)VV1), 6));
           vst3_u8(RGBOut2, RGB);
           RGBOut2 += 24;
       }

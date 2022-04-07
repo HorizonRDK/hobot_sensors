@@ -83,13 +83,13 @@ SHARED_MEM
      --cmake-args \
      --no-warn-unused-cli \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
-     -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker \
      -DSHARED_MEM=ON
   ```
 - 其中SYS_ROOT为交叉编译系统依赖路径，此路径具体地址详见第1步“编译环境确认”的交叉编译说明。
 
 # Usage
 
+## X3 Ubuntu系统
 编译成功后，将生成的install路径拷贝到地平线X3开发板上（如果是在X3上编译，忽略拷贝步骤），并执行如下命令运行
 
 ```
@@ -101,4 +101,21 @@ ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=
 
 指明topic 为 hbmem_img，接收 发布端通过share mem pub 的数据：
 ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=hbmem_img
+```
+
+## X3 linaro系统
+
+把在docker 交叉编译的install 目录拷贝到linaro 系统下，例如:/userdata
+需要首先指定依赖库的路径，例如：
+`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/userdata/install/lib`
+
+修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以
+
+运行 subscribe_example
+```
+// 默认参数方式
+/userdata/install/lib/image_subscribe_example/subscribe_example
+// 传参方式
+#/userdata/install/lib/image_subscribe_example/subscribe_example --ros-args -p sub_img_topic:=hbmem_img
+
 ```

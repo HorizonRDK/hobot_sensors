@@ -60,7 +60,7 @@ bool MipiCam::process_image(const void * src, int len, camera_image_t * dest)
         const_cast<char *>(
           reinterpret_cast<const char *>(src)), dest->image, dest->width * dest->height);
           */
-      NV12_TO_RGB24((unsigned char *)src, (unsigned char*)dest->image, dest->width , dest->height);
+      NV12_TO_BGR24((unsigned char *)src, (unsigned char*)dest->image, dest->width , dest->height);
       dest->image_size = 3*dest->width*dest->height;
     }
   } else if (pixelformat_ == PIXEL_FORMAT_UYVY) {
@@ -244,6 +244,7 @@ bool MipiCam::start(
   memset(image_->image, 0, image_->image_size * sizeof(char *));
   image_pub_->image = reinterpret_cast<char *>(calloc(image_pub_->image_size, sizeof(char *)));
   memset(image_pub_->image, 0, image_pub_->image_size * sizeof(char *));
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->w:h=%d:%d.\n", __func__, image_width, image_height);
   return true;
 }
 
@@ -311,10 +312,10 @@ bool MipiCam::get_image(
       encoding = "mono8";
     } else {
       // TODO(oal) aren't there other encoding types?
-      encoding = "rgb8";
+      encoding = "bgr8";
       step = width * 3;
     }
-    // jpeg，png---opencv 转 rgb8
+    // jpeg，png---opencv 转 bgr8
     process_image(image_->image, image_->image_size, image_pub_);
     // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
     /*++s_nIdx;
@@ -331,8 +332,8 @@ bool MipiCam::get_image(
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msEnd = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
-    __func__, encoding.c_str(), step, image_->image_size , msStart, msEnd - msStart);
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[%s]->enc=%s,step=%d, w:h=%d:%d,sz=%d,start %ld->laps=%ld ms.\n",
+    __func__, encoding.c_str(), step, width, height, image_->image_size , msStart, msEnd - msStart);
   return true;
 }
 
@@ -370,10 +371,10 @@ bool MipiCam::get_image_mem(
       memcpy(encoding.data(), "mono8", strlen("mono8"));
     } else {
       // TODO(oal) aren't there other encoding types?
-      memcpy(encoding.data(), "rgb8", strlen("rgb8"));
+      memcpy(encoding.data(), "bgr8", strlen("bgr8"));
       step = width * 3;
     }
-    // jpeg，png---opencv 转 rgb8
+    // jpeg，png---opencv 转 bgr8
     process_image(image_->image, image_->image_size, image_pub_);
     // eliminate this copy
     data_size = image_pub_->image_size;  // step * height);

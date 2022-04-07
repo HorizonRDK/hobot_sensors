@@ -42,7 +42,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("image_width", 1920);  // 640);
   this->declare_parameter("io_method", "mmap");
   this->declare_parameter("pixel_format", "yuyv");
-  this->declare_parameter("out_format", "rgb8");  // nv12
+  this->declare_parameter("out_format", "bgr8");  // nv12
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");//"/dev/video0");
   // video_compressed_publisher_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed",5);
   get_params();
@@ -80,8 +80,12 @@ void MipiCamNode::get_params()
       framerate_ = parameter.as_double();
     } else if (parameter.get_name() == "image_height") {
       image_height_ = parameter.as_int();
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
+        "image_height_ value: %s", parameter.value_to_string().c_str());
     } else if (parameter.get_name() == "image_width") {
       image_width_ = parameter.as_int();
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
+        "image_width_ value: %s", parameter.value_to_string().c_str());
     } else if (parameter.get_name() == "io_method") {
       io_method_name_ = parameter.value_to_string();
     } else if (parameter.get_name() == "pixel_format") {
@@ -90,7 +94,7 @@ void MipiCamNode::get_params()
       video_device_name_ = parameter.value_to_string();
     } else {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
-      "Invalid parameter name: %s", parameter.get_name().c_str());
+        "Invalid parameter name: %s", parameter.get_name().c_str());
     }
   }
 }
@@ -149,7 +153,7 @@ void MipiCamNode::init()
     rclcpp::shutdown();
     return;
   }
-  // ROS_printf("===>[%s]->start cam.\n",__func__);
+  ROS_printf("===>[%s]->start cam w:h=%d:%d.\n", __func__, image_width_, image_height_);
   // start the camera
   if (false == mipiCam_.start( video_device_name_.c_str(), out_format_name_.c_str(), io_method, pixel_format,
     image_width_, image_height_, framerate_)) {

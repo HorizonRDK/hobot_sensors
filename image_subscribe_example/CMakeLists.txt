@@ -36,10 +36,9 @@ include_directories(include
 ${PROJECT_SOURCE_DIR}
 )
 
-message("SYS_ROOT is " ${SYS_ROOT})
 if(SHARED_MEM)
 link_directories(
-  ${SYS_ROOT}/usr/lib/
+  ${CMAKE_SYSROOT}/usr/lib/
 )
 endif()
 
