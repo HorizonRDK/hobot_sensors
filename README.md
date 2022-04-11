@@ -14,6 +14,8 @@ ros package：
 - sensor_msgs
 - hbm_img_msgs
 
+hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared mem场景下的图片传输。
+
 ## 开发环境
 - 编程语言：C/C++
 - 开发平台：X3/X86
