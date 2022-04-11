@@ -10,7 +10,7 @@
 
 #include <string>
 #include <memory>
-
+#include <vector>
 #include <stdarg.h>
 
 extern "C" int ROS_printf(char *fmt, ...)
@@ -118,6 +118,19 @@ void MipiCamNode::init()
 {
   if(m_bIsInit)
     return;
+
+  // 使能sensor mclk
+  std::vector<std::string> sys_cmds{
+    "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart",
+    "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
+    "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",
+    "echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en",
+    "echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq"
+  };
+  for (const auto& sys_cmd : sys_cmds) {
+    system(sys_cmd.data());
+  }
+
   while (frame_id_ == "") {
     RCLCPP_WARN_ONCE(
     rclcpp::get_logger("mipi_node"),
@@ -138,7 +151,7 @@ void MipiCamNode::init()
   // set the IO method
   MipiCam::io_method io_method = MipiCam::io_method_from_string(io_method_name_);
 #ifdef USING_HBMEM
-  if (io_method_name_.compare("hbmem") == 0) {
+  if (io_method_name_.compare("shared_mem") == 0) {
     // 创建hbmempub
     publisher_hbmem_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
         "hbmem_img", 10);
@@ -166,7 +179,7 @@ void MipiCamNode::init()
   // TODO(oal) should this check a little faster than expected frame rate?
   // TODO(oal) how to do small than ms, or fractional ms- std::chrono::nanoseconds?
   const int period_ms = 1000.0 / framerate_;
-  if (io_method_name_.compare("hbmem") != 0) {
+  if (io_method_name_.compare("shared_mem") != 0) {
     timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
       std::bind(&MipiCamNode::update, this));
   } else {

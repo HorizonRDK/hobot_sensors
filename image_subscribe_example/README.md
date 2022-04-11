@@ -13,21 +13,7 @@ ros package：
 - sensor_msgs
 - hbm_img_msgs
 
-其中cv_bridge为ROS开源的package，需要手动安装，具体安装方法：
-
-```cpp
-# 方法1，直接使用apt安装，以cv_bridge安装举例
-sudo apt-get install ros-foxy-cv-bridge -y
-
-# 方法2，使用rosdep检查并自动安装pkg编译的依赖项
-# 安装ros pkg依赖下载⼯具rosdep
-sudo apt-get install python3-pip
-sudo pip install rosdep
-sudo rosdep init
-rosdep update
-# 在ros的⼯程路径下执⾏安装依赖，需要指定pkg所在路径。默认为所有pkg安装依赖，也可以指定为某个pkg安装依赖
-rosdep install -i --from-path . --rosdistro foxy -y
-```
+hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared mem场景下的图片传输。
 
 ## 开发环境
 
@@ -65,7 +51,7 @@ SHARED_MEM
 
 1、编译环境确认
 
-- 在docker中编译，并且docker中已经安装好tros。docker安装、交叉编译说明、tros编译和部署说明：http://gitlab.hobot.cc/robot_dev_platform/robot_dev_config/blob/dev/README.md
+- 在docker中编译，并且docker中已经安装好tros。docker安装、交叉编译说明、tros编译和部署说明详见机器人开发平台robot_dev_config repo中的README.md。
 - 已编译hbm_img_msgs package
 
 2、编译
@@ -109,7 +95,9 @@ ros2 run image_subscribe_example subscribe_example --ros-args -p sub_img_topic:=
 需要首先指定依赖库的路径，例如：
 `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/userdata/install/lib`
 
-修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以
+
+修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以在 /home 下创建日志
+`export ROS_LOG_DIR=/userdata/`
 
 运行 subscribe_example
 ```

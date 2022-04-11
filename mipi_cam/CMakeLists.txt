@@ -46,16 +46,9 @@ include_directories(include
   src/x3_sdk_swap/include
 )
 
-if(SHARED_MEM)
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
 )
-else()
-link_directories(
-  ${CMAKE_SYSROOT}/usr/lib/hbmedia/
-  /opt/ros/foxy/lib
-)
-endif()
 
 ## Build the mipi camera library
 add_executable(${PROJECT_NAME}
@@ -85,7 +78,6 @@ set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gd
 
 target_link_libraries(${PROJECT_NAME}
   ${BASE_LIBRARIES} ${X3_HAPI_LIB}
-  ${ROS_LIB}
 )
 
 ament_target_dependencies(
