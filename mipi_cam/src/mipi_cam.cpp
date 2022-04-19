@@ -338,7 +338,8 @@ bool MipiCam::get_image(
 }
 
 bool MipiCam::get_image_mem(
-  uint64_t & stamp,
+  // uint64_t & stamp,
+  builtin_interfaces::msg::Time & stamp,
   std::array<uint8_t, 12> & encoding,
   uint32_t & height, uint32_t & width, uint32_t & step, std::array<uint8_t, 6220800> & data, uint32_t & data_size)
 {
@@ -357,7 +358,9 @@ bool MipiCam::get_image_mem(
     reinterpret_cast<unsigned int*>(&image_->image_size)))
     return false;
   clock_gettime(CLOCK_REALTIME, &time_start);
-  stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
+  // stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
+  stamp.sec = time_start.tv_sec;
+  stamp.nanosec = time_start.tv_nsec;
   height = image_pub_->height;
   width = image_pub_->width;
   //这里出来都是 yuv 的

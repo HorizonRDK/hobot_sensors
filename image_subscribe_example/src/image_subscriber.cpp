@@ -129,15 +129,17 @@ void ImageSubscriber::hbmem_topic_callback(
   struct timespec time_now = {0, 0}, time_in = {0, 0};
   int32_t nLapsFrm = 0;
   clock_gettime(CLOCK_REALTIME, &time_now);
-  uint64_t mNow = (time_now.tv_sec * 1000 + time_now.tv_nsec / 1000000);
+  // uint64_t mNow = (time_now.tv_sec * 1000 + time_now.tv_nsec / 1000000);
+  time_in.tv_nsec = msg->time_stamp.nanosec;
+  time_in.tv_sec = msg->time_stamp.sec;
 
-  nLapsFrm = mNow - msg->time_stamp;
+  // nLapsFrm = mNow - msg->time_stamp;
   // m_vecHbmLatency.push_back(nLapsFrm);
   std::stringstream ss;
   ss << "Recv raw img: " << msg->encoding.data()
   << ", w: " << msg->width
   << ", h: " << msg->height
-  << ", tmlaps(ms): " << nLapsFrm
+  << ", tmlaps(ms): " << tool_calc_time_laps(time_in, time_now)
   << ", data size: " << msg->data_size;
   RCLCPP_INFO(rclcpp::get_logger("hbmem_img_sub"), "%s", ss.str().c_str());
   /* if (0 == s_nSave) {
