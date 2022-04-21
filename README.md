@@ -79,12 +79,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 用户直接调用ros2 命令启动即可：
 
 ```
-# 使能sensor mclk
-echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart
-echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en
-echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq
-echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en
-echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq
+
 # 添加sensor库路径, 或者将sensor库拷贝到系统库路径cp install/mipi_cam/sensorlib/lib* /usr/lib
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:install/mipi_cam/sensorlib
 
@@ -110,9 +105,9 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
-使用 io_method 参数设置发布图像采用的方式，目前 hbmem 发布的主题是固定的：hbmem_img
+使用 io_method 参数设置发布图像采用的方式，目前 shared_mem 发布的主题是固定的：hbmem_img
 
-`ros2 run mipi_cam mipi_cam --ros-args -p io_method:=hbmem`
+`ros2 run mipi_cam mipi_cam --ros-args -p io_method:=shared_mem`
 
 ---
 
@@ -122,7 +117,9 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 需要首先指定依赖库的路径，例如：
 `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/userdata/install/lib`
 
-修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以
+
+修改 ROS_LOG_DIR 的路径，否则会创建在 /home 目录下，需要执行 mount -o remount,rw /，才可以在 /home 下创建日志
+`export ROS_LOG_DIR=/userdata/`
 
 运行 mipi_cam
 ```

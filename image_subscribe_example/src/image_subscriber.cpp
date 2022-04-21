@@ -28,7 +28,7 @@ ImageSubscriber::ImageSubscriber(const rclcpp::NodeOptions& node_options, ImgCbT
   if (!topic_name.empty()) {
     topic_name_ = topic_name;
   }
-  if (topic_name_.find("hbmem") == std::string::npos) {
+  if (topic_name_.find("shared_mem") == std::string::npos) {
     RCLCPP_WARN(rclcpp::get_logger("ImageSubscriber"),
       "Create subscription with topic_name: %s", topic_name_.c_str());
     if (topic_name_.compare(topic_name_compressed_) != 0) {
