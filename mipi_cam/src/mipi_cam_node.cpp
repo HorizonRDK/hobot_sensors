@@ -10,7 +10,7 @@
 
 #include <string>
 #include <memory>
-
+#include <vector>
 #include <stdarg.h>
 
 extern "C" int ROS_printf(char *fmt, ...)
@@ -118,6 +118,19 @@ void MipiCamNode::init()
 {
   if(m_bIsInit)
     return;
+
+  // 使能sensor mclk
+  std::vector<std::string> sys_cmds{
+    "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart",
+    "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
+    "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",
+    "echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en",
+    "echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq"
+  };
+  for (const auto& sys_cmd : sys_cmds) {
+    system(sys_cmd.data());
+  }
+
   while (frame_id_ == "") {
     RCLCPP_WARN_ONCE(
     rclcpp::get_logger("mipi_node"),
