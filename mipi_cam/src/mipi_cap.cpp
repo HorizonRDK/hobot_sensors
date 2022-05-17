@@ -3,6 +3,7 @@
  * Copyright 2020 Horizon Robotics, Inc.
  * All rights reserved.
  ***************************************************************************/
+#include <string>
 #include "mipi_cam/mipi_cap.h"
 
 #include "x3_vio_venc.h"
@@ -178,6 +179,23 @@ int MipiDevice::init_param(void)
         ret = mimx415_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
     } else if (strcmp(sensor_name, "F37") == 0) {
         ret = mf37_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+        int bus_num =
+            m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
+        std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
+        if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
+          // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
+          for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
+            dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
+            if (access(dev_i2c.data(), F_OK) == 0) {
+              m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num =
+              dev_id;
+              ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d",
+              bus_num,
+              m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
+              break;
+            }
+          }
+        }
     } else {
         ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
         m_oX3UsbCam.m_infos.m_vin_enable = 0;
