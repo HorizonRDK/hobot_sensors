@@ -12,7 +12,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-using hobot_usb_cam;
+using hobot_usb_cam::HobotUSBCamNode;
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
