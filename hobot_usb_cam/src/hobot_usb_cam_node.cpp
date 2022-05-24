@@ -227,9 +227,9 @@ void HobotUSBCamNode::ReadFrame() {
           message.width = 1920;
           message.step = 1920 * 3;
           memcpy(message.encoding.data(), "jpeg", strlen("jpeg"));
-          message.time_stamp =
-            cam_buffer.reserved_buffer.timestamp.tv_sec * 1000000000
-            + cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
+          message.time_stamp.sec = cam_buffer.reserved_buffer.timestamp.tv_sec;
+          message.time_stamp.nanosec =
+            cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
           if (cam_buffer.length < message.step * message.height) {
             memcpy(&message.data[0], cam_buffer.start, cam_buffer.length);
             message.data_size = cam_buffer.length;
@@ -248,9 +248,9 @@ void HobotUSBCamNode::ReadFrame() {
           message.width = 960;
           message.step = 960 * 3;
           memcpy(message.encoding.data(), "jpeg", strlen("jpeg"));
-          message.time_stamp =
-            cam_buffer.reserved_buffer.timestamp.tv_sec * 1000000000
-            + cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
+          message.time_stamp.sec = cam_buffer.reserved_buffer.timestamp.tv_sec;
+          message.time_stamp.nanosec =
+            cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
           if (cam_buffer.length < message.step * message.height) {
             memcpy(&message.data[0], cam_buffer.start, cam_buffer.length);
             message.data_size = cam_buffer.length;
@@ -269,9 +269,9 @@ void HobotUSBCamNode::ReadFrame() {
           message.width = 640;
           message.step = 640 * 3;
           memcpy(message.encoding.data(), "jpeg", strlen("jpeg"));
-          message.time_stamp =
-            cam_buffer.reserved_buffer.timestamp.tv_sec * 1000000000
-            + cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
+          message.time_stamp.sec = cam_buffer.reserved_buffer.timestamp.tv_sec;
+          message.time_stamp.nanosec =
+            cam_buffer.reserved_buffer.timestamp.tv_usec * 1000;
           if (cam_buffer.length < message.step * message.height) {
             memcpy(&message.data[0], cam_buffer.start, cam_buffer.length);
             message.data_size = cam_buffer.length;
