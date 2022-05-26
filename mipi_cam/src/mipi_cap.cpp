@@ -19,6 +19,7 @@
 //#include "x3_config.h"
 #include "sensor_f37_config.h"
 #include "sensor_imx415_config.h"
+#include "sensor_gc4663_config.h"
 #include "x3_preparam.h"
 
 MipiDevice::MipiDevice()
@@ -84,6 +85,25 @@ int MipiDevice::mimx415_linear_vin_param_init(x3_vin_info_t* vin_info)
     vin_info->pipeinfo = PIPE_ATTR_IMX415_LINEAR_BASE;
     vin_info->disinfo = DIS_ATTR_IMX415_BASE;
     vin_info->ldcinfo = LDC_ATTR_IMX415_BASE;
+    vin_info->vin_vps_mode = VIN_SIF_ONLINE_DDR_ISP_DDR_VPS_ONLINE;
+
+    // 单目的使用dev_id 和 pipe_id 都设置成0
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
+    vin_info->enable_dev_attr_ex = 0;
+
+    return 0;
+}
+
+/******************************** GC4663 方案 ******************************/
+int MipiDevice::mgc4663_linear_vin_param_init(x3_vin_info_t* vin_info)
+{
+    vin_info->snsinfo = SENSOR_GC4663_30FPS_1440P_LINEAR_INFO;
+    vin_info->mipi_attr = MIPI_SENSOR_GC4663_30FPS_1440P_LINEAR_ATTR;
+    vin_info->devinfo = DEV_ATTR_GC4663_LINEAR_BASE;
+    vin_info->pipeinfo = PIPE_ATTR_GC4663_LINEAR_BASE;
+    vin_info->disinfo = DIS_ATTR_GC4663_BASE;
+    vin_info->ldcinfo = LDC_ATTR_GC4663_BASE;
     vin_info->vin_vps_mode = VIN_SIF_ONLINE_DDR_ISP_DDR_VPS_ONLINE;
 
     // 单目的使用dev_id 和 pipe_id 都设置成0
@@ -196,6 +216,8 @@ int MipiDevice::init_param(void)
             }
           }
         }
+    } else if (strcmp(sensor_name, "GC4663") == 0) {
+        ret = mgc4663_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
     } else {
         ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
         m_oX3UsbCam.m_infos.m_vin_enable = 0;
@@ -217,7 +239,7 @@ int MipiDevice::init_param(void)
     // 以下是配置group的每一个通道的参数
     m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_chn_num = 1;
     ret |= vps_chn_param_init(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_chn_attrs[0],
-            1, m_oCamInfo.width, m_oCamInfo.height, m_oCamInfo.fps);
+            2, m_oCamInfo.width, m_oCamInfo.height, m_oCamInfo.fps);
     /*
     m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_chn_num = 3;
     //这个默认就有 4 层，8 层，分别为原始分辨率的 一半，再一半，第一次传最大size，第二次传最小size
