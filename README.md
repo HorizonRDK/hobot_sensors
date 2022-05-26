@@ -2,7 +2,7 @@
 ---
 # Intro
 ---
-通过阅读本文档，用户可以在地平线X3开发板上轻松抓取mipi摄像头的视频流数据，并通过ROS平台发布满足ROS标准的图片数据，供其他ROS Node订阅获取。目前支持F37、IMX415 mipi标准设备。
+通过阅读本文档，用户可以在地平线X3开发板上轻松抓取mipi摄像头的视频流数据，并通过ROS平台发布满足ROS标准的图片数据，供其他ROS Node订阅获取。目前支持F37、IMX415、GC4663 mipi标准设备。
 Mipi_cam Node package是地平线机器人开发平台的一部分，基于地平线VIO和ROS2 Node进行二次开发，为应用开发提供简单易用的摄像头数据采集功能的功能，避免重复开发获取视频的工作。支持 share mem 方式发布。
 
 # Build
@@ -43,7 +43,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 
 2、编译：
   - 只发布支持share mem的 hbmem_img主题的图片：`colcon build --packages-select mipi_cam --cmake-args -DSHARED_MEM=ON`
-  这个需要先配置 TROS 环境，例如：`source /opt/tros/setup.bash`
+    这个需要先配置 TROS 环境，例如：`source /opt/tros/setup.bash`
   - 支持发布ROS标准图片：`colcon build --packages-select mipi_cam`。
 
 
@@ -71,6 +71,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
      -DSHARED_MEM=ON
 - 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。     
+  
   ```
 
 
@@ -151,5 +152,4 @@ root@xj3ubuntu:/userdata/cc_ws/tros_ws# ros2 run image_subscribe_example subscri
 ```
 注意：此项功能，需要安装 ros包 image_transport_plugins，利用命令：
 sudo apt-get install ros-foxy-image-transport-plugins
-
 

@@ -293,8 +293,10 @@ bool MipiCam::get_image(
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msStart = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
-    reinterpret_cast<unsigned int*>(&image_->image_size)))
+  if (m_pMipiDev->GetVpsFrame(
+          2, &image_pub_->width, &image_pub_->height,
+          reinterpret_cast<void **>(&image_->image),
+          reinterpret_cast<unsigned int *>(&image_->image_size)))
     return false;
   clock_gettime(CLOCK_REALTIME, &time_start);
   stamp.sec = time_start.tv_sec;
@@ -354,8 +356,10 @@ bool MipiCam::get_image_mem(
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msStart = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  if (m_pMipiDev->GetVpsFrame(1, &image_pub_->width, &image_pub_->height, reinterpret_cast<void**>(&image_->image),
-    reinterpret_cast<unsigned int*>(&image_->image_size)))
+  if (m_pMipiDev->GetVpsFrame(
+          2, &image_pub_->width, &image_pub_->height,
+          reinterpret_cast<void **>(&image_->image),
+          reinterpret_cast<unsigned int *>(&image_->image_size)))
     return false;
   clock_gettime(CLOCK_REALTIME, &time_start);
   // stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
