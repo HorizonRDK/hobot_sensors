@@ -559,7 +559,7 @@ bool HobotUSBCam::ReadFrame(CamBuffer &cam_buffer) {
             return false;
         }
       }
-      cam_buffer.length = buffers_[buffer.index].length;
+      cam_buffer.length = buffer.bytesused;
       cam_buffer.start = buffers_[buffer.index].start;
       cam_buffer.time_point = std::chrono::system_clock::time_point {
           std::chrono::seconds { buffer.timestamp.tv_sec } +

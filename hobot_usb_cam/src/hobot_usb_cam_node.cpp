@@ -67,6 +67,7 @@ HobotUSBCamNode::HobotUSBCamNode(const rclcpp::NodeOptions &ndoe_options)
 }
 
 HobotUSBCamNode::~HobotUSBCamNode() {
+  reading_ = false;
   if (read_thread_ != nullptr)
     read_thread_->join();
   if (cam_node_state_ == kSTATE_RUNING) {
