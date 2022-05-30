@@ -176,18 +176,24 @@ void HobotUSBCamNode::SetPublisher() {
       hbmem_image_pub_480_ = nullptr;
       image_pub_ = nullptr;
     } else if (image_width_ == 960 && image_height_ == 540) {
-      hbmem_image_pub_1080_ = nullptr;
-      hbmem_image_pub_540_ =
-        this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg540P>
+      hbmem_image_pub_1080_ =
+        this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>
           ("hbmem_image", 5);
+      hbmem_image_pub_540_ = nullptr;
+      // Todo Use different pub for different image resulution
+      // hbmem_image_pub_540_ =
+      //   this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg540P>
+      //     ("hbmem_image", 5);
       hbmem_image_pub_480_ = nullptr;
       image_pub_ = nullptr;
     } else if (image_width_ == 640 && image_height_ == 480) {
-      hbmem_image_pub_1080_ = nullptr;
-      hbmem_image_pub_540_ = nullptr;
-      hbmem_image_pub_480_ =
-        this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg480P>
+      hbmem_image_pub_1080_ =
+        this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>
           ("hbmem_image", 5);
+      hbmem_image_pub_540_ = nullptr;
+      // hbmem_image_pub_480_ =
+      //   this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg480P>
+      //     ("hbmem_image", 5);
       image_pub_ = nullptr;
     } else {
       RCLCPP_ERROR(this->get_logger(), "Invalid resolution: "
@@ -242,7 +248,7 @@ void HobotUSBCamNode::ReadFrame() {
           hbmem_image_pub_1080_->publish(std::move(loanedMsg));
         }
       } else if (image_width_ == 540) {
-        auto loanedMsg = hbmem_image_pub_540_->borrow_loaned_message();
+        auto loanedMsg = hbmem_image_pub_1080_->borrow_loaned_message();
         if (loanedMsg.is_valid()) {
           auto& message = loanedMsg.get();
           message.height = 540;
@@ -260,10 +266,10 @@ void HobotUSBCamNode::ReadFrame() {
               message.step * message.height);
             message.data_size = message.step * message.height;
           }
-          hbmem_image_pub_540_->publish(std::move(loanedMsg));
+          hbmem_image_pub_1080_->publish(std::move(loanedMsg));
         }
       } else {
-        auto loanedMsg = hbmem_image_pub_540_->borrow_loaned_message();
+        auto loanedMsg = hbmem_image_pub_1080_->borrow_loaned_message();
         if (loanedMsg.is_valid()) {
           auto& message = loanedMsg.get();
           message.height = 480;
@@ -281,7 +287,7 @@ void HobotUSBCamNode::ReadFrame() {
               message.step * message.height);
             message.data_size = message.step * message.height;
           }
-          hbmem_image_pub_540_->publish(std::move(loanedMsg));
+          hbmem_image_pub_1080_->publish(std::move(loanedMsg));
         }
       }
     } else {
