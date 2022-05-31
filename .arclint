@@ -12,7 +12,7 @@
             "flags": ["--extensions=h,h++,hh,hpp,hxx,cc,c++,cpp,cxx,C"],
             "include": ["(\\.h$)", "(\\.h++)", "(\\.hh)","(\\.hpp$)",  "(\\.hxx$)", "(\\.cc$)", "(\\.c++$)", "(\\.cpp$)", "(\\.cxx$)","(\\.C$)"],
             "exclude": [
-              "(mipi_cam/x3_prebuilt/)"
+              "(mipi_cam/x3_prebuilt/)","(rgbd_sensor/src/TOF_SDK)","(rgbd_sensor/src/application)"
                 ]
         },
         "golang": {
@@ -36,7 +36,7 @@
             "flags": ["--extensions=h,c"],
             "include": ["(\\.h$)", "(\\.c$)"],
             "exclude": [
-              "(mipi_cam/x3_prebuilt/)"
+              "(mipi_cam/x3_prebuilt/)","(rgbd_sensor/src/TOF_SDK)","(rgbd_sensor/src/application)"
                 ]
         }
     }

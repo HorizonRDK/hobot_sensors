@@ -23,7 +23,7 @@ extern "C" int ROS_printf(char *fmt, ...)
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "%s", buf);
 	va_end(args);
 }
-
+#define PUB_BUF_NUM 5
 namespace mipi_cam
 {
 
@@ -32,7 +32,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   Node("mipi_cam", node_options),
   img_(new sensor_msgs::msg::Image())
 {
-  image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
+  image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw", PUB_BUF_NUM);
   // declare params
   this->declare_parameter("camera_name", "default_cam");
   this->declare_parameter("camera_info_url", "");
@@ -154,7 +154,7 @@ void MipiCamNode::init()
   if (io_method_name_.compare("shared_mem") == 0) {
     // 创建hbmempub
     publisher_hbmem_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
-        "hbmem_img", 10);
+        "hbmem_img", PUB_BUF_NUM);
   }
 #endif
 

@@ -6,7 +6,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-OPTION(SHARED_MEM    "SHARED_MEM work environment"    OFF)
+OPTION(BUILD_HBMEM    "BUILD_HBMEM work environment"    OFF)
 
 # Using image_transport pkg to publish compressed img with default config
 # 
@@ -27,7 +27,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 add_compile_options(-w)
-if(SHARED_MEM)
+if(BUILD_HBMEM)
 add_definitions(-DUSING_HBMEM)
 find_package(hbm_img_msgs REQUIRED)
 endif()
@@ -87,7 +87,7 @@ ament_target_dependencies(
   sensor_msgs
   )
 
-if(SHARED_MEM)
+if(BUILD_HBMEM)
 target_link_libraries(${PROJECT_NAME}
   hbmem
 )
@@ -102,6 +102,11 @@ endif()
 install(
   TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 ament_package()
