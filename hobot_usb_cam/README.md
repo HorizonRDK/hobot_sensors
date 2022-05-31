@@ -110,12 +110,16 @@ export COLCON_CURRENT_PREFIX=./install
 source ./install/setup.bash
 ~~~
 
-运行hobot_usb_cam
-
+使用launch运行hobot_usb_cam
+~~~shell
+ros2 launch  hobot_usb_cam hobot_usb_cam.launch.py
+~~~
+使用命令运行hobot_usb_cam
 ~~~shell
 ros2 run hobot_usb_cam hobot_usb_cam --ros-args --log-level info --ros-args -p video_device:="/dev/video8"
 ~~~
 
+注意：video_device参数需要根据实际情况配置
 ### **Linux**
 
 ```shell
