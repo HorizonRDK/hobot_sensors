@@ -38,20 +38,18 @@ include_directories(include
   src/application/v4l2_capture
 )
 
+include_directories(
+  ${CMAKE_SYSROOT}/usr/include/vio
+)
+
 link_directories(
-  #${CMAKE_SYSROOT}/usr/lib/hbmedia/
+  ${CMAKE_SYSROOT}/usr/lib/hbmedia/
   src/TOF_SDK/libs
 )
 
 if(BORAD_UBUNTU)
 include_directories(
-  src/application/horizon_mpp/ubuntu/include
-  src/application/horizon_mpp/ubuntu/include/linux
-  src/application/horizon_mpp/ubuntu/include/vio
   src/application/horizon_mpp/
-)
-link_directories(
-  src/application/horizon_mpp/ubuntu/libs/hbmedia
 )
 else()
 include_directories(

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "hb_vio_interface.h"
 #include "horizon_mpp.h"
 #include "hb_venc.h"
