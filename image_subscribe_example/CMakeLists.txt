@@ -15,12 +15,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-OPTION(SHARED_MEM    "SHARED_MEM work environment"    OFF)
+OPTION(BUILD_HBMEM    "BUILD_HBMEM work environment"    OFF)
 
-if(SHARED_MEM)
+if(BUILD_HBMEM)
 add_definitions(-DUSING_HBMEM)
 find_package(hbm_img_msgs REQUIRED)
-add_definitions(-DSHARED_MEM_MSG)
+add_definitions(-DBUILD_HBMEM_MSG)
 endif()
 
 # find dependencies
@@ -36,7 +36,7 @@ include_directories(include
 ${PROJECT_SOURCE_DIR}
 )
 
-if(SHARED_MEM)
+if(BUILD_HBMEM)
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/
 )
@@ -47,7 +47,7 @@ src/example.cpp
 src/image_subscriber.cpp
 )
 
-if(SHARED_MEM)
+if(BUILD_HBMEM)
 target_link_libraries(subscribe_example
   hbmem ion alog
 )

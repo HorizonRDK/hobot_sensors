@@ -27,24 +27,17 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 
 ## 编译
 支持在X3 Ubuntu系统上编译和在PC上使用docker交叉编译两种方式，并支持通过编译选项控制编译pkg的依赖和pkg的功能。
-### 编译选项
-1、SHARED_MEM
-
-- shared mem（共享内存传输）使能开关，默认关闭（OFF），编译时使用-DSHARED_MEM=ON命令打开。
-- 如果打开，编译和运行会依赖hbm_img_msgs pkg，并且需要使用tros进行编译。
-- 如果关闭，编译和运行不依赖hbm_img_msgs pkg，支持使用原生ros和tros进行编译。
 
 ### X3 Ubuntu系统上编译
 1、编译环境确认
 
-- 当前编译终端已设置ROS环境变量：`source /opt/ros/foxy/setup.bash`。
-- 已安装ROS2编译工具colcon。安装的ROS不包含编译工具colcon，需要手动安装colcon。colcon安装命令：`apt update; apt install python3-colcon-common-extensions`
+- 板端已安装X3 Ubuntu系统。
+- 当前编译终端已设置TogetherROS环境变量：`source PATH/setup.bash`。其中PATH为TogetherROS的安装路径。
+- 已安装ROS2编译工具colcon，安装命令：`pip install -U colcon-common-extensions`
 - 已依赖pkg ，详见 Dependency 部分
 
 2、编译：
-  - 只发布支持share mem的 hbmem_img主题的图片：`colcon build --packages-select mipi_cam --cmake-args -DSHARED_MEM=ON`
-    这个需要先配置 TROS 环境，例如：`source /opt/tros/setup.bash`
-  - 支持发布ROS标准图片：`colcon build --packages-select mipi_cam`。
+  `colcon build --packages-select mipi_cam`。
 
 
 ### docker交叉编译
@@ -68,8 +61,8 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
      --cmake-force-configure \
      --cmake-args \
      --no-warn-unused-cli \
-     -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
-     -DSHARED_MEM=ON
+     -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake
+     
 - 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。     
   
   ```
@@ -77,7 +70,8 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 
 # Usage
 ## X3 Ubuntu系统
-用户直接调用ros2 命令启动即可：
+
+运行方式1，用户直接调用ros2 命令启动即可：
 
 ```
 
@@ -130,6 +124,10 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 #/userdata/install/lib/mipi_cam/mipi_cam --ros-args -p image_width:=960 -p image_height:=540
 
 ```
+
+运行方式2，使用launch文件启动：
+`ros2 launch install/share/mipi_cam/launch/mipi_cam.launch.py`
+
 # Attention
 目前设备出来的数据默认为nv12，转rgb8 格式，目前没有用cv，1920*1080 性能耗时 100ms 左右，压缩图需要用中继的方式支持：
 ros2 run image_transport republish [in_transport] in:=<in_base_topic> [out_transport] out:=<out_base_topic>
