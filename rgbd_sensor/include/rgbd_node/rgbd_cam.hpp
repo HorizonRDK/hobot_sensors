@@ -56,7 +56,7 @@ class ShyCam : public CVideoComm {
     int GetCurState(int nType);   // 查询当前存储图片使用状态
     int GetUseIdx() { return m_nCurUseIndex; }
     void SetSaveData(bool bSave) { m_bSave = bSave; }   // 查询当前存储图片使用状态
-    int CalcTofSync(TTofRgbResult *pOutTofRes)
+    int CalcTofSync(TTofRgbResult *pOutTofRes);
 
     bool is_capturing() { return m_nDevStat == enDEV_START; }
 
