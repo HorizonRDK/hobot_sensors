@@ -31,7 +31,7 @@ HobotUSBCamNode::HobotUSBCamNode(const rclcpp::NodeOptions &ndoe_options)
   this->declare_parameter("io_method", "mmap");
   this->declare_parameter("pixel_format", "mjpeg");
   this->declare_parameter("video_device", "/dev/video0");
-  this->declare_parameter("zero-copy", "disabled");
+  this->declare_parameter("zero_copy", true);
 
   if (GetParams() == false) {
     RCLCPP_ERROR(this->get_logger(), "Hobot USB Cam GetParams() failed\n\n");
@@ -88,7 +88,7 @@ bool HobotUSBCamNode::GetParams() {
     std::make_shared<rclcpp::SyncParametersClient>(this);
   auto parameters = parameters_client->get_parameters(
     {"frame_id", "framerate", "image_height", "image_width",
-    "io_method", "pixel_format", "video_device"});
+    "io_method", "pixel_format", "video_device", "zero_copy"});
   return AssignParams(parameters);
 }
 
@@ -113,7 +113,7 @@ bool HobotUSBCamNode::AssignParams(
         return false;
     } else if (parameter.get_name() == "video_device") {
       video_device_name_ = parameter.value_to_string();
-    } else if (parameter.get_name() == "zero-copy") {
+    } else if (parameter.get_name() == "zero_copy") {
       zero_copy_enabled_ = parameter.as_bool();
     } else {
       RCLCPP_WARN(this->get_logger(), "Invalid parameter name: %s",
