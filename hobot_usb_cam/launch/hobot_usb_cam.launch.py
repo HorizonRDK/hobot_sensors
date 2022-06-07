@@ -16,7 +16,7 @@ def generate_launch_description():
                           {"io_method": "mmap"},
                           {"pixel_format": "mjpeg"},
                           {"video_device": "/dev/video8"},
-                          {"zero-copy": "disabled"}
+                          {"zero_copy": False}
                          ]
             )
     ])
