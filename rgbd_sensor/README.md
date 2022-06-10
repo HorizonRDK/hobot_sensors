@@ -154,3 +154,7 @@ ros2 run rgbd_sensor rgbd_sensor
 #/userdata/install/lib/rgbd_sensor/rgbd_sensor --ros-args -p io_method:=ros
 
 ```
+
+## rviz2 观看效果
+安装：
+apt install ros-foxy-rviz-common ros-foxy-rviz-default-plugins ros-foxy-rviz2

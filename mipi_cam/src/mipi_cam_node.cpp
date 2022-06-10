@@ -1,8 +1,17 @@
-/***************************************************************************
- * COPYRIGHT NOTICE
- * Copyright 2020 Horizon Robotics, Inc.
- * All rights reserved.
- ***************************************************************************/
+// Copyright (c) 2022，Horizon Robotics.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "mipi_cam/mipi_cam_node.hpp"
 
 #include <sstream>
@@ -19,7 +28,6 @@ extern "C" int ROS_printf(char *fmt, ...)
 	va_list args;
 	va_start(args, fmt);
   vsprintf(buf, fmt, args);
-  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), fmt, args);
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "%s", buf);
 	va_end(args);
 }
@@ -43,8 +51,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("io_method", "mmap");
   this->declare_parameter("pixel_format", "yuyv");
   this->declare_parameter("out_format", "bgr8");  // nv12
-  this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");//"/dev/video0");
-  // video_compressed_publisher_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed",5);
+  this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
   get_params();
   init();  //外部可能会调用了
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
@@ -140,7 +147,6 @@ void MipiCamNode::init()
   }
 
   img_->header.frame_id = frame_id_;
-  // img_compressed_->header.frame_id = frame_id_;
   RCLCPP_INFO(
     rclcpp::get_logger("mipi_node"),
     "[MipiCamNode::%s]->Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS",
@@ -176,8 +182,6 @@ void MipiCamNode::init()
     return;
   }
   mipiCam_.get_formats();
-  // TODO(oal) should this check a little faster than expected frame rate?
-  // TODO(oal) how to do small than ms, or fractional ms- std::chrono::nanoseconds?
   const int period_ms = 1000.0 / framerate_;
   if (io_method_name_.compare("shared_mem") != 0) {
     timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
@@ -199,23 +203,16 @@ bool MipiCamNode::take_and_send_image()
     RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "grab failed");
     return false;
   }
-  // INFO(img_->data.size() << " " << img_->width << " " << img_->height << " " << img_->step);
   image_pub_->publish(*img_);
   return true;
 }
 void MipiCamNode::update()
 {
   if (mipiCam_.is_capturing()) {
-    // If the camera exposure longer higher than the framerate period
-    // then that caps the framerate.
-    // auto t0 = now();
     if (!take_and_send_image()) {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
       "mipi camera did not respond in time.");
     }
-    // auto diff = now() - t0;
-    // INFO(diff.nanoseconds() / 1e6 << " " << int(t0.nanoseconds() / 1e9));
-    // RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),"[update]->start %ld \n", mipi_cam::GetTickCount());
   }
 }
 void MipiCamNode::hbmem_update()
@@ -232,13 +229,6 @@ void MipiCamNode::hbmem_update()
         return;
       }
       msg.index = mSendIdx++;
-      /*auto time_now =
-          std::chrono::duration_cast<std::chrono::microseconds>(
-              std::chrono::high_resolution_clock::now().time_since_epoch())
-              .count();
-      msg.index = count_;
-      msg.time_stamp = time_now;
-      RCLCPP_INFO(this->get_logger(), "message: %d", msg.index);*/
       publisher_hbmem_->publish(std::move(loanedMsg));
     } else {
       RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "borrow_loaned_message failed");

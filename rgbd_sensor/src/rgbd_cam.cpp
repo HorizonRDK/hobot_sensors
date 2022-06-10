@@ -1,8 +1,17 @@
-/***************************************************************************
- * COPYRIGHT NOTICE
- * Copyright 2020 Horizon Robotics, Inc.
- * All rights reserved.
- ***************************************************************************/
+// Copyright (c) 2022，Horizon Robotics.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #define __STDC_CONSTANT_MACROS
 #include "rgbd_node/rgbd_cam.hpp"
 #include "rgbd_node/video_utils.hpp"
@@ -138,13 +147,13 @@ int ShyCam::GetValidUse()
                 utTMStamp = m_arrRecvStrmData[nIdx].depth_frame.timeStamp;
                 nRetIdx = nIdx;
             } else {
-                ROS_printf(0, "<==>[%s]->errStamp %lld - %lld Idx=%d.\n", __func__,
+                ROS_printf(1, "<==>[%s]->errStamp %lld - %lld Idx=%d.\n", __func__,
                     utTMStamp, m_arrRecvStrmData[nIdx].depth_frame.timeStamp, nIdx);
             }
         }
     }
     if (-1 == nRetIdx && s_bPrint) {
-        ROS_printf(0, "<==>[%s]->NoBuffer Idx=%d.\n", __func__, nIdx);
+        ROS_printf(1, "<==>[%s]->NoBuffer Idx=%d.\n", __func__, nIdx);
         // abort();
     }
     m_nCurUseIndex = nRetIdx;
