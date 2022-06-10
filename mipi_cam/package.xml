@@ -6,8 +6,8 @@
   <description>A ROS2 Driver for Mipi Cameras</description>
 
   <maintainer email="wenli.wu@horizon.ai">wenli wu</maintainer>
-
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
+  
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>rclcpp</depend>

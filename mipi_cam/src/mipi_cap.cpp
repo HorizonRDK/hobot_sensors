@@ -1,8 +1,17 @@
-/***************************************************************************
- * COPYRIGHT NOTICE
- * Copyright 2020 Horizon Robotics, Inc.
- * All rights reserved.
- ***************************************************************************/
+// Copyright (c) 2022，Horizon Robotics.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <string>
 #include "mipi_cam/mipi_cap.h"
 
@@ -181,6 +190,7 @@ vp_err:
     return -1;
 }
 
+#define USE_VPS
 int MipiDevice::init_param(void)
 {
     int ret = 0;
@@ -247,8 +257,8 @@ int MipiDevice::init_param(void)
     width = m_oX3UsbCam.m_infos.m_vin_info.mipi_attr.mipi_host_cfg.width;
     height = m_oX3UsbCam.m_infos.m_vin_info.mipi_attr.mipi_host_cfg.height;
     fps = m_oX3UsbCam.m_infos.m_vin_info.mipi_attr.mipi_host_cfg.fps;
-
-    m_oX3UsbCam.m_infos.m_vin_info.vin_vps_mode = VIN_ONLINE_VPS_ONLINE;
+#ifdef USE_VPS
+    // m_oX3UsbCam.m_infos.m_vin_info.vin_vps_mode = VIN_ONLINE_VPS_ONLINE;
     m_oX3UsbCam.m_infos.m_vps_enable = 1;
     m_oX3UsbCam.m_infos.m_vps_infos.m_group_num = 1;
     // 配置group的输入
@@ -258,21 +268,7 @@ int MipiDevice::init_param(void)
     m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_chn_num = 1;
     ret |= vps_chn_param_init(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_chn_attrs[0],
             2, m_oCamInfo.width, m_oCamInfo.height, m_oCamInfo.fps);
-    /*
-    m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_chn_num = 3;
-    //这个默认就有 4 层，8 层，分别为原始分辨率的 一半，再一半，第一次传最大size，第二次传最小size
-    // chn2 给 usb gadget
-    ret |=  vps_chn_param_init(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_chn_attrs[0],
-            2, width, height, fps);
-    if (width >= 1920 && height >= 1080) {
-        // chn 1 给 bpu 运算算法
-        ret |= vps_chn_param_init(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_chn_attrs[1],
-                1,1920, 1080, fps);//960,540
-        // chn 3 给 hdmi 显示
-        ret |= vps_chn_param_init(&m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_chn_attrs[2],
-                3, width/4, height/4, fps);
-        //m_oX3UsbCam.m_infos.m_vot_enable = 1;
-    }*/
+#endif
     ROS_printf("[%s]-> w:h=%d:%d ,fps=%d sucess.\n", __func__, width, height, fps);
     return ret;
 }
@@ -319,7 +315,7 @@ int MipiDevice::x3_mipi_cam_start(void) {
             return -3003;
         }
     }
-    print_debug_infos();
+    // print_debug_infos();   // disable by wuwl 20220514
     mState = 1;
     return 0;
 }
@@ -354,48 +350,6 @@ extern "C" int time_cost_ms(struct timeval *start, struct timeval *end);
 int MipiDevice::doCapStreamLoop()
 {
     return 0;
-    /*struct timeval time_now = { 0 };
-    struct timeval time_next = { 0 };
-    int size = -1, ret = 0;
-    int time_ms = 0;
-    struct timeval select_timeout = {0};
-    hb_vio_buffer_t vOut;
-    char file_name[128] = "/userdata/robot/mipi.yuv";
-    int nSave = 0;
-    int nPrintLog = 100;
-    do
-    {
-        ret =x3_vin_get_ouput(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,&vOut);
-        if (ret < 0) {
-            ROS_printf("[doCapStreamLoop]->HB_VIN_GetPipeFrame error =%d !!!\n",ret);
-            usleep(10*1000);
-            break;
-            continue;
-        }
-        size = vOut.img_addr.stride_size * vOut.img_addr.height;
-        if (0==nSave){
-            gettimeofday(&time_now, NULL);
-            x3_dump_vio_buf_to_nv12(file_name, &vOut);
-            gettimeofday(&time_next, NULL);
-            int time_cost = time_cost_ms(&time_now, &time_next);
-            ROS_printf("[%s]->dumpToFile yuv cost time %d ms,pipe=%d.\n",
-                __func__,time_cost,m_oX3UsbCam.m_infos.m_vin_info.pipe_id);
-            nSave = 1;
-        }
-        ++nPrintLog;
-        if (nPrintLog>100){
-            x3_normal_buf_info_print(&vOut);
-            ROS_printf("==>[%s]->yuv ret=%d, stride_size(%d) wxh(%d*%d), size %d\n", __func__,ret,
-                        vOut.img_addr.stride_size,
-                        vOut.img_addr.width, vOut.img_addr.height, size);
-            nPrintLog = 0;
-        }		
-        ret = x3_vin_output_release(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,&vOut);
-        if(ret<0)
-            break;
-    } while (1);
-    return 0;
-    */
 }
 
 int MipiDevice::childStart()
@@ -412,7 +366,8 @@ int MipiDevice::childStop()
     x3_mipi_cam_stop();
     return 0;
 }
-
+// #define TEST_CLR
+extern void TestSave(char *pFilePath, char *imgData, int nDlen);
 int MipiDevice::GetVpsFrame(int nChnID,int *nVOutW,int *nVOutH,void **frame_buf, unsigned int* len)
 {
     int size = -1, ret = 0;
@@ -475,7 +430,6 @@ int MipiDevice::GetFrame(void **frame_buf, unsigned int* len)
     do {
         ret = HB_VPS_GetChnFrame(m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_grp_id,
                 4, &vOut, 1000);
-        // ret =x3_vin_get_ouput(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,&vOut);
         if (ret < 0) {
             ROS_printf("[GetFrame]->HB_VIN_GetPipeFrame error =%d !!!\n", ret);
             usleep(10*1000);
@@ -502,7 +456,6 @@ int MipiDevice::GetFrame(void **frame_buf, unsigned int* len)
         // yuv 转成 rgb8
         HB_VPS_ReleaseChnFrame(m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0].m_vps_grp_id,
                 4, &vOut);
-        // ret = x3_vin_output_release(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,&vOut);
         break;
     }while(1);
     return m_curCaptureIdx;

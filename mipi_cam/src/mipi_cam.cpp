@@ -1,8 +1,17 @@
-/***************************************************************************
- * COPYRIGHT NOTICE
- * Copyright 2020 Horizon Robotics, Inc.
- * All rights reserved.
- ***************************************************************************/
+// Copyright (c) 2022，Horizon Robotics.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #define __STDC_CONSTANT_MACROS
 #include "mipi_cam/mipi_cam.hpp"
 #include "mipi_cam/video_utils.hpp"
@@ -141,14 +150,12 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate)
 {
   unsigned int min;
   
-  // strcpy(m_oCamInfo.devName, camera_dev_.c_str());  // "F37");
   snprintf(m_oCamInfo.devName, sizeof(m_oCamInfo.devName), "%s", camera_dev_.c_str());
   m_oCamInfo.fps = framerate;
   m_oCamInfo.height = image_height;
   m_oCamInfo.width = image_width;
   int nRet = m_pMipiDev->OpenCamera(&m_oCamInfo);
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
-  // fd_ = open(camera_dev_.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
 
   if (-1 == nRet) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("mipi_cam"),
@@ -175,9 +182,6 @@ bool MipiCam::open_device(void)
 {
   m_pMipiDev = new MipiDevice();
   if (NULL==m_pMipiDev) {
-    // RCLCPP_ERROR_STREAM(
-    //   rclcpp::get_logger("mipi_cam"),
-    //   "Cannot open '" << camera_dev_ << "': " << errno << ", " << strerror(errno));
     return false;  // (EXIT_FAILURE);
   }
   ROS_printf("[%s]->cam %p new.\r\n", __func__, m_pMipiDev);
@@ -319,12 +323,6 @@ bool MipiCam::get_image(
     }
     // jpeg，png---opencv 转 bgr8
     process_image(image_->image, image_->image_size, image_pub_);
-    // TestSave("/userdata/catkin_ws/test.yuv", image_->image, image_->image_size);
-    /*++s_nIdx;
-    if (s_nIdx > 30) {
-      TestSave("/userdata/cc_ws/tros_ws/test.rgb", image_pub_->image, image_pub_->image_size);
-      abort();
-    }*/
     // eliminate this copy
     data.resize(image_pub_->image_size);  // step * height);
     memcpy(&data[0], image_pub_->image, data.size());
@@ -404,16 +402,6 @@ MipiCam::io_method MipiCam::io_method_from_string(const std::string & str)
 {
   // all did't support
   return IO_METHOD_UNKNOWN;
-  /*
-  if (str == "mmap") {
-    return IO_METHOD_MMAP;
-  } else if (str == "read") {
-    return IO_METHOD_READ;
-  } else if (str == "userptr") {
-    return IO_METHOD_USERPTR;
-  } else {
-    return IO_METHOD_UNKNOWN;
-  }*/
 }
 
 MipiCam::pixel_format MipiCam::pixel_format_from_string(const std::string & str)

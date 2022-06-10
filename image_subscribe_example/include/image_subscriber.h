@@ -1,10 +1,16 @@
-// Copyright (c) 2021 Horizon Robotics.All Rights Reserved.
+// Copyright (c) 2022，Horizon Robotics.
 //
-// The material in this file is confidential and contains trade secrets
-// of Horizon Robotics Inc. This is proprietary information owned by
-// Horizon Robotics Inc. No part of this work may be disclosed,
-// reproduced, copied, transmitted, or used in any way for any purpose,
-// without the express written permission of Horizon Robotics Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <string>
 #include <queue>
@@ -15,7 +21,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 
-#ifdef SHARED_MEM_MSG
+#ifdef BUILD_HBMEM_MSG
 #include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
 #endif
 
@@ -49,7 +55,7 @@ class ImageSubscriber : public rclcpp::Node {
   std::string save_dir_ = "";
   // 默认为空，表示正常sub，hbmem，表示用 hbmem sub
   // std::string io_method_ = "";
-#ifdef SHARED_MEM_MSG
+#ifdef BUILD_HBMEM_MSG
   rclcpp::SubscriptionHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
       hbmem_subscription_;
 #endif
@@ -81,7 +87,7 @@ class ImageSubscriber : public rclcpp::Node {
   void topic_callback(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   void topic_compressed_callback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr msg);
   // void hbmem_topic_callback(const hbmem_msgs::msg::SampleMessage::SharedPtr msg) const;
-#ifdef SHARED_MEM_MSG
+#ifdef BUILD_HBMEM_MSG
   void hbmem_topic_callback(const hbm_img_msgs::msg::HbmMsg1080P::ConstSharedPtr msg);
 #endif
 };
