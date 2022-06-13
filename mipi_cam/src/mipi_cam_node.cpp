@@ -231,7 +231,8 @@ void MipiCamNode::hbmem_update()
       msg.index = mSendIdx++;
       publisher_hbmem_->publish(std::move(loanedMsg));
     } else {
-      RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "borrow_loaned_message failed");
+      RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+      "borrow_loaned_message failed");
     }
   }
 #endif
