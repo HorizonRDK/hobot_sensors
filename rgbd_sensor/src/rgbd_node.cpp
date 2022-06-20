@@ -72,6 +72,8 @@ RgbdNode::~RgbdNode()
 
 void RgbdNode::get_params()
 {
+  declare_parameter("sensor_type", "CP3AM");
+  declare_parameter("io_method", "ros");
   this->get_parameter("sensor_type", _sensor_type);
   this->get_parameter("io_method", _io_mode);
 
@@ -173,6 +175,7 @@ void RgbdNode::exec_loopPub()
         "hbmem_infra", BUF_PUB_NUM);
     }
 #endif
+    bSharedMem = true;
   }
   while (!stop_) {
     if (bSharedMem) {
