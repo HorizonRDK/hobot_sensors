@@ -60,7 +60,7 @@ typedef enum tagTOF_MODE
 	TOF_MODE_HDRZ_45FPS  = 0x00010000,
 	TOF_MODE_HDRZ_60FPS  = 0x00020000,
 
-	//一种频
+	//帧率不同
 	TOF_MODE_5FPS        = 0x00040000,
 	TOF_MODE_10FPS       = 0x00080000,
 	TOF_MODE_20FPS       = 0x00100000,
@@ -68,9 +68,19 @@ typedef enum tagTOF_MODE
 	TOF_MODE_45FPS       = 0x00400000,
 	TOF_MODE_60FPS       = 0x00800000,
 
-	//名称待定
+	//ADI特定
 	TOF_MODE_ADI_1M5     = 0x01000000,
 	TOF_MODE_ADI_5M      = 0x02000000,
+
+	//自定义
+	TOF_MODE_CUSTOM_1    = 0x04000000,
+	TOF_MODE_CUSTOM_2    = 0x08000000,
+	TOF_MODE_CUSTOM_3    = 0x10000000,
+	TOF_MODE_CUSTOM_4    = 0x20000000,
+	TOF_MODE_CUSTOM_5    = 0x40000000,
+
+	//DEBUG模式
+	TOF_MODE_DEBUG       = 0x80000000,
 
 
 }TOF_MODE;
@@ -279,11 +289,17 @@ typedef struct tagPointData
 
 typedef struct tagRgbDData
 {
-	UINT8 r;
-	UINT8 g;
 	UINT8 b;
+	UINT8 g;
+	UINT8 r;
 }RgbDData;
 
+//坐标
+typedef struct tagPixelCoordData
+{
+	UINT16 x;
+	UINT16 y;
+}PixelCoordData;
 
 typedef enum tagCOLOR_FORMAT
 {

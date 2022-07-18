@@ -72,9 +72,9 @@ static unsigned long long Utils_GetTickCount(void)
 	unsigned long long tick = 0;
 
 #ifdef WIN32
-	//tick = GetTickCount();//ʵ�ʾ���ֻ��15ms����; ���ص���һ��32λ���޷���������Windows��������49.710��������ٴδ��㿪ʼ��ʱ; 
-	//tick = GetTickCount64();//����һ��64λ���޷���������Windows��������5.8��������ʱ�Ż����; 
-	//tick = clock();//�ó������������������ռ��CPU��ʱ��, ��C/C++�еļ�ʱ����
+	//tick = GetTickCount();//实际精度只有15ms左右; 返回的是一个32位的无符号整数，Windows连续运行49.710天后，它将再次从零开始计时; 
+	//tick = GetTickCount64();//返回一个64位的无符号整数。Windows连续运行5.8亿年后，其计时才会归零; 
+	//tick = clock();//该程序从启动到函数调用占用CPU的时间, 是C/C++中的计时函数
 
 	//struct timeval tv;
 	//gettimeofday(&tv, 0);
@@ -115,7 +115,7 @@ static long Utils_GetFileLen(const char * filename)
 		return 0;
 	}
 
-	fseek(fd, 0L, SEEK_END); /* ��λ���ļ�ĩβ */
+	fseek(fd, 0L, SEEK_END); /* 定位到文件末尾 */
 	const long len = ftell(fd);
 	fclose(fd);
 
@@ -374,8 +374,8 @@ bool CGrayConvert::ToBgr32(unsigned char* pGray, const int width, const int heig
 bool CGrayConvert::ToBgr32(unsigned short* pGray, const int width, const int height, unsigned int* pBgr32)
 {
 	const int pixel_cnt = width*height;
-	//const unsigned short min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const unsigned short max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const unsigned short min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const unsigned short max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
 	if (0 >= max)
 	{
@@ -383,7 +383,7 @@ bool CGrayConvert::ToBgr32(unsigned short* pGray, const int width, const int hei
 		return true;
 	}
 
-	const float K = (255 * 1.0 / max);//���ֵ��255�Ķ��ٱ�
+	const float K = (255 * 1.0 / max);//最大值是255的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
@@ -396,20 +396,20 @@ bool CGrayConvert::ToBgr32(unsigned short* pGray, const int width, const int hei
 bool CGrayConvert::ToBgr32(float* pGray, const int width, const int height, unsigned int* pBgr32)
 {
 	const int pixel_cnt = width*height;
-	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
-	if (0.001 >= max)//0ֵ�ú�ɫ��ʾ
+	if (0.001 >= max)//0值用黑色表示
 	{
 		memset(pBgr32, 0, pixel_cnt * sizeof(pBgr32[0]));
 		return true;
 	}
 
-	const float K = (255 * 1.0 / max);//���ֵ��255�Ķ��ٱ�
+	const float K = (255 * 1.0 / max);//最大值是255的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
-		unsigned char tmp = 0;//0ֵ�ú�ɫ��ʾ
+		unsigned char tmp = 0;//0值用黑色表示
 		if (0.001 < pGray[i])
 		{
 			tmp = (unsigned char)(pGray[i] * K);
@@ -431,8 +431,8 @@ bool CGrayConvert::ToBgr32(unsigned int* pGray, const int width, const int heigh
 bool CGrayConvert::ToU16(unsigned char* pGray, const int width, const int height, unsigned short* pU16)
 {
 	const int pixel_cnt = width*height;
-	//const unsigned char min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const unsigned char max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const unsigned char min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const unsigned char max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
 	if (0 >= max)
 	{
@@ -440,7 +440,7 @@ bool CGrayConvert::ToU16(unsigned char* pGray, const int width, const int height
 		return true;
 	}
 
-	const float K = (65535 * 1.0 / max);//���ֵ��65535�Ķ��ٱ�
+	const float K = (65535 * 1.0 / max);//最大值是65535的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
@@ -461,7 +461,7 @@ bool CGrayConvert::ToU16(unsigned short* pGray, const int width, const int heigh
 bool CGrayConvert::ToU16(float* pGray, const int width, const int height, unsigned short* pU16)
 {
 #if 1
-	//����1���Ҷ�ֱ����������ǿת
+	//方法1：灰度直接数据类型强转
 
 	const int pixel_cnt = width*height;
 
@@ -471,23 +471,23 @@ bool CGrayConvert::ToU16(float* pGray, const int width, const int height, unsign
 	}
 
 #else
-	//����2���ҶȰ��յȱ���ѹ��
+	//方法2：灰度按照等比例压缩
 
 	const int pixel_cnt = width*height;
-	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
-	if (0.001 >= max)//0ֵ�ú�ɫ��ʾ
+	if (0.001 >= max)//0值用黑色表示
 	{
 		memset(pU16, 0, pixel_cnt * sizeof(pU16[0]));
 		return true;
 	}
 
-	const float K = (65535 * 1.0 / max);//���ֵ��65535�Ķ��ٱ�
+	const float K = (65535 * 1.0 / max);//最大值是65535的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
-		unsigned short tmp = 0;//0ֵ�ú�ɫ��ʾ
+		unsigned short tmp = 0;//0值用黑色表示
 		if (0.001 < pGray[i])
 		{
 			tmp = (unsigned short)(pGray[i] * K);
@@ -503,8 +503,8 @@ bool CGrayConvert::ToU16(unsigned int* pGray, const int width, const int height,
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
-		unsigned char* pTmp = (unsigned char*)(pGray + i);//BGRD����
-		pU16[i] = (pTmp[0] << 8);//�Ŵ�65535
+		unsigned char* pTmp = (unsigned char*)(pGray + i);//BGRD排列
+		pU16[i] = (pTmp[0] << 8);//放大到65535
 	}
 
 	return true;
@@ -521,8 +521,8 @@ bool CGrayConvert::ToU8(unsigned char* pGray, const int width, const int height,
 bool CGrayConvert::ToU8(unsigned short* pGray, const int width, const int height, unsigned char* pU8)
 {
 	const int pixel_cnt = width*height;
-	//const unsigned short min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const unsigned short max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const unsigned short min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const unsigned short max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
 	if (0 >= max)
 	{
@@ -530,7 +530,7 @@ bool CGrayConvert::ToU8(unsigned short* pGray, const int width, const int height
 		return true;
 	}
 
-	const float K = (255 * 1.0 / max);//���ֵ��255�Ķ��ٱ�
+	const float K = (255 * 1.0 / max);//最大值是255的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
@@ -543,20 +543,20 @@ bool CGrayConvert::ToU8(unsigned short* pGray, const int width, const int height
 bool CGrayConvert::ToU8(float* pGray, const int width, const int height, unsigned char* pU8)
 {
 	const int pixel_cnt = width*height;
-	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element��ʱ��
-	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element��ʱ��
+	//const float min = Utils_FindMinValue(pGray, pixel_cnt);//*min_element(pGray, pGray + pixel_cnt);//min_element耗时长
+	const float max = Utils_FindMaxValue(pGray, pixel_cnt);// *max_element(pGray, pGray + pixel_cnt);//max_element耗时长
 
-	if (0.001 >= max)//0ֵ�ú�ɫ��ʾ
+	if (0.001 >= max)//0值用黑色表示
 	{
 		memset(pU8, 0, pixel_cnt * sizeof(pU8[0]));
 		return true;
 	}
 
-	const float K = (255 * 1.0 / max);//���ֵ��255�Ķ��ٱ�
+	const float K = (255 * 1.0 / max);//最大值是255的多少倍
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
-		unsigned char tmp = 0;//0ֵ�ú�ɫ��ʾ
+		unsigned char tmp = 0;//0值用黑色表示
 		if (0.001 < pGray[i])
 		{
 			tmp = (unsigned char)(pGray[i] * K);
@@ -572,7 +572,7 @@ bool CGrayConvert::ToU8(unsigned int* pGray, const int width, const int height, 
 
 	for (int i = 0; i < pixel_cnt; i++)
 	{
-		unsigned char* pTmp = (unsigned char*)(pGray + i);//BGRD����
+		unsigned char* pTmp = (unsigned char*)(pGray + i);//BGRD排列
 		pU8[i] = pTmp[0];
 	}
 
@@ -650,7 +650,7 @@ static bool SaveDepthText(float* pDepthData, const UINT32 width, const UINT32 he
 		return false;
 	}
 
-	if (bWH)//1��W�С�H������
+	if (bWH)//1：W列、H行排列
 	{
 		UINT32 nPos = 0;
 		for (UINT32 h = 0; h < height; h++)
@@ -664,7 +664,7 @@ static bool SaveDepthText(float* pDepthData, const UINT32 width, const UINT32 he
 			nPos++;
 		}
 	}
-	else//2��1�С�W*H������
+	else//2：1行、W*H行排列
 	{
 		const UINT32 nCnt = width *height;
 		for (UINT32 nPos = 0; nPos < nCnt; nPos++)
@@ -777,9 +777,9 @@ static bool SaveU16PointDataText(UINT16 *pu16Point, const UINT32 width, const UI
 class CBuf
 {
 public:
-	CBuf(const unsigned int nBufLen = 128/*�ֽ���*/)
+	CBuf(const unsigned int nBufLen = 128/*字节数*/)
 	{
-		m_nBufLen = (0 < nBufLen) ? nBufLen : 128;//��ֹ��������
+		m_nBufLen = (0 < nBufLen) ? nBufLen : 128;//防止参数错误
 		m_pBuf = new unsigned char[m_nBufLen];
 		m_nDataLen = 0;
 
@@ -809,7 +809,7 @@ public:
 	}
 	unsigned int SetDataLen(const unsigned int nDataLen)
 	{
-		m_nDataLen = ((nDataLen > m_nBufLen) ? m_nBufLen : nDataLen);//��������������������
+		m_nDataLen = ((nDataLen > m_nBufLen) ? m_nBufLen : nDataLen);//不允许超过缓冲区长度
 
 		return m_nDataLen;
 	}
@@ -821,7 +821,7 @@ public:
 			m_pBuf = NULL;
 		}
 
-		m_nBufLen = (0 < nBufLen) ? nBufLen : 128;//��ֹ��������
+		m_nBufLen = (0 < nBufLen) ? nBufLen : 128;//防止参数错误
 		m_pBuf = new unsigned char[m_nBufLen];
 		m_nDataLen = 0;
 
@@ -830,9 +830,9 @@ public:
 
 
 private:
-	unsigned char* m_pBuf;//ָ��һ�黺����
-	unsigned int m_nBufLen;//m_pBuf����
-	unsigned int m_nDataLen;//m_pBuf�����ݳ���
+	unsigned char* m_pBuf;//指向一块缓冲区
+	unsigned int m_nBufLen;//m_pBuf长度
+	unsigned int m_nDataLen;//m_pBuf内数据长度
 
 };
 
@@ -935,7 +935,7 @@ static void ExterntionHooks_RecvTofExpTime(TofExpouseCurrentItems* pExp, void*us
 	}
 	else
 	{
-		printf("ExterntionHooks RecvTofExpTime: time:%llu, not supported.\n", pExp->nIndex);
+		printf("ExterntionHooks RecvTofExpTime: time:%u, not supported.\n", pExp->nIndex);
 		return;
 	}
 
@@ -968,7 +968,7 @@ static SBOOL ReadFile(std::string& strFile, CBuf& buf)
 
 	buf.SetDataLen((const unsigned int)read_len);
 
-	printf("read file(%s), ok, file_len=%d, read_len=%d.......\n", strFile.c_str(), file_len, read_len);
+	printf("read file(%s), ok, file_len=%ld, read_len=%lu.......\n", strFile.c_str(), file_len, read_len);
 
 	return true;
 }
@@ -1031,7 +1031,7 @@ typedef struct tagSunnyFullDepthData
 	unsigned short* u16Confidence;
 }SunnyFullDepthData;
 
-//���˿ͻ�MTP013ʱ�������Ҫ������
+//安克客户MTP013时候额外需要的数据
 typedef struct tagAnkerMtp013CustomExtData
 {
 	float* pConfidence;
@@ -1073,8 +1073,8 @@ static void SunnyFullDepthDataGet(TofModDepthData *tofFrameData, SunnyFullDepthD
 		//u8Intensity, u16Confidence
 		for (UINT32 pos = 0; pos < pixle_cnt; pos++)
 		{
-			depthData->u8Intensity[pos]   = ((255 > pExt->intensity[pos]) ? pExt->intensity[pos] : 255);//����255ȡ255,����ǿת
-			depthData->u16Confidence[pos] = ((0 > pExt->pConfidence[pos]) ? 0 : (pExt->pConfidence[pos] * 1000));//С��0ȡ0,����Ŵ�1000��ǿת
+			depthData->u8Intensity[pos]   = ((255 > pExt->intensity[pos]) ? pExt->intensity[pos] : 255);//超过255取255,否则强转
+			depthData->u16Confidence[pos] = ((0 > pExt->pConfidence[pos]) ? 0 : (pExt->pConfidence[pos] * 1000));//小于0取0,否则放大1000倍强转
 		}
 	}
 
@@ -1118,8 +1118,44 @@ static bool SaveColorPointDataXYZText(TofRgbdPointCloudColor *pPointData, const 
 	return true;
 }
 
+static bool SavePixelCoordText(TofRgbdPixelCoord *pPixelCoord, const unsigned int width, const unsigned int height, char* pTxtFile)
+{
+	if ((NULL == pPixelCoord) || (0 >= width) || (0 >= height) || (NULL == pTxtFile))
+	{
+		return false;
+	}
 
-static void CaptureTofRgbdOutputData(const std::string& strDir, const unsigned int nCaptureIndex, TofRgbdOutputData *rgbdData)
+	FILE* fp = fopen(pTxtFile, "w");
+	if (NULL == fp)
+	{
+		return false;
+	}
+
+	const unsigned int nCnt = width *height;
+	for (unsigned int nPos = 0; nPos < nCnt; nPos++)
+	{
+		fprintf(fp, "%u %u\n", pPixelCoord[nPos].x, pPixelCoord[nPos].y);
+	}
+
+	fclose(fp);
+	return true;
+}
+
+unsigned int ConvertPixelCoordMap2Rgb(unsigned char* pRgb, unsigned int nRgbWidth, unsigned int nRgbHeight, TofRgbdPixelCoord* pCoord, unsigned int nCoordWidth, unsigned int nCoordHeight, unsigned char* pOutRgb)
+{
+	for (int i = 0; i < nCoordWidth *nCoordHeight; i++)
+	{
+		unsigned int rgbpixle = pCoord[i].x + pCoord[i].y * nRgbWidth;
+		if (0 != rgbpixle)
+		{
+			memcpy(pOutRgb + 3 * i, pRgb + 3 * rgbpixle, 3);//目前只考虑3通道rgb的情况
+		}
+	}
+
+	return (nCoordWidth * nCoordHeight * 3);
+}
+
+static void CaptureTofRgbdOutputData(const std::string& strDir, const unsigned int nCaptureIndex, TofRgbdInputData* pDataIn, TofRgbdOutputData *rgbdData)
 {
 	char szFile[512] = { 0 };
 
@@ -1182,6 +1218,30 @@ static void CaptureTofRgbdOutputData(const std::string& strDir, const unsigned i
 	//
 	if (1)
 	{
+		TofRgbdImage_PixelCoord& tmp = rgbdData->rgb2TofPixelCoord;
+		if ((NULL != tmp.pData) && (0 < tmp.nWidth) && (0 < tmp.nHeight))
+		{
+			const unsigned int nPixelCnt = tmp.nWidth * tmp.nHeight;
+
+			sprintf(szFile, "%s/%u-rgb2TofPixelCoord.dat", strDir.c_str(), nCaptureIndex);
+			Utils_SaveBufToFile(tmp.pData, nPixelCnt  * sizeof(tmp.pData[0]), szFile, false);
+
+			sprintf(szFile, "%s/%u-rgb2TofPixelCoord.txt", strDir.c_str(), nCaptureIndex);
+			SavePixelCoordText(tmp.pData, tmp.nWidth, tmp.nHeight, szFile);
+
+
+			CBuf bufRgb(tmp.nWidth * tmp.nHeight * 3);//目前只考虑3通道rgb的情况
+			const unsigned int nRetLen = ConvertPixelCoordMap2Rgb(pDataIn->pRgb, RGB_WIDTH, RGB_HEIGHT, tmp.pData, tmp.nWidth, tmp.nHeight, bufRgb.GetBuf());
+			sprintf(szFile, "%s/%u-rgb2TofPixelCoord-rgb.dat", strDir.c_str(), nCaptureIndex);
+			Utils_SaveBufToFile(bufRgb.GetBuf(), nRetLen, szFile, false);
+
+		}
+	}
+
+
+	//
+	if (1)
+	{
 		TofRgbdImage_Priv& tmp = rgbdData->privData;
 		if ((NULL != tmp.pData) && (0 < tmp.nDataLen))
 		{
@@ -1191,11 +1251,11 @@ static void CaptureTofRgbdOutputData(const std::string& strDir, const unsigned i
 	}
 }
 
-void HandleTofRgbdOutputData(unsigned int frameIndex, const std::string& strSaveDir, TofRgbdOutputData* rgbdData)
+void HandleTofRgbdOutputData(unsigned int frameIndex, const std::string& strSaveDir, TofRgbdInputData* pDataIn, TofRgbdOutputData* rgbdData)
 {
 	//todo anthing by youself. for example, save to file:
 
-	CaptureTofRgbdOutputData(strSaveDir, frameIndex, rgbdData);
+	CaptureTofRgbdOutputData(strSaveDir, frameIndex, pDataIn, rgbdData);
 }
 #endif
 
@@ -1272,7 +1332,7 @@ static void GetOrSetSomeParam(HTOFM hTofMod, TofModuleCaps* pCaps, const TOF_MOD
 		if ((TOF_MODE_HDRZ_5FPS == tofMode) || (TOF_MODE_HDRZ_10FPS == tofMode)
 			|| (TOF_MODE_HDRZ_15FPS == tofMode) || (TOF_MODE_HDRZ_30FPS == tofMode)
 			|| (TOF_MODE_HDRZ_45FPS == tofMode) || (TOF_MODE_HDRZ_60FPS == tofMode))
-		{	//ע�⣺Ŀǰֻ��17��λ�Ĳŵ��Թ�Ч�������Կ��ţ�������λ��Ч��û���Թ������Բ�����
+		{	//注意：目前只有17相位的才调试过效果，所以开放，其他相位的效果没调试过，所以不开放
 			bEnable = true;
 		}
 		if (TOFRET_SUCCESS != (retVal = TOFM_SetTofRemoveINS(hTofMod, bEnable)))
@@ -1303,7 +1363,7 @@ static void PrintfSomeCalibParam(SomeCalibParam* pParamOut)
 static bool ReadTemperature(HTOFM hTofMod, FLOAT32* pTemperature)
 {
 	FLOAT32 temperature = 0;
-	const TOFRET retVal = TOFM_GetTemperature(hTofMod, &temperature);//�������е�ģ�鶼֧������ӿ�
+	const TOFRET retVal = TOFM_GetTemperature(hTofMod, &temperature);//不是所有的模组都支持这个接口
 	if (TOFRET_SUCCESS == retVal)
 	{
 		*pTemperature = temperature;
@@ -1384,11 +1444,11 @@ void *Sunny_SetTofEXP(void *para)
 void TofDepthSdkGloableInit()
 {
 
-	//0. ��ʼ��.......
+	//0. 初始化.......
 	TofModuleInitParam struInitParam;
 	memset(&struInitParam, 0, sizeof(struInitParam));
-	strncpy(struInitParam.szDepthCalcCfgFileDir, "./parameter", sizeof(struInitParam.szDepthCalcCfgFileDir) - 1);
-	TOFM_Init(&struInitParam);//��������ʼ
+	strncpy(struInitParam.szDepthCalcCfgFileDir, SELECT_MODULE_CFG_FILE_PATH, sizeof(struInitParam.szDepthCalcCfgFileDir) - 1);
+	TOFM_Init(&struInitParam);//必须放在最开始
 
 	printf("SDK Version: %s.\n", TOFM_GetSDKVersion());
 }
@@ -1396,7 +1456,7 @@ void TofDepthSdkGloableInit()
 
 void TofDepthSdkGloableUnInit()
 {
-	TOFM_Uninit();//������TOFM_Init����ʹ��
+	TOFM_Uninit();//必须与TOFM_Init配套使用
 }
 
 
@@ -1404,7 +1464,7 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 {
 	TOFRET retVal = TOFRET_ERROR_OTHER;
 	TofModuleCaps stTofModuleCaps;
-	CBuf calibData(512 * 1024);//��������128K,��һ�㲻����128K
+	CBuf calibData(512 * 1024);//不能少于128K,，一般不超过128K
 
 	if (!pstDepthHandleCb || !pcCalibDataPath || !pHalUserData)
 	{
@@ -1412,13 +1472,13 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 		return -1;
 	}
 
-	//1. ��ģ��.......
+	//1. 打开模组.......
 	const std::string strModule = (SELECT_MODULE_NAME);
 
 	const TOF_MODE tofMode = TOF_MODE_HDRZ_10FPS;
 	std::string strCalibFile = pcCalibDataPath;
 
-	TofModuleHal struHal;// �������
+	TofModuleHal struHal;// 传入参数
 	memset(&struHal, 0, sizeof(struHal));
 	struHal.Init 		= TofModuleHal_Init;
 	struHal.Deinit 		= TofModuleHal_Deinit;
@@ -1433,8 +1493,8 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 		return -1;
 	}
 
-	// ������ָ�������ļ�����Ϊ����ʹ��Ĭ�������ļ�
-	const std::string strCfgFile = (SELECT_MODULE_CFG_FILE);	
+	// 可自行指定配置文件名，为空则使用默认配置文件
+	const std::string strCfgFile = ("");	
 	
 	SCHAR* pModCfgFile = (("" == strCfgFile) ? NULL : (SCHAR*)(strCfgFile.c_str()));
 	if (TOFRET_SUCCESS != (retVal = TOFM_SetTofModeV20(hTofMod, tofMode, pModCfgFile)))
@@ -1443,7 +1503,7 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 		goto errExitCloseDev;
 	}
 
-	//2. ���豸��ȡ�궨���ݣ����Ա�����
+	//2. 从设备读取标定数据，可以备份着
 	{
 		//const UINT32 nCalibDataLen = TOFM_ReadCalibData(hTofMod, calibData.GetBuf(), calibData.GetBufLen());
 		if (!ReadFile(strCalibFile, calibData))
@@ -1454,7 +1514,7 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 		}
 	}
 
-	//3. ���ز������궨���ݣ�������֮ǰ�����ŵı궨����
+	//3. 加载并解析标定数据，可以是之前备份着的标定数据
 	if (TOFRET_SUCCESS != (retVal = TOFM_LoadCalibData(hTofMod, calibData.GetBuf(), calibData.GetDataLen())))
 	{
 		printf("TOFM_LoadCalibData failed, retVal=0x%08x.\n", retVal);
@@ -1462,28 +1522,28 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 		goto errExitCloseDev;
 	}
 
-	//4. ��ʱ����Զ�ȡһЩ�궨��������������
+	//4. 这时候可以读取一些标定参数出来备份着
 	SomeCalibParam struSomeCalibParam;
     if (TOFRET_SUCCESS == (TOFM_GetSomeCalibParam(hTofMod, &struSomeCalibParam)))
     {
         PrintfSomeCalibParam(&struSomeCalibParam);
     }
 
-	//��ȼ���ģ�飨�ò��ֱ�����TOFM_LoadCalibData֮��TOFM_UnLoadCalibData֮ǰ���ã�
-	//5. ��ʼ����ȼ���ģ��
-	if (TOFRET_SUCCESS != (retVal = TOFM_InitDepthCal(hTofMod)))//(�ȽϺ�ʱ)
+	//深度计算模块（该部分必须在TOFM_LoadCalibData之后，TOFM_UnLoadCalibData之前调用）
+	//5. 初始化深度计算模块
+	if (TOFRET_SUCCESS != (retVal = TOFM_InitDepthCal(hTofMod)))//(比较耗时)
 	{
 		printf("TOFM_InitDepthCal failed, retVal=0x%08x.\n", retVal);
 		goto errExitUnLoadCalibData;
 	}
 
-	//7. һ���ڿ���֮�󣬿ɰ����ȡ/�޸Ĳ���
-	GetOrSetSomeParam(hTofMod, &stTofModuleCaps, tofMode);////ae �� �˲�
+	//7. 一般在开流之后，可按需获取/修改参数
+	GetOrSetSomeParam(hTofMod, &stTofModuleCaps, tofMode);////ae 、 滤波
 
-	// 7.1 ��¼֧�ֵ��˲�����
+	// 7.1 记录支持的滤波类型
 	pstDepthHandleCb->uiSupportedTofFilter = stTofModuleCaps.supportedTOFFilter;
 
-	//8. �ع⴦������
+	//8. 曝光处理设置
 	ExterntionHooks stHooks;
 	memset(&stHooks, 0x00, sizeof(ExterntionHooks));
 	stHooks.pUserData = pstDepthHandleCb;
@@ -1493,9 +1553,7 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 	TofExpouseRangeItems stExpRangeItems;
 	stExpRangeItems.nIndex = 2;
 	TOFM_GetTofExpTimeRange(hTofMod, &stExpRangeItems);
-	stExpRangeItems.uParam.g2.max_AEF = EXP_MAX_AEF;
-	stExpRangeItems.uParam.g2.max_FEF = EXP_MAX_FEF;
-	TOFM_SetTofExpTimeRange(hTofMod, &stExpRangeItems);
+	printf("max_AEF[%u], max_FEF[%u]\n", stExpRangeItems.uParam.g2.max_AEF, stExpRangeItems.uParam.g2.max_FEF);
 
 	/* Create set tof exp thread */
 	pstDepthHandleCb->stTofSetExp.flag = STOP_SETUP_EXP;
@@ -1508,15 +1566,15 @@ int TofDepthSdkInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb, char *pcCalibDataPath, 
 	return 0;
 
 errExitUnInitDepthCal:
-	//10. ������ȼ���ģ��
+	//10. 回收深度计算模块
 	retVal = TOFM_UnInitDepthCal(hTofMod);
 
 errExitUnLoadCalibData:
-	//11. ж��֮ǰ���벢�����ı궨���ݣ�������ڴ�й©
+	//11. 卸载之前导入并解析的标定数据，否则会内存泄漏
 	retVal = TOFM_UnLoadCalibData(hTofMod);
 
 errExitCloseDev:
-	//12. �ر�ģ��.......
+	//12. 关闭模组.......
 	retVal = TOFM_CloseDevice(hTofMod);
 
 	printf("TofDepthSdkInit failed\n");
@@ -1536,13 +1594,13 @@ int TofDepthSdkUnInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb)
 
 	if (NULL != pstDepthHandleCb->hTofMod)
 	{
-		//10. ������ȼ���ģ��
+		//10. 回收深度计算模块
 		retVal = TOFM_UnInitDepthCal(pstDepthHandleCb->hTofMod);
 
-		//11. ж��֮ǰ���벢�����ı궨���ݣ�������ڴ�й©
+		//11. 卸载之前导入并解析的标定数据，否则会内存泄漏
 		retVal = TOFM_UnLoadCalibData(pstDepthHandleCb->hTofMod);
 
-		//12. �ر�ģ��.......
+		//12. 关闭模组.......
 		retVal = TOFM_CloseDevice(pstDepthHandleCb->hTofMod);
 	}
 
@@ -1654,17 +1712,61 @@ int TofDepthProcessExp(void *pCamHandle, IMAGE_DATA_INFO_S *pstTofRawDataInfo, T
 
 
 #ifdef RGBD
+static void PrintfLensParameter(TofRgbdLensParameter* pTofLens)
+{
+	if (NULL == pTofLens)  return;
+
+	const unsigned int nIndex = pTofLens->nIndex;
+
+	if (1 == nIndex)
+	{
+		TofRgbdLensGeneral* pTmp = &(pTofLens->uParam.general);
+
+		printf("Lens Paramter (general):...............................\n");
+		printf(">>   fx = %f.\n", pTmp->fx);
+		printf(">>   fy = %f.\n", pTmp->fy);
+		printf(">>   cx = %f.\n", pTmp->cx);
+		printf(">>   cy = %f.\n", pTmp->cy);
+		printf(">>   k1 = %f.\n", pTmp->k1);
+		printf(">>   k2 = %f.\n", pTmp->k2);
+		printf(">>   p1 = %f.\n", pTmp->p1);
+		printf(">>   p2 = %f.\n", pTmp->p2);
+		printf(">>   k3 = %f.\n", pTmp->k3);
+	}
+	else if (2 == nIndex)
+	{
+		TofRgbdLensFishEye* pTmp = &(pTofLens->uParam.fishEye);
+
+		printf("Lens Paramter (fishEye):...............................\n");
+		printf(">>   fx = %f.\n", pTmp->fx);
+		printf(">>   fy = %f.\n", pTmp->fy);
+		printf(">>   cx = %f.\n", pTmp->cx);
+		printf(">>   cy = %f.\n", pTmp->cy);
+		printf(">>   k1 = %f.\n", pTmp->k1);
+		printf(">>   k2 = %f.\n", pTmp->k2);
+		printf(">>   k3 = %f.\n", pTmp->k3);
+		printf(">>   k4 = %f.\n", pTmp->k4);
+	}
+	else
+	{
+		printf("Lens Paramter (index=%u):...............................\n", nIndex);
+		printf(">>   unknown, not supported.\n");
+	}
+}
+
 int TofRgbdSdkInit(HTOFRGBD *ppstRgbdHandle, const char *pcRgbdCalibPath)
 {
-	const std::string strModuleName = SELECT_MODULE_NAME;//ģ���ͺ�
-	const TOFRGBD_GUEST_ID guestID = TOFRGBD_GUEST_ID_DEF;//�ͻ�ʶ���
+	TofRgbdParameter struParameters;
+	TOFRGBDRET retVal = TOFRGBDRET_FAILED;
+	const std::string strModuleName = SELECT_MODULE_NAME;//模组型号
+	const TOFRGBD_GUEST_ID guestID = TOFRGBD_GUEST_ID_DEF;//客户识别号
 
-	const unsigned int nTofWidth = RAW_WIDTH;//TOF���ݿ�
-	const unsigned int nTofHeight = ACTIVE_HEIGHT;//TOF���ݸ�
-	const unsigned int nRgbWidth = RGB_WIDTH;//RGB���ݿ�
-	const unsigned int nRgbHeight = RGB_HEIGHT;//RGB���ݸ�
+	const unsigned int nTofWidth = RAW_WIDTH;//TOF数据宽
+	const unsigned int nTofHeight = ACTIVE_HEIGHT;//TOF数据高
+	const unsigned int nRgbWidth = RGB_WIDTH;//RGB数据宽
+	const unsigned int nRgbHeight = RGB_HEIGHT;//RGB数据高
 
-	const TofRgbd_Gray_Format inGrayFormat = TofRgbd_Gray_Format_Float;//����ĻҶȸ�ʽ
+	const TofRgbd_Gray_Format inGrayFormat = TofRgbd_Gray_Format_Float;//输入的灰度格式
 
 	if (!ppstRgbdHandle || !pcRgbdCalibPath)
 	{
@@ -1688,7 +1790,7 @@ int TofRgbdSdkInit(HTOFRGBD *ppstRgbdHandle, const char *pcRgbdCalibPath)
 	struInputParam.guestID = guestID;
 
 	struInputParam.pRgbdCalibData = calibData.GetBuf();
-	struInputParam.nRgbdCalibDataLen = 272;		// TODO
+	struInputParam.nRgbdCalibDataLen = 512;		// TODO
 
 	struInputParam.nTofWidth = nTofWidth;
 	struInputParam.nTofHeight = nTofHeight;
@@ -1703,6 +1805,20 @@ int TofRgbdSdkInit(HTOFRGBD *ppstRgbdHandle, const char *pcRgbdCalibPath)
 	{
 		printf("TOFRGBD_CreateHandle failed.\n");
 		return -1;
+	}
+
+	//获取并打印RGB内参
+	memset(&struParameters, 0, sizeof(struParameters));
+	struParameters.type = TOF_RGBD_PARAM_RgbCameraLensParam;
+	retVal = TOFRGBD_GetParameters(hTofRgbd, &struParameters);
+	if (TOFRGBDRET_SUCCESS == retVal)
+	{
+		printf(">> RGB LensParam:\n");
+		PrintfLensParameter(&struParameters.uParam.lensParam);
+	}
+	else
+	{
+		printf("TOFRGBD_GetParameters(TOF_RGBD_PARAM_RgbCameraLensParam) failed, retVal=0x%08x.\n", retVal);
 	}
 
 	*ppstRgbdHandle = hTofRgbd;

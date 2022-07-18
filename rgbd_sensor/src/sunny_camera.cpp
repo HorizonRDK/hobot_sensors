@@ -100,11 +100,11 @@ void* Open_ShyCamera(int nCamType)
 }
 int Start_ShyCamera(void *pCamHdl)
 {
-    return StartCamera(pCamHdl);
+    return CameraStreamON(pCamHdl);
 }
 int Stop_ShyCamera(void *pCamHdl)
 {
-    return StopCamera(pCamHdl);
+    return CameraStreamOFF(pCamHdl);
 }
 int Close_ShyCamera(void **pHdlCam)
 {
@@ -145,10 +145,23 @@ int GetFrame_ShyCamera(void *pCamHdl, TShyFrame *pDataOut)
     int nRet = -1;
     if (pDataOut && pCamHdl) {
         IMAGE_DATA_INFO_S pstImageDataInfo;
+      	camera_handle *pstCameraHandler = (camera_handle*)pCamHdl;
+	    if ((CAM_TYPE_TOF == pstCameraHandler->eCamType) || (CAM_TYPE_TOF_RGBD == pstCameraHandler->eCamType)) {
+            pDataOut->height = RAW_HEIGHT;
+            pDataOut->width = RAW_WIDTH;
+		    pstImageDataInfo.ePixelFormat = PIXEL_FORMAT_RAW;
+        } else if (CAM_TYPE_RGB == pstCameraHandler->eCamType) {
+            pDataOut->height = RGB_HEIGHT;
+            pDataOut->width = RGB_WIDTH;
+		    pstImageDataInfo.ePixelFormat = PIXEL_FORMAT_YUV;	
+        }
+
         int nRet = GetImageData(pCamHdl, &pstImageDataInfo);
         if (0 == nRet) {
-            pDataOut->height = pstImageDataInfo.height;
-            pDataOut->width = pstImageDataInfo.width;
+            if ((CAM_TYPE_TOF == pstCameraHandler->eCamType) || (CAM_TYPE_TOF_RGBD == pstCameraHandler->eCamType)) {
+                unsigned short *pu16TofRawData = (unsigned short*)pstImageDataInfo.pucImageData;
+                pstImageDataInfo.uiFrameCnt = pu16TofRawData[3] & 0xFFF;
+            }
             if (0 == pDataOut->size) {
                 pDataOut->pucImageData = (unsigned char*)malloc(pstImageDataInfo.uiImageSize);  // RGB_YUV_SZIE);
             }
@@ -158,7 +171,7 @@ int GetFrame_ShyCamera(void *pCamHdl, TShyFrame *pDataOut)
             pDataOut->size = pstImageDataInfo.uiImageSize;
             pDataOut->uiFrameCnt = pstImageDataInfo.uiFrameCnt;
             pDataOut->timeStamp = pstImageDataInfo.timeStamp;
-            ROS_printf(2, "[%s]->w:h=%d:%d,sz=%d.\n", __func__, pDataOut->width, pDataOut->height, pDataOut->size);
+            // ROS_printf(2, "[%s]->w:h=%d:%d,sz=%d.\n", __func__, pDataOut->width, pDataOut->height, pDataOut->size);
         }
         return nRet;
     }
@@ -205,6 +218,7 @@ int Calc_Depth2Tof(void *pCamHdl, TShyFrame *pDataDepthIn, const TShyFrame *pDat
     stTofRawDataInfo.pucImageData = pDataDepthIn->pucImageData;
     stTofRawDataInfo.timeStamp = pDataDepthIn->timeStamp;
     stTofRawDataInfo.uiFrameCnt = pDataDepthIn->uiFrameCnt;
+    stTofRawDataInfo.ePixelFormat = PIXEL_FORMAT_RAW;
 
     uint32_t startTm = get_tick_count();
     // ROS_printf(2, "[wuwl-%s]->start dSz=%d,w:h=%d:%d.\n", __func__, pDataDepthIn->size,
@@ -238,9 +252,9 @@ int Calc_Depth2Tof(void *pCamHdl, TShyFrame *pDataDepthIn, const TShyFrame *pDat
     pDataOut->mOriRes.pDepthData = stTmpDepthInfo.pDepthData;
 #ifdef CV_CONVERT_CLR
     cv::Mat imgTmp;
-    cv::Mat yuvImg = cv::Mat(pDataYuvIn->height * 3 / 2, pDataYuvIn->width, CV_8UC1, pDataYuvIn->pucImageData, 0);
-    cv::cvtColor(yuvImg, imgTmp, cv::COLOR_YUV2RGB_NV12);
-    memcpy(au8RgbBuf, imgTmp.data, pDataYuvIn->height * 3 * pDataYuvIn->width);
+    cv::Mat yuvImg = cv::Mat(RGB_HEIGHT * 3 / 2, RGB_WIDTH, CV_8UC1, pDataYuvIn->pucImageData, 0);
+    cv::cvtColor(yuvImg, imgTmp, cv::COLOR_YUV2BGR_NV12);
+    memcpy(au8RgbBuf, imgTmp.data, RGB_HEIGHT * 3 * RGB_WIDTH);
 #else
     nv12_to_bgr888_buffer(pDataYuvIn->pucImageData, au8RgbBuf, RGB_WIDTH, RGB_HEIGHT);
 #endif

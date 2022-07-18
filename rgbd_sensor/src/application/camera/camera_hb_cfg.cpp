@@ -341,7 +341,7 @@ VIN_PIPE_ATTR_S *GetGc2053VinPipeAttr(void)
 	pstVinDevAttr->ispAlgoState = 1; // 是否启动 3a 算法库 ,1 是启动， 0 是关闭
 	pstVinDevAttr->bitwidth = 10; // raw图位宽，有效值 8 、 10 、 12 、14 、 16 、 20
 	pstVinDevAttr->calib.mode = 1; // 是否开启 sensor 矫正数据加载，1 是开启，0 是关闭。ISP使用这些数据
-	pstVinDevAttr->calib.lname = (char*)"/lib/sensorlib/libgc2053_linear.so"; // 对应使用的校准库
+	pstVinDevAttr->calib.lname = (char*)"libgc2053_linear.so"; // 对应使用的校准库
 
 	return pstVinDevAttr;
 }
@@ -382,7 +382,7 @@ MIPI_ATTR_S *GetGc2053MipiAttr(void)
 	
 	memset(pstMipiAttr, 0, sizeof(*pstMipiAttr));
 
-	pstHostCfg->lane = 1; // 硬件上sensor用了几个mipi数据lane，f37用的1 lane, os8a10 4K的用了4 lane
+	pstHostCfg->lane = 2; // 硬件上sensor用了几个mipi数据lane，f37用的1 lane, os8a10 4K的用了4 lane
 	pstHostCfg->datatype = 0x2b; // sensor的输出数据类型，请参考 《X3J3平台AIOT媒体系统接口手册.pdf》第3.5.36节 DATA TYPE
 	pstHostCfg->mclk = 2400; // mipi 模块主时钟，目前默认是24MHz
 	pstHostCfg->mipiclk = 864; // sensor 输出总的 mipibit rate, 单位Mbits/秒

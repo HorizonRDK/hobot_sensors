@@ -11,7 +11,7 @@
         #define TOFMDLL __declspec(dllimport)
     #endif
 #else
-    #define TOFMDLL 
+    #define TOFMDLL __attribute__((visibility("default")))
 #endif
 
 

@@ -35,7 +35,7 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-add_definitions(-std=c++11 -DRGBD -DHORIZON_PLATFORM)
+add_definitions(-std=c++11 -DRGBD -DHORIZON_PLATFORM -DCV_CONVERT_CLR)
 
 ## pkg-config libraries
 find_package(ament_cmake REQUIRED)
@@ -90,7 +90,7 @@ add_executable(${PROJECT_NAME}
   src/application/tof_depth/tof_depth_process.cpp
 )
 
-set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk)
+set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk opencv_world)
 set(X3_HAPI_LIB hbmedia isp vio alog cam ion gdcbin hbmem iar tinyalsa)
 
 target_link_libraries(${PROJECT_NAME}

@@ -24,8 +24,6 @@ typedef enum PixelFormat
 
 typedef struct ImageDataInfo
 {
-	int width;
-	int height;
 	SY_PIXEL_FORMAT_E ePixelFormat;
 	unsigned long long timeStamp;//时间戳
 	unsigned char *pucImageData; // 输出的图像数据地址

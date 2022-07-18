@@ -68,6 +68,10 @@ RgbdNode::~RgbdNode()
   stop_ = true;
   RCLCPP_WARN(rclcpp::get_logger("rgbd_node"), "shutting down");
   // rgbdCam_.shutdown();
+  if (m_spThrdPub) {
+    m_spThrdPub->join();
+    m_spThrdPub = nullptr;
+  }
 }
 
 void RgbdNode::get_params()
@@ -124,6 +128,7 @@ void RgbdNode::init()
   // img_->header.frame_id = frame_id_;
   img_dep_->header.frame_id = "depth";
   img_infra_->header.frame_id = "infra";
+  img_clr_->header.frame_id = "color";
   // 启动cam 读取并且计算
   nRet = ShyCam::GetInstance()->InitVideo();
   nRet = ShyCam::GetInstance()->StartStream(GetCaptureHdl, this);

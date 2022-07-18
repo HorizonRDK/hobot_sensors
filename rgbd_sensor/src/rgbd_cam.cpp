@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+#include "camera_control.h"
+
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 namespace rgbd_node
@@ -61,8 +63,8 @@ ShyCam::~ShyCam()
 
 int ShyCam::InitVideo()
 {
-    m_pTofCamHdl = Open_ShyCamera(3);   // open rgbd
-    m_pRgbCamHdl = Open_ShyCamera(1);  // open rgb
+    m_pTofCamHdl = Open_ShyCamera(CAM_TYPE_TOF_RGBD);   // open rgbd
+    m_pRgbCamHdl = Open_ShyCamera(CAM_TYPE_RGB);  // open rgb
     // TLOG_INFO("Open Device successed .\n");
     m_nDevStat = enDEV_INIT;
     if (!m_pRgbCamHdl || !m_pTofCamHdl) {
