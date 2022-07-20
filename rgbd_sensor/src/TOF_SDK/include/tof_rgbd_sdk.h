@@ -9,7 +9,7 @@
         #define TOFRGBDDLL __declspec(dllimport)
     #endif
 #else
-    #define TOFRGBDDLL 
+    #define TOFRGBDDLL __attribute__((visibility("default")))
 #endif
 
 #ifndef NULL
@@ -84,6 +84,76 @@ typedef enum tagTofRgbd_Gray_Format
 	TofRgbd_Gray_Format_Float = 2,//float格式
 }TofRgbd_Gray_Format;
 
+//RGB或TOF模组内参和畸变 (通用模型)
+typedef struct tagTofRgbdLensGeneral
+{
+	float fx;
+	float fy;
+	float cx;
+	float cy;
+	float k1;
+	float k2;
+	float p1;
+	float p2;
+	float k3;
+}TofRgbdLensGeneral;
+
+//RGB或TOF模组内参和畸变 (鱼眼模型)
+typedef struct tagTofRgbdLensFishEye
+{
+	float fx;
+	float fy;
+	float cx;
+	float cy;
+	float k1;
+	float k2;
+	float k3;
+	float k4;
+}TofRgbdLensFishEye;
+
+//RGB或TOF模组内参和畸变
+typedef struct tagTofRgbdLensParameter
+{
+	int nIndex;//1---general有效, 2---fishEye有效
+
+	union
+	{
+		//[第1种]: 普通模型
+		TofRgbdLensGeneral general;//普通模型
+
+		//[第2种]: 鱼眼模型
+		TofRgbdLensFishEye fishEye;//鱼眼模型
+	}uParam;
+
+}TofRgbdLensParameter;
+
+//RGBD参数类型
+typedef enum tagTOF_RGBD_PARAM_TYPE
+{
+	TOF_RGBD_PARAM_TofCameraLensParam = 0, //TOF模组的内参
+	TOF_RGBD_PARAM_RgbCameraLensParam, //RGB模组的内参
+}TOF_RGBD_PARAM_TYPE;
+
+//RGBD参数
+typedef struct tagTofRgbdParameter
+{
+	TOF_RGBD_PARAM_TYPE type;//输入参数，只读
+
+	union
+	{
+		TofRgbdLensParameter lensParam; //RGB或TOF模组的内参, 当 type=TOF_RGBD_PARAM_TofCameraLensParam 或 TOF_RGBD_PARAM_RgbCameraLensParam 时有效
+
+	}uParam;
+
+}TofRgbdParameter;
+
+
+//坐标
+typedef struct tagTofRgbdPixelCoord
+{
+	unsigned short x;
+	unsigned short y;
+}TofRgbdPixelCoord;
 
 //点云
 typedef struct tagTofRgbdPointCloud
@@ -100,9 +170,9 @@ typedef struct tagTofRgbdPointCloudColor
 	float y;
 	float z;
 
-	float r;
-	float g;
 	float b;
+	float g;
+	float r;
 }TofRgbdPointCloudColor;
 
 
@@ -162,6 +232,13 @@ typedef struct tagTofRgbdImage_PointCloudColor
 	unsigned int            nHeight;
 }TofRgbdImage_PointCloudColor;
 
+//坐标信息
+typedef struct tagTofRgbdImage_PixelCoord
+{
+	TofRgbdPixelCoord* pData;//数据总长：nWidth * nHeight * sizeof(pData[0])
+	unsigned int    nWidth;
+	unsigned int    nHeight;
+}TofRgbdImage_PixelCoord;
 
 
 //创建RGBD计算句柄的初始化参数
@@ -192,7 +269,7 @@ typedef struct tagTofRgbdInputData
 	void*        pGray;//灰度数据（格式必须与初始化参数inGrayFormat指定的一致）
 	unsigned int nGrayLen;//pGray内灰度数据长度（字节数）
 
-	unsigned char* pRgb;//RGB数据，可以是bgr/rgb等格式
+	unsigned char* pRgb;//BGR数据，只能是 bgr 排列顺序
 	unsigned int   nRgbLen;//pRgb内RGB数据长度（字节数）
 
 }TofRgbdInputData;
@@ -205,6 +282,9 @@ typedef struct tagTofRgbdOutputData
 	TofRgbdImage_Void rgb2Tof;//配准后的RGB数据（格式与输入的相同）（可能为空）
 	TofRgbdImage_PointCloudColor colorPointCloud;//配准后的彩色点云数据（可能为空）
 
+	 
+	TofRgbdImage_PixelCoord rgb2TofPixelCoord; //RGB坐标与TOF坐标的映射表（可能为空）
+	
 	TofRgbdImage_Priv privData;//私有数据（用于客户定制）（一般为空）
 
 }TofRgbdOutputData;
@@ -227,6 +307,11 @@ TOFRGBDDLL HTOFRGBD   TOFRGBD_CreateHandle(TofRgbdHandleParam* pInputParam);
 TOFRGBDDLL TOFRGBDRET TOFRGBD_CloseHandle(HTOFRGBD hTofRgbd);
 //RGBD计算
 TOFRGBDDLL TOFRGBDRET TOFRGBD_DoCal(HTOFRGBD hTofRgbd, TofRgbdInputData* pDataIn, TofRgbdOutputData* pDataOut);//（该接口必须在TOFRGBD_CreateHandle之后，TOFRGBD_CloseHandle之前调用）
+
+
+//获取/设置模组参数
+TOFRGBDDLL TOFRGBDRET TOFRGBD_GetParameters(HTOFRGBD hTofRgbd, TofRgbdParameter* pParam);
+TOFRGBDDLL TOFRGBDRET TOFRGBD_SetParameters(HTOFRGBD hTofRgbd, TofRgbdParameter* pParam);
 
 
 #ifdef __cplusplus

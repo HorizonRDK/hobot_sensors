@@ -35,12 +35,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-add_definitions(-std=c++11 -DRGBD -DHORIZON_PLATFORM)
+add_definitions(-std=c++11 -DRGBD -DHORIZON_PLATFORM -DCV_CONVERT_CLR)
 
 ## pkg-config libraries
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(OpenCV REQUIRED)
 
 include_directories(include
   src/TOF_SDK/include
@@ -102,16 +103,12 @@ ament_target_dependencies(
   ${PROJECT_NAME}
   rclcpp
   sensor_msgs
+  OpenCV
   )
 
 if(BUILD_HBMEM)
 target_link_libraries(${PROJECT_NAME}
   hbmem
-)
-ament_target_dependencies(
-  ${PROJECT_NAME}
-  rclcpp
-  hbm_img_msgs
 )
 endif()
 

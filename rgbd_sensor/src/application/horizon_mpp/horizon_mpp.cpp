@@ -1,5 +1,5 @@
-#include <stdlib.h>
-
+#include <stddef.h>
+#include <sys/types.h>
 #include "hb_vio_interface.h"
 #include "horizon_mpp.h"
 #include "hb_venc.h"
@@ -33,6 +33,8 @@ static int hv_vp_init()
 		printf("vp_init fail s32Ret = %d !\n", s32Ret);
 		return -1;
 	}
+
+	return 0;
 }
 
 
@@ -43,6 +45,8 @@ static int hv_vp_deinit()
 	s32Ret = HB_VP_Exit();
 	if (s32Ret == 0) 
 		printf("vp exit ok!\n");
+
+	return s32Ret;
 }
 
 
@@ -74,33 +78,33 @@ static int hb_enable_sensor_clk(uint32_t mipiIdx)
 	/* reset使能*/
 	if (1 == mipiIdx)
 	{
-		system("echo 111 > /sys/class/gpio/export");
-		system("echo out > /sys/class/gpio/gpio111/direction");
-		system("echo 0 > /sys/class/gpio/gpio111/value");
-		system("sleep 0.2");
-		system("echo 1 > /sys/class/gpio/gpio111/value");
+		(void) system("echo 111 > /sys/class/gpio/export");
+		(void) system("echo out > /sys/class/gpio/gpio111/direction");
+		(void) system("echo 0 > /sys/class/gpio/gpio111/value");
+		(void) system("sleep 0.2");
+		(void) system("echo 1 > /sys/class/gpio/gpio111/value");
 	}
 	else if (0 == mipiIdx)
 	{
-		system("echo 119 > /sys/class/gpio/export");
-		system("echo out > /sys/class/gpio/gpio119/direction");
-		system("echo 0 > /sys/class/gpio/gpio119/value");
-		system("sleep 0.2");
-		system("echo 1 > /sys/class/gpio/gpio119/value");	
+		(void) system("echo 119 > /sys/class/gpio/export");
+		(void) system("echo out > /sys/class/gpio/gpio119/direction");
+		(void) system("echo 0 > /sys/class/gpio/gpio119/value");
+		(void) system("sleep 0.2");
+		(void) system("echo 1 > /sys/class/gpio/gpio119/value");	
 	}
 	
 	/* 使能 mclk */
 	iRet = HB_MIPI_EnableSensorClock(mipiIdx);
 	if (iRet)
 	{
-		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", iRet);
+		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", __func__, iRet);
 		return iRet;
 	}
 	
 	iRet = HB_MIPI_SetSensorClock(mipiIdx, 24000000);
 	if (iRet)
 	{
-		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", iRet);
+		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", __func__, iRet);
 		return iRet;
 	}
 	
@@ -522,7 +526,7 @@ static int hb_venc_common_deinit()
 
     ret = HB_VENC_Module_Uninit();
     if (ret) {
-        printf("HB_VENC_Module_Init: %d\n", ret);
+        printf("HB_VENC_Module_Uninit: %d\n", ret);
     }
 
     return ret;
@@ -894,6 +898,9 @@ int hb_video_stop_stream(HB_VIDEO_DEV_S *pstHbVideoDev)
 		return -1;
 	}
 
+	if (0 == pstHbVideoDev->is_streaming)
+		return 0;
+
 	pstHbVideoDev->is_streaming = 0;
 	usleep(100*1000);
 
@@ -964,11 +971,9 @@ int hb_get_raw_data(HB_VIDEO_DEV_S *pstHbVideoDev, IMAGE_DATA_INFO_S *pstImageDa
 			HB_VIN_ReleaseDevFrame(pstHbVideoDev->pipeId, 0, &sif_raw);
 		}
 
-		pstImageDataInfo->width = sif_raw.img_addr.width;
-		pstImageDataInfo->height = sif_raw.img_addr.height;
 		pstImageDataInfo->uiImageSize= sif_raw.img_addr.stride_size * sif_raw.img_addr.height;
 		pstImageDataInfo->pucImageData= (unsigned char*)sif_raw.img_addr.addr[0];
-		pstImageDataInfo->timeStamp = sif_raw.img_info.time_stamp;
+		pstImageDataInfo->timeStamp = sif_raw.img_info.tv.tv_sec*1000000 + sif_raw.img_info.tv.tv_usec;
 		pstImageDataInfo->uiFrameCnt = sif_raw.img_info.frame_id;
 #if 0
 
@@ -1007,7 +1012,7 @@ int hb_get_yuv_data(HB_VIDEO_DEV_S *pstHbVideoDev, IMAGE_DATA_INFO_S *pstImageDa
 	select_timeout.tv_usec = 500 * 1000;
 	memset(&isp_yuv, 0, sizeof(isp_yuv));
 
-#if 0
+#if 1
 	iRet = select(pstHbVideoDev->vin_fd + 1, &readfd, NULL, NULL, &select_timeout);
 	if (iRet == -1) 
 	{
@@ -1019,7 +1024,7 @@ int hb_get_yuv_data(HB_VIDEO_DEV_S *pstHbVideoDev, IMAGE_DATA_INFO_S *pstImageDa
 		iRet = HB_VIN_GetChnFrame(pstHbVideoDev->pipeId, 0, &isp_yuv, 2000);
 		if (iRet < 0) 
 		{
-			printf("HB_VPS_GetChnFrame error!!!\n");
+			printf("HB_VIN_GetChnFrame error!!!\n");
 		} 
 		else 
 		{
@@ -1032,8 +1037,6 @@ int hb_get_yuv_data(HB_VIDEO_DEV_S *pstHbVideoDev, IMAGE_DATA_INFO_S *pstImageDa
 
 		//normal_buf_info_print(&isp_yuv);
 
-		pstImageDataInfo->width = isp_yuv.img_addr.width;
-		pstImageDataInfo->height = isp_yuv.img_addr.height;
 		size_y = isp_yuv.img_addr.width * isp_yuv.img_addr.height;
 		size_uv = size_y / 2;
 		pstImageDataInfo->uiImageSize= size_y + size_uv;
@@ -1043,10 +1046,10 @@ int hb_get_yuv_data(HB_VIDEO_DEV_S *pstHbVideoDev, IMAGE_DATA_INFO_S *pstImageDa
 		memcpy(pu8YuvBuffer+size_y, isp_yuv.img_addr.addr[1], size_uv);
 		pstImageDataInfo->pucImageData= pu8YuvBuffer;
 		
-		pstImageDataInfo->timeStamp = isp_yuv.img_info.time_stamp;
+		pstImageDataInfo->timeStamp = isp_yuv.img_info.tv.tv_sec*1000000 + isp_yuv.img_info.tv.tv_usec;
 		pstImageDataInfo->uiFrameCnt = isp_yuv.img_info.frame_id;
 		
-#if 0
+#if 1
 	}
 	else
 	{
@@ -1148,7 +1151,7 @@ int hb_set_fps(HB_VIDEO_DEV_S *pstHbVideoDev, unsigned int u32Fps)
 	iRet = HB_MIPI_SwSensorFps(pstHbVideoDev->devId, u32Fps);
 	if (iRet)
 	{
-		printf("[%s] HB_MIPI_SwSensorFps[%u] failed, iRet = 0x%x\n", u32Fps, iRet);
+		printf("[%s] HB_MIPI_SwSensorFps[%u] failed, iRet = 0x%x\n", __func__, u32Fps, iRet);
 		return iRet;
 	}
 

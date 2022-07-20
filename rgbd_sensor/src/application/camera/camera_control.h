@@ -78,12 +78,6 @@ typedef struct tagDepthHandleCb
 	Tof_SetExp stTofSetExp;
 } DEPTH_HANDLE_CB_S;
 
-typedef enum {
-	ENST_CAMERA_IDLE = 0,
-	ENST_CAMERA_START,
-	ENST_CAMERA_STOP
-};
-
 typedef struct camera_hal
 {
     int camera_index;
@@ -99,7 +93,6 @@ typedef struct camera_hal
 	char acDirection[32];
 	char acCalibDataPath[64];
 	char acRgbdCalibDataPath[64];
-	int nWorkState;  // 0 idle , 1 run, 2 stop
 #ifdef HORIZON_PLATFORM
 	HB_VIDEO_DEV_S stHbVideoDev;
 #else
@@ -115,11 +108,10 @@ typedef struct camera_hal
 void *OpenCamera(CAM_PARAM_S *pstCamParam);
 void CloseCamera(void *pHandle);
 
-int SetCameraFps(void *pHandle, unsigned int u32Fps);
+int CameraStreamON(void *pCamHandle);
+int CameraStreamOFF(void *pCamHandle);
 
-int StartCamera(void *pCamHdl);
-int StopCamera(void *pCamHdl);
-int GetCameraInfo(void *pCamHdl, SomeCalibParam *pOutParam);
+int SetCameraFps(void *pHandle, unsigned int u32Fps);
 
 int GetRawData(void *pHandle, RAW_DATA_INFO_S *pstRawDataInfo);
 int GetImageData(void *pHandle, IMAGE_DATA_INFO_S *pstImageDataInfo);

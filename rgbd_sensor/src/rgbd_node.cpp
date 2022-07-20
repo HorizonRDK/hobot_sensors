@@ -68,12 +68,22 @@ RgbdNode::~RgbdNode()
   stop_ = true;
   RCLCPP_WARN(rclcpp::get_logger("rgbd_node"), "shutting down");
   // rgbdCam_.shutdown();
+  if (m_spThrdPub) {
+    m_spThrdPub->join();
+    m_spThrdPub = nullptr;
+  }
 }
 
 void RgbdNode::get_params()
 {
   declare_parameter("sensor_type", "CP3AM");
   declare_parameter("io_method", "ros");
+  declare_parameter("enable_color", _enable_clr);
+  declare_parameter("enable_depth", _enable_dep);
+  declare_parameter("enable_pointcloud", _enable_pcl);
+  declare_parameter("enable_aligned_pointcloud", _enable_rgb_pcl);
+  declare_parameter("enable_infra", _enable_infra);
+
   this->get_parameter("sensor_type", _sensor_type);
   this->get_parameter("io_method", _io_mode);
 
@@ -124,6 +134,7 @@ void RgbdNode::init()
   // img_->header.frame_id = frame_id_;
   img_dep_->header.frame_id = "depth";
   img_infra_->header.frame_id = "infra";
+  img_clr_->header.frame_id = "color";
   // 启动cam 读取并且计算
   nRet = ShyCam::GetInstance()->InitVideo();
   nRet = ShyCam::GetInstance()->StartStream(GetCaptureHdl, this);

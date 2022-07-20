@@ -28,7 +28,7 @@
 #define RGB_HEIGHT				(1080)
 #define RGB_SIZE				(RGB_WIDTH*RGB_HEIGHT*3)
 #define RGB_YUV_SZIE			(RGB_WIDTH*RGB_HEIGHT*3/2)
-#define RGB_ENC_SIZE			(500*1024)
+#define RGB_ENC_SIZE			(1024*1024)
 
 #define I2C_TOF_SLAVE_ADDR		(0x3d)
 #define I2C_RGB_SLAVE_ADDR		(0x37)
@@ -36,10 +36,8 @@
 #define I2C_RGB_DEV_ID			(2)
 
 #define SELECT_MODULE_NAME		"T00P11A"
-#define SELECT_MODULE_CFG_FILE	"./parameter/T00P11A-17.ini"
-#define EXP_MAX_AEF				(50)
-#define EXP_MAX_FEF				(720)
-#define SELECT_MODULE_GUEST_ID	MODULE_GUEST_ID_DEF
+#define SELECT_MODULE_CFG_FILE_PATH	"./parameter"
+#define SELECT_MODULE_GUEST_ID		MODULE_GUEST_ID_01
 
 
 int GetVideoDevPath(CAM_TYPE_E eCamType, char *pcCamDirection, int *piCamDevId, PIPELINE_TYPE_E *pePipeType);

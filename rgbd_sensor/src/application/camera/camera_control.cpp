@@ -16,9 +16,9 @@ static int G1[256];
 static int G2[256];
 static int B1[256];
 
-static unsigned char au8RawBuffer[RAW_SIZE];
-static char str_calib_name[128] = {0};////�궨�ļ�·��
-static char str_removeINS_name[128] = {0};////�궨�ļ�·��
+static unsigned char au8RawBuffer[RAW_SIZE] = {0};
+static char str_calib_name[128] = {0};////标定文件路径
+static char str_removeINS_name[128] = {0};////标定文件路径
 static unsigned char p_tof_eeprom_double[128*1024+RINS_FILE_SIZE] = {0};
 
 
@@ -135,7 +135,7 @@ static int Read_FLASH_Hal(I2C_CB_S *pstI2cCb, unsigned char *pcBuf, int start_ad
 
 		do
 		{
-			usleep(500);	/* ���뱣�� */
+			usleep(500);	/* 必须保留 */
 				
 		} while (u16Status & 0x1);
 
@@ -333,7 +333,7 @@ int GetImageData(void *pHandle, IMAGE_DATA_INFO_S *pstImageDataInfo)
 {
 	int iRet = 0;
 	unsigned int uiFrameCnt = 0;
-	camera_handle *pstCameraHandler = (camera_handle*)pHandle;
+	camera_handle *pstCameraHandler;
 
 	if (!pHandle || !pstImageDataInfo)
 	{
@@ -341,10 +341,7 @@ int GetImageData(void *pHandle, IMAGE_DATA_INFO_S *pstImageDataInfo)
 		return -1;
 	}
 
-	if ((CAM_TYPE_TOF == pstCameraHandler->eCamType) || (CAM_TYPE_TOF_RGBD == pstCameraHandler->eCamType))
-		pstImageDataInfo->ePixelFormat = PIXEL_FORMAT_RAW;
-	else if (CAM_TYPE_RGB == pstCameraHandler->eCamType)
-		pstImageDataInfo->ePixelFormat = PIXEL_FORMAT_YUV;	
+	pstCameraHandler = (camera_handle*)pHandle;
 
 	switch (pstImageDataInfo->ePixelFormat)
 	{
@@ -414,14 +411,14 @@ int GetImageData(void *pHandle, IMAGE_DATA_INFO_S *pstImageDataInfo)
 		}
 	#endif
 	}
+
 #if 0
-	printf("[%s] get 0x%x-%s image, w:h=%d:%d size = %u\n", __func__, 
+	printf("[%s] get 0x%x-%s image, size = %u\n", __func__, 
 		pstCameraHandler->eCamType,
 		pstCameraHandler->acDirection,
-		pstImageDataInfo->width,
-		pstImageDataInfo->height,
-		pstImageDataInfo->uiImageSize);
+		pstEncodeDataInfo->uiImageSize);
 #endif
+
 	return 0;
 }
 
@@ -575,43 +572,6 @@ int SetTofFilterStatus(void *pCamHandle, unsigned int *puiEnableTypeList, unsign
 	return 0;
 }
 
-int StartCamera(void *pCamHdl)
-{
-	camera_handle *pstCameraHandler = (camera_handle*)pCamHdl;
-	if (pstCameraHandler) {
-		if (ENST_CAMERA_START == pstCameraHandler->nWorkState)
-			return 0;
-		int nRet = hb_video_start_stream(&pstCameraHandler->stHbVideoDev);
-		printf("\n[wuwl-%s]->camT=%d, ret=%d.\n", __func__, pstCameraHandler->eCamType, nRet);
-		pstCameraHandler->nWorkState = ENST_CAMERA_START;
-		return nRet;
-	}
-	return -1;
-}
-int StopCamera(void *pCamHdl)
-{
-	camera_handle *pstCameraHandler = (camera_handle*)pCamHdl;
-	if (pstCameraHandler) {
-		if (ENST_CAMERA_STOP == pstCameraHandler->nWorkState)
-			return 0;
-		int nRet = hb_video_stop_stream(&pstCameraHandler->stHbVideoDev);
-		pstCameraHandler->nWorkState = ENST_CAMERA_STOP;
-		return nRet;
-	}
-	return -1;
-}
-int GetCameraInfo(void *pCamHdl, SomeCalibParam *pOutParam)
-{
-	camera_handle *pstCameraHandler = (camera_handle*)pCamHdl;
-	if (pstCameraHandler) {
-		if (TOFRET_SUCCESS == (TOFM_GetSomeCalibParam(pstCameraHandler->stDepthHandleCb[0].hTofMod, pOutParam)))
-		{
-			// PrintfSomeCalibParam(pOutParam);
-			return 0;
-		}
-	}
-	return -1;
-}
 
 void *OpenCamera(CAM_PARAM_S *pstCamParam)
 {
@@ -696,9 +656,9 @@ void *OpenCamera(CAM_PARAM_S *pstCamParam)
 		memcpy(&pstHbSensorInit->stMipiSensorInfo, GetIrs2381cSensorInfo(), sizeof(pstHbSensorInit->stMipiSensorInfo));
 		memcpy(pstMipiAttr, GetIrs2381cMipiAttr(), sizeof(*pstMipiAttr));	
 	
-		pstHbVinVpssInit->pipeId = 1; 		/* ���������������ظ� */
+		pstHbVinVpssInit->pipeId = 1; 		/* 按续递增，不能重复 */
 		pstHbVinVpssInit->mipiIdx = pstHbSensorInit->stMipiSensorInfo.sensorInfo.entry_index;
-		pstHbVinVpssInit->deseri_port = 0;	/* linearģʽVCͨ����Ĭ��Ϊ0 */
+		pstHbVinVpssInit->deseri_port = 0;	/* linear模式VC通道号默认为0 */
 		pstHbVinVpssInit->vin_vps_mode = VIN_OFFLINE_VPS_OFFINE;
 		
 
@@ -720,9 +680,9 @@ void *OpenCamera(CAM_PARAM_S *pstCamParam)
 		memcpy(&pstHbSensorInit->stMipiSensorInfo, GetGc2053SensorInfo(), sizeof(pstHbSensorInit->stMipiSensorInfo));
 		memcpy(pstMipiAttr, GetGc2053MipiAttr(), sizeof(*pstMipiAttr));	
 	
-		pstHbVinVpssInit->pipeId = 0; 		/* ���������������ظ� */
+		pstHbVinVpssInit->pipeId = 0; 		/* 按续递增，不能重复 */
 		pstHbVinVpssInit->mipiIdx = pstHbSensorInit->stMipiSensorInfo.sensorInfo.entry_index;
-		pstHbVinVpssInit->deseri_port = 0;	/* linearģʽVCͨ����Ĭ��Ϊ0 */
+		pstHbVinVpssInit->deseri_port = 0;	/* linear模式VC通道号默认为0 */
 		pstHbVinVpssInit->vin_vps_mode = VIN_OFFLINE_VPS_OFFINE;
 		
 
@@ -747,7 +707,7 @@ void *OpenCamera(CAM_PARAM_S *pstCamParam)
 		printf("[%s] hb_video_init failed\n", __func__);
 		goto err_free;
 	}
-	
+
 #else
 	/* V4L2 Init */
 	iRet = GetVideoDevPath(pstCameraHandler->eCamType, pstCameraHandler->acDirection, &iCamIndex, &ePipelineType);
@@ -775,32 +735,6 @@ void *OpenCamera(CAM_PARAM_S *pstCamParam)
 		goto err_free;
 	}
 	vdev = pstCameraHandler->pstV4l2Dev;
-
-	if (pstCamParam->isReqV4l2Buf)
-	{
-		/* V4L2 request buffers */
-		iRet = v4l2_reqbufs(vdev, vdev->nbufs);
-		if (iRet < 0) {
-			printf("[%s] v4l2_reqbufs failed\n", __func__);
-			goto err_v4l2_close;
-		}
-
-		/* Queue buffers to v4l2 domain and start streaming. */
-		iRet = v4l2_qbuf(vdev);
-		if (iRet < 0) {
-			printf("[%s] v4l2_qbuf failed\n", __func__);
-			goto err_v4l2_free;
-		}
-
-		/* Start V4L2 capturing now. */
-		iRet = v4l2_start_capturing(vdev);
-		if (iRet < 0) {
-			printf("[%s] v4l2_start_capturing failed\n", __func__);
-			goto err_v4l2_free;
-		}
-		vdev->is_streaming = 1;
-	}
-	
 #endif
 
 	/* I2C init */
@@ -896,11 +830,6 @@ err_video_uninit:
 	hb_video_Uninit(pstHbVideoDev);
 #else
 	v4l2_stop_capturing(vdev);
-err_v4l2_free:
-	v4l2_uninit_device(vdev);
-	v4l2_reqbufs(vdev, 0);
-err_v4l2_close:
-	v4l2_close(pstCameraHandler->pstV4l2Dev);
 #endif
 
 err_free:
@@ -952,6 +881,7 @@ void CloseCamera(void *pHandle)
 	
 	
 #ifdef HORIZON_PLATFORM
+	hb_video_stop_stream(&pstCameraHandler->stHbVideoDev);
 	hb_video_Uninit(&pstCameraHandler->stHbVideoDev);
 #else
 	close_v4l2_device(pstCameraHandler->pstV4l2Dev);
@@ -959,6 +889,108 @@ void CloseCamera(void *pHandle)
 
 	free(pHandle);
 	pHandle = NULL;
+}
+
+
+int CameraStreamON(void *pCamHandle)
+{
+	int iRet = 0;
+	camera_handle *pstCameraHandler;
+	struct v4l2_device *vdev;
+
+	if (!pCamHandle)
+	{
+		printf("[%s-%d] hb_set_fps failed\n", __func__, __LINE__);
+		return -1;
+	}
+
+	pstCameraHandler = (camera_handle*)pCamHandle;
+
+#ifdef HORIZON_PLATFORM
+	HB_VIDEO_DEV_S *pstHbVideoDev = &pstCameraHandler->stHbVideoDev;
+
+	if (pstHbVideoDev->is_streaming == 0) 
+	{
+		iRet = hb_video_init(pstHbVideoDev);
+		if (iRet) 
+		{
+			printf("[%s] hb_video_init failed\n", __func__);
+			return -1;
+		}
+		
+		hb_video_start_stream(pstHbVideoDev);
+	}
+#else
+	vdev = pstCameraHandler->pstV4l2Dev;
+
+	if ((vdev != NULL) && (vdev->is_streaming == 0))
+	{
+		iRet = v4l2_reqbufs(vdev, vdev->nbufs);
+		if (iRet < 0) {
+			UVC_APP_PRINTF("[%s] v4l2_reqbufs failed\n", __func__);
+			return -1;
+		}
+
+		/* Queue buffers to v4l2 domain and start streaming. */
+		iRet = v4l2_qbuf(vdev);
+		if (iRet < 0) {
+			UVC_APP_PRINTF("[%s] v4l2_qbuf failed\n", __func__);
+			goto err_v4l2_uninit;
+		}
+
+		/* Start V4L2 capturing now. */
+		iRet = v4l2_start_capturing(vdev);
+		if (iRet < 0) {
+			UVC_APP_PRINTF("[%s] v4l2_start_capturing failed\n", __func__);
+			goto err_v4l2_uninit;
+		}
+	}
+#endif
+
+	return 0;
+
+#ifdef HORIZON_PLATFORM
+#else
+err_v4l2_uninit:
+	v4l2_uninit_device(vdev);
+	v4l2_reqbufs(vdev, 0);
+#endif
+
+	return -1;
+}
+
+
+int CameraStreamOFF(void *pCamHandle)
+{
+	int iRet = 0;
+	camera_handle *pstCameraHandler;
+
+	if (!pCamHandle)
+	{
+		printf("[%s-%d] hb_set_fps failed\n", __func__, __LINE__);
+		return -1;
+	}
+
+#ifdef HORIZON_PLATFORM
+	HB_VIDEO_DEV_S *pstHbVideoDev = &pstCameraHandler->stHbVideoDev;
+
+	if ((pstHbVideoDev != NULL) && pstHbVideoDev->is_streaming) 
+	{
+		hb_video_stop_stream(pstHbVideoDev);
+		hb_video_Uninit(pstHbVideoDev);
+	}
+#else
+	struct v4l2_device *vdev = pstCameraHandler->pstV4l2Dev;
+
+	if ((vdev != NULL) && vdev->is_streaming) 
+	{
+		v4l2_stop_capturing(vdev);
+		v4l2_uninit_device(vdev);
+		v4l2_reqbufs(vdev, 0);
+	}
+#endif
+
+	return 0;
 }
 
 
