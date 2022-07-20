@@ -327,6 +327,7 @@ int ShyCam::doCapStreamLoop()
                                 m_arrRecvStrmData[nCurSave].depth_frame.height);
                         }
                     } else {
+                        usleep(10*1000);
                         continue;
                     }
                 } else {
@@ -335,7 +336,7 @@ int ShyCam::doCapStreamLoop()
                     if (0 == GetFrame_ShyCamera(m_pRgbCamHdl, &m_arrRecvStrmData[nCurSave].clrTof_frame)) {
                         m_arrRecvStrmData[nCurSave].enClrStat = enDST_READY;
                     } else {
-                        usleep(5*1000);
+                        usleep(10*1000);
                         continue;
                     }
                 }

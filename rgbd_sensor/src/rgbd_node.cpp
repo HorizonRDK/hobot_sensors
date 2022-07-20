@@ -78,6 +78,12 @@ void RgbdNode::get_params()
 {
   declare_parameter("sensor_type", "CP3AM");
   declare_parameter("io_method", "ros");
+  declare_parameter("enable_color", _enable_clr);
+  declare_parameter("enable_depth", _enable_dep);
+  declare_parameter("enable_pointcloud", _enable_pcl);
+  declare_parameter("enable_aligned_pointcloud", _enable_rgb_pcl);
+  declare_parameter("enable_infra", _enable_infra);
+
   this->get_parameter("sensor_type", _sensor_type);
   this->get_parameter("io_method", _io_mode);
 
