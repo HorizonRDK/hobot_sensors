@@ -41,6 +41,7 @@ add_definitions(-std=c++11 -DRGBD -DHORIZON_PLATFORM -DCV_CONVERT_CLR)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(OpenCV REQUIRED)
 
 include_directories(include
   src/TOF_SDK/include
@@ -90,7 +91,7 @@ add_executable(${PROJECT_NAME}
   src/application/tof_depth/tof_depth_process.cpp
 )
 
-set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk opencv_world)
+set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk)
 set(X3_HAPI_LIB hbmedia isp vio alog cam ion gdcbin hbmem iar tinyalsa)
 
 target_link_libraries(${PROJECT_NAME}
@@ -102,16 +103,12 @@ ament_target_dependencies(
   ${PROJECT_NAME}
   rclcpp
   sensor_msgs
+  OpenCV
   )
 
 if(BUILD_HBMEM)
 target_link_libraries(${PROJECT_NAME}
   hbmem
-)
-ament_target_dependencies(
-  ${PROJECT_NAME}
-  rclcpp
-  hbm_img_msgs
 )
 endif()
 
