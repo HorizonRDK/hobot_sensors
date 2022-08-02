@@ -74,6 +74,8 @@ sensor_id_t sensor_id_list[] =
 	{2, 0x40, I2C_ADDR_8, 0x0B, "f37", SENSOR_F37_SUPPORT},           // F37
 	{2, 0x36, I2C_ADDR_16, 0x0100, "os8a10", SENSOR_OS8A10_SUPPORT},     // os8a10
 	{2, 0x1a, I2C_ADDR_16, 0x0000, "imx415", SENSOR_IMX415_SUPPORT},     // imx514
+	{2, 0x1a, I2C_ADDR_16, 0x0000, "imx586", SENSOR_IMX586_SUPPORT},     // imx586
+	{2, 0x29, I2C_ADDR_16, 0x0000, "gc4c33", SENSOR_GC4C33_SUPPORT},     // gc4c33
 };
 #define ARRAY_SIZE(a) ((sizeof(a) / sizeof(a[0])))
 

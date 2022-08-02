@@ -24,6 +24,8 @@
 #include "sensor_imx415_config.h"
 //#include "sensor_ov8856_config.h"
 //#include "sensor_sc031gs_config.h"
+#include "sensor_imx586_config.h"
+#include "sensor_gc4c33_config.h"
 
 // sunrise camare 封装的头文件
 #include "x3_vio_venc.h"
@@ -145,6 +147,44 @@ int imx415_linear_vin_param_init(x3_vin_info_t* vin_info)
 	vin_info->enable_dev_attr_ex = 0;
 
 	return 0;
+}
+/******************************* IMX586 方案 **********************************/
+int imx586_linear_vin_param_init(x3_vin_info_t* vin_info)
+{
+    vin_info->snsinfo = SENSOR_IMX586_25FPS_10BIT_LINEAR_INFO;
+    vin_info->mipi_attr = MIPI_SENSOR_IMX586_25FPS_10BIT_LINEAR_ATTR;
+    vin_info->devinfo = DEV_ATTR_IMX586_LINEAR_BASE;
+    vin_info->pipeinfo = PIPE_ATTR_IMX586_LINEAR_BASE;
+    vin_info->disinfo = DIS_ATTR_IMX586_BASE;
+    vin_info->ldcinfo = LDC_ATTR_IMX586_BASE;
+    vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+    // 单目的使用dev_id 和 pipe_id 都设置成0
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = 0;
+    vin_info->enable_dev_attr_ex = 0;
+
+    return 0;
+}
+
+
+/******************************* GC4C33 方案 **********************************/
+int gc4c33_linear_vin_param_init(x3_vin_info_t* vin_info)
+{
+    vin_info->snsinfo = SENSOR_GC4C33_30FPS_10BIT_LINEAR_INFO;
+    vin_info->mipi_attr = MIPI_SENSOR_GC4C33_30FPS_10BIT_LINEAR_ATTR;
+    vin_info->devinfo = DEV_ATTR_GC4C33_LINEAR_BASE;
+    vin_info->pipeinfo = PIPE_ATTR_GC4C33_LINEAR_BASE;
+    vin_info->disinfo = DIS_ATTR_GC4C33_BASE;
+    vin_info->ldcinfo = LDC_ATTR_GC4C33_BASE;
+    vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+    // 单目的使用dev_id 和 pipe_id 都设置成0
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = 0;
+    vin_info->enable_dev_attr_ex = 0;
+
+    return 0;
 }
 
 /******************************** OV8856 ******************************/

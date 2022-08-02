@@ -74,6 +74,8 @@ add_executable(${PROJECT_NAME}
   src/x3/sensor_f37_config.c
   src/x3/sensor_imx415_config.c
   src/x3/sensor_gc4663_config.c
+  src/x3/sensor_imx586_config.c
+  src/x3/sensor_gc4c33_config.c
   src/x3/x3_preparam.c
   src/x3/x3_utils.c
   src/x3_sdk_swap/src/x3_sdk_wrap.c

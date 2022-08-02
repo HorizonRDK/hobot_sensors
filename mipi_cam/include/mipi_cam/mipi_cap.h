@@ -63,6 +63,8 @@ private:
 	int mf37_dol2_vin_param_init(x3_vin_info_t* vin_info);
     int mimx415_linear_vin_param_init(x3_vin_info_t* vin_info);
     int mgc4663_linear_vin_param_init(x3_vin_info_t* vin_info);
+    int mimx586_linear_vin_param_init(x3_vin_info_t* vin_info);
+    int mgc4c33_linear_vin_param_init(x3_vin_info_t* vin_info);
     int x3_cam_uninit(void);
     int x3_mipi_cam_stop(void);
     int x3_mipi_cam_start(void);
