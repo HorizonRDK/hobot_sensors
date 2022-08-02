@@ -1,5 +1,5 @@
 # Changelog for package mipi_cam
-v1.0.2 (2022-08-02)
+hhp_1.0.4 (2022-08-02)
 ------------------
 1. 新增imx586和gc4c33配置
 
