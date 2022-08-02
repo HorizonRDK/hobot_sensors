@@ -27,6 +27,8 @@ typedef enum {
 #define SENSOR_OS8A10_SUPPORT		4
 #define SENSOR_OV8856_SUPPORT		8
 #define SENSOR_SC031GS_SUPPORT		16
+#define SENSOR_IMX586_SUPPORT		32
+#define SENSOR_GC4C33_SUPPORT		64
 
 typedef struct {
 	E_CHIP_TYPE m_chip_type; // 芯片类型

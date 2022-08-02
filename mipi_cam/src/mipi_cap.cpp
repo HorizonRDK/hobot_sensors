@@ -28,7 +28,9 @@
 //#include "x3_config.h"
 #include "sensor_f37_config.h"
 #include "sensor_imx415_config.h"
+#include "sensor_imx586_config.h"
 #include "sensor_gc4663_config.h"
+#include "sensor_gc4c33_config.h"
 #include "x3_preparam.h"
 
 MipiDevice::MipiDevice()
@@ -114,6 +116,42 @@ int MipiDevice::mgc4663_linear_vin_param_init(x3_vin_info_t* vin_info)
     vin_info->disinfo = DIS_ATTR_GC4663_BASE;
     vin_info->ldcinfo = LDC_ATTR_GC4663_BASE;
     vin_info->vin_vps_mode = VIN_SIF_ONLINE_DDR_ISP_DDR_VPS_ONLINE;
+
+    // 单目的使用dev_id 和 pipe_id 都设置成0
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
+    vin_info->enable_dev_attr_ex = 0;
+
+    return 0;
+}
+/******************************* IMX586 方案 **********************************/
+int MipiDevice::mimx586_linear_vin_param_init(x3_vin_info_t* vin_info)
+{
+    vin_info->snsinfo = SENSOR_IMX586_25FPS_10BIT_LINEAR_INFO;
+    vin_info->mipi_attr = MIPI_SENSOR_IMX586_25FPS_10BIT_LINEAR_ATTR;
+    vin_info->devinfo = DEV_ATTR_IMX586_LINEAR_BASE;
+    vin_info->pipeinfo = PIPE_ATTR_IMX586_LINEAR_BASE;
+    vin_info->disinfo = DIS_ATTR_IMX586_BASE;
+    vin_info->ldcinfo = LDC_ATTR_IMX586_BASE;
+    vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+    // 单目的使用dev_id 和 pipe_id 都设置成0
+    vin_info->dev_id = 0;
+    vin_info->pipe_id = get_available_pipeid();
+    vin_info->enable_dev_attr_ex = 0;
+
+    return 0;
+}
+/******************************* GC4C33 方案 **********************************/
+int MipiDevice::mgc4c33_linear_vin_param_init(x3_vin_info_t* vin_info)
+{
+    vin_info->snsinfo = SENSOR_GC4C33_30FPS_10BIT_LINEAR_INFO;
+    vin_info->mipi_attr = MIPI_SENSOR_GC4C33_30FPS_10BIT_LINEAR_ATTR;
+    vin_info->devinfo = DEV_ATTR_GC4C33_LINEAR_BASE;
+    vin_info->pipeinfo = PIPE_ATTR_GC4C33_LINEAR_BASE;
+    vin_info->disinfo = DIS_ATTR_GC4C33_BASE;
+    vin_info->ldcinfo = LDC_ATTR_GC4C33_BASE;
+    vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
 
     // 单目的使用dev_id 和 pipe_id 都设置成0
     vin_info->dev_id = 0;
@@ -231,6 +269,52 @@ int MipiDevice::init_param(void)
     } else if (strcmp(sensor_name, "GC4663") == 0 ||
                strcmp(sensor_name, "gc4663") == 0) {
       ret = mgc4663_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+      int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
+      std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
+      if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
+        // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
+        for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
+          dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
+          if (access(dev_i2c.data(), F_OK) == 0) {
+            m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
+            ROS_printf(
+                "Adapt bus_num for /dev/i2c- from %d to %d", bus_num,
+                m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
+            break;
+          }
+        }
+      }
+    } else if (strcmp(sensor_name, "IMX586") == 0 ||
+               strcmp(sensor_name, "imx586") == 0) {
+      // enable, sdb3.0
+      std::vector<std::string> sys_cmds{
+          "echo 111 > /sys/class/gpio/export",
+          "echo out > /sys/class/gpio/gpio111/direction",
+          "echo 1 > /sys/class/gpio/gpio111/value",
+      };
+      for (const auto& sys_cmd : sys_cmds) {
+        system(sys_cmd.data());
+      }
+
+      ret = mimx586_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+      int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
+      std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
+      if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
+        // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
+        for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
+          dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
+          if (access(dev_i2c.data(), F_OK) == 0) {
+            m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
+            ROS_printf(
+                "Adapt bus_num for /dev/i2c- from %d to %d", bus_num,
+                m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
+            break;
+          }
+        }
+      }
+    } else if (strcmp(sensor_name, "GC4C33") == 0 ||
+               strcmp(sensor_name, "gc4c33") == 0) {
+      ret = mgc4c33_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
       int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
       std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
       if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
