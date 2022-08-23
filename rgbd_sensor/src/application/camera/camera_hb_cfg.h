@@ -39,7 +39,7 @@
 #define SELECT_MODULE_CFG_FILE_PATH	"./parameter"
 #define SELECT_MODULE_GUEST_ID		MODULE_GUEST_ID_01
 
-
+int GetBoardType(void);
 int GetVideoDevPath(CAM_TYPE_E eCamType, char *pcCamDirection, int *piCamDevId, PIPELINE_TYPE_E *pePipeType);
 int GetCamI2cSlaveAddr(CAM_TYPE_E eCamType, char *pcCamDirection, unsigned int *puiSlaveAddr);
 int GetCamI2cDevId(CAM_TYPE_E eCamType, char *pcCamDirection, int *piI2cDevId);

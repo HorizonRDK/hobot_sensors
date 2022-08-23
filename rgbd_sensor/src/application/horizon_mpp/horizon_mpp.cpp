@@ -16,7 +16,7 @@ int need_ipu = 63;
 int minQP = 0;
 int maxQP = 0;
 unsigned char pu8YuvBuffer[RGB_WIDTH*RGB_HEIGHT*2];
-	
+static bool mipi_reset_flag = false;
 
 
 static int hv_vp_init()
@@ -75,24 +75,65 @@ static int hb_enable_sensor_clk(uint32_t mipiIdx)
 {
 	int iRet = 0;
 
-	/* reset使能*/
-	if (1 == mipiIdx)
-	{
-		(void) system("echo 111 > /sys/class/gpio/export");
-		(void) system("echo out > /sys/class/gpio/gpio111/direction");
-		(void) system("echo 0 > /sys/class/gpio/gpio111/value");
-		(void) system("sleep 0.2");
-		(void) system("echo 1 > /sys/class/gpio/gpio111/value");
+	int board_type = GetBoardType();
+	if (5 == board_type) {
+		// x3pi两个sensor使用的同一个reset管脚，只需要复位一次
+		if (!mipi_reset_flag) {
+			(void)system("echo 19 > /sys/class/gpio/export");
+			(void)system("echo out > /sys/class/gpio/gpio19/direction");
+			(void)system("echo 0 > /sys/class/gpio/gpio19/value");
+			(void)system("sleep 0.2");
+			(void)system("echo 1 > /sys/class/gpio/gpio19/value");
+			(void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+			(void)system("echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart");
+			mipi_reset_flag = true;
+		}
+	} else if (4 == board_type) {
+		/* reset使能*/
+		if (1 == mipiIdx) {
+			(void)system("echo 118 > /sys/class/gpio/export");
+			(void)system("echo out > /sys/class/gpio/gpio118/direction");
+			(void)system("echo 0 > /sys/class/gpio/gpio118/value");
+			(void)system("sleep 0.2");
+			(void)system("echo 1 > /sys/class/gpio/gpio118/value");
+			(void)system("echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
+		} else if (0 == mipiIdx) {
+			(void)system("echo 119 > /sys/class/gpio/export");
+			(void)system("echo out > /sys/class/gpio/gpio119/direction");
+			(void)system("echo 0 > /sys/class/gpio/gpio119/value");
+			(void)system("sleep 0.2");
+			(void)system("echo 1 > /sys/class/gpio/gpio119/value");
+			(void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+		}
+	} else if (3 == board_type) {
+		/* reset使能*/
+		if (1 == mipiIdx) {
+			(void)system("echo 111 > /sys/class/gpio/export");
+			(void)system("echo out > /sys/class/gpio/gpio111/direction");
+			(void)system("echo 0 > /sys/class/gpio/gpio111/value");
+			(void)system("sleep 0.2");
+			(void)system("echo 1 > /sys/class/gpio/gpio111/value");
+			(void)system("echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
+		} else if (0 == mipiIdx) {
+			(void)system("echo 119 > /sys/class/gpio/export");
+			(void)system("echo out > /sys/class/gpio/gpio119/direction");
+			(void)system("echo 0 > /sys/class/gpio/gpio119/value");
+			(void)system("sleep 0.2");
+			(void)system("echo 1 > /sys/class/gpio/gpio119/value");
+			(void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+		}
+	} else {
+		printf("[%s] Unsupported board type!\n", __func__);
+		return -1;
 	}
-	else if (0 == mipiIdx)
+    
+	iRet = HB_MIPI_SetSensorClock(mipiIdx, 24000000);
+	if (iRet)
 	{
-		(void) system("echo 119 > /sys/class/gpio/export");
-		(void) system("echo out > /sys/class/gpio/gpio119/direction");
-		(void) system("echo 0 > /sys/class/gpio/gpio119/value");
-		(void) system("sleep 0.2");
-		(void) system("echo 1 > /sys/class/gpio/gpio119/value");	
+		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", __func__, iRet);
+		return iRet;
 	}
-	
+
 	/* 使能 mclk */
 	iRet = HB_MIPI_EnableSensorClock(mipiIdx);
 	if (iRet)
@@ -100,14 +141,6 @@ static int hb_enable_sensor_clk(uint32_t mipiIdx)
 		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", __func__, iRet);
 		return iRet;
 	}
-	
-	iRet = HB_MIPI_SetSensorClock(mipiIdx, 24000000);
-	if (iRet)
-	{
-		printf("[%s] HB_MIPI_EnableSensorClock failed, iRet = 0x%x\n", __func__, iRet);
-		return iRet;
-	}
-	
 
 	return 0;
 }
