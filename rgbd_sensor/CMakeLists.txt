@@ -57,6 +57,10 @@ include_directories(
   ${CMAKE_SYSROOT}/usr/include/vio
 )
 
+include_directories(../../../../install/opt/yaml_cpp_vendor/include/)
+
+link_directories(../../../../install/opt/yaml_cpp_vendor/lib/)
+
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
   src/TOF_SDK/libs
@@ -95,7 +99,7 @@ set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk)
 set(X3_HAPI_LIB hbmedia isp vio alog cam ion gdcbin hbmem iar tinyalsa)
 
 target_link_libraries(${PROJECT_NAME}
-  ${BASE_LIBRARIES} ${X3_HAPI_LIB}
+  ${BASE_LIBRARIES} ${X3_HAPI_LIB} yaml-cpp
   # ${ROS_LIB}
 )
 

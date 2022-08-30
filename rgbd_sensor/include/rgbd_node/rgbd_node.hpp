@@ -89,6 +89,9 @@ class RgbdNode : public rclcpp::Node
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr img_pcl_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr img_pcl_align_pub_;
 
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr imgCam_pub_;
+  sensor_msgs::msg::CameraInfo::UniquePtr camera_calibration_info_;
+
  private:
   void pub_align_pcl(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr camPublish,
     TTofRgb_PCDClr &pclRgbDepth, struct timespec time_start);
@@ -104,6 +107,9 @@ class RgbdNode : public rclcpp::Node
   std::string _sensor_type = "CP3AM";
   std::string _io_mode = "ros";
   std::string frame_id_ = "";
+  std::string camera_calibration_file_path_ = "./config/CP3AM_calibration.yaml";
+    
+  bool _enabled_read_cam_calibration = true;
 
   int m_bIsInit;
   int clr_w_ = 1920;

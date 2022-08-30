@@ -54,7 +54,8 @@ RgbdNode::RgbdNode(const rclcpp::NodeOptions & node_options, std::string node_na
   Node(node_name, node_options),
   img_dep_(new sensor_msgs::msg::Image()),
   img_infra_(new sensor_msgs::msg::Image()),
-  img_clr_(new sensor_msgs::msg::Image())
+  img_clr_(new sensor_msgs::msg::Image()),
+  camera_calibration_info_(new sensor_msgs::msg::CameraInfo())
 {
   stop_ = false;
   get_params();
@@ -83,9 +84,11 @@ void RgbdNode::get_params()
   declare_parameter("enable_pointcloud", _enable_pcl);
   declare_parameter("enable_aligned_pointcloud", _enable_rgb_pcl);
   declare_parameter("enable_infra", _enable_infra);
+  declare_parameter("camera_calibration_file_path", camera_calibration_file_path_);
 
   this->get_parameter("sensor_type", _sensor_type);
   this->get_parameter("io_method", _io_mode);
+  this->get_parameter("camera_calibration_file_path", camera_calibration_file_path_);
 
   this->get_parameter_or("color_width", clr_w_, 1920);
   this->get_parameter_or("color_height", clr_h_, 1080);
@@ -138,9 +141,16 @@ void RgbdNode::init()
   img_dep_->header.frame_id = "depth";
   img_infra_->header.frame_id = "infra";
   img_clr_->header.frame_id = "color";
+  camera_calibration_info_->header.frame_id = "color";
   // 启动cam 读取并且计算
   nRet = ShyCam::GetInstance()->InitVideo();
   nRet = ShyCam::GetInstance()->StartStream(GetCaptureHdl, this);
+
+  if (!ShyCam::GetInstance()->ReadCalibrationFile(*camera_calibration_info_, camera_calibration_file_path_))
+  {
+    _enabled_read_cam_calibration = false;
+    RCLCPP_WARN(rclcpp::get_logger("rgbd_node"), "get camera calibration parameters failed");
+  }
   // 创建线程，读取rgbd 数据，准备发送
   m_spThrdPub = std::make_shared<std::thread>(std::bind(&RgbdNode::exec_loopPub, this));
   m_bIsInit = 1;
@@ -173,6 +183,10 @@ void RgbdNode::exec_loopPub()
       snprintf(tsTopicName, sizeof(tsTopicName), "/rgbd_%s/color/image_rect_raw", _sensor_type.c_str());
       imgClr_pub_ = this->create_publisher<sensor_msgs::msg::Image>(tsTopicName, BUF_PUB_NUM);
     }
+    if (_enabled_read_cam_calibration) {
+      snprintf(tsTopicName, sizeof(tsTopicName), "/rgbd_%s/color/camera_info", _sensor_type.c_str());
+      imgCam_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(tsTopicName, BUF_PUB_NUM);
+    }
   } else {
 #ifdef USING_HBMEM
     // 创建hbmempub
@@ -187,6 +201,9 @@ void RgbdNode::exec_loopPub()
     if (_enable_infra) {
       pub_hbmeminfra_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg480P>(
         "hbmem_infra", BUF_PUB_NUM);
+    }
+    if (_enabled_read_cam_calibration) {
+      imgCam_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(tsTopicName, BUF_PUB_NUM);
     }
 #endif
     bSharedMem = true;
@@ -334,6 +351,10 @@ void RgbdNode::timer_ros_pub()
           memcpy(&img_clr_->data[0], oResTofPCL.mOutRgb, img_clr_->data.size());
           imgClr_pub_->publish(*img_clr_);
         }
+        if (_enabled_read_cam_calibration ) {
+          camera_calibration_info_->header.stamp = img_dep_->header.stamp;
+          imgCam_pub_->publish(*camera_calibration_info_);
+        }
         // pub_CamInfo(depCam_pub_,);
         if (_enable_pcl)
           pub_ori_pcl(img_pcl_pub_, oResTofPCL.mOriRes, time_start);
@@ -430,6 +451,11 @@ void RgbdNode::timer_hbmem_pub()
           } else {
             RCLCPP_ERROR(rclcpp::get_logger("rgbd_node"), "1080p borrow_loaned_message failed");
           }
+        }
+        if (_enabled_read_cam_calibration ) {
+          camera_calibration_info_->header.stamp.sec = time_start.tv_sec;
+          camera_calibration_info_->header.stamp.nanosec = time_start.tv_nsec;
+          imgCam_pub_->publish(*camera_calibration_info_);
         }
         // pub_ori_pcl(img_pcl_pub_, oResTofPCL.mOriRes, time_start);
         // pub_align_pcl(img_pcl_align_pub_, oResTofPCL.mPclRgb, time_start);
