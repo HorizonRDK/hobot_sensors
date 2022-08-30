@@ -351,7 +351,7 @@ void RgbdNode::timer_ros_pub()
           memcpy(&img_clr_->data[0], oResTofPCL.mOutRgb, img_clr_->data.size());
           imgClr_pub_->publish(*img_clr_);
         }
-        if (_enabled_read_cam_calibration ) {
+        if (_enabled_read_cam_calibration) {
           camera_calibration_info_->header.stamp = img_dep_->header.stamp;
           imgCam_pub_->publish(*camera_calibration_info_);
         }

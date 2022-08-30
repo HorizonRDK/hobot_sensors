@@ -89,7 +89,7 @@ class RgbdNode : public rclcpp::Node
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr img_pcl_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr img_pcl_align_pub_;
 
-  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr imgCam_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr imgCam_pub_ = nullptr;
   sensor_msgs::msg::CameraInfo::UniquePtr camera_calibration_info_;
 
  private:

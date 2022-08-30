@@ -42,6 +42,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 include_directories(include
   src/TOF_SDK/include
@@ -57,9 +58,6 @@ include_directories(
   ${CMAKE_SYSROOT}/usr/include/vio
 )
 
-include_directories(../../../../install/opt/yaml_cpp_vendor/include/)
-
-link_directories(../../../../install/opt/yaml_cpp_vendor/lib/)
 
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
@@ -108,6 +106,7 @@ ament_target_dependencies(
   rclcpp
   sensor_msgs
   OpenCV
+  yaml_cpp_vendor
   )
 
 if(BUILD_HBMEM)

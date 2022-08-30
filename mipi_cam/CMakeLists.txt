@@ -53,16 +53,13 @@ ament_auto_find_build_dependencies()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-
+find_package(yaml_cpp_vendor REQUIRED)
 
 include_directories(include
   src/x3
   src/x3_sdk_swap/include
 )
 
-include_directories(../../../../install/opt/yaml_cpp_vendor/include/)
-
-link_directories(../../../../install/opt/yaml_cpp_vendor/lib/)
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
 )
@@ -104,6 +101,7 @@ ament_target_dependencies(
   ${PROJECT_NAME}
   rclcpp
   sensor_msgs
+  yaml_cpp_vendor
   )
 
 if(BUILD_HBMEM)

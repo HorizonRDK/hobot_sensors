@@ -94,8 +94,8 @@ websocket接收图像消息和智能结果消息，根据时间戳进行匹配�
 | io_method   | io类型           | string | mmap/read/userptr          | 否       | “mmap”            |
 | pixel_format| 像素格式         | string | 当前只支持mjpeg            | 否        | “mjpeg”           |
 | video_device| 设备驱动名称     | string | 设备名称一般为/dev/videox  | 是        | “/dev/video0”     |
-| zero_copy   | 使能“zero-copy”  | bool   | true/false                 | 否       | “false”           |
-| camera_calibration_file_path  | 相机标定文件的存放路径  | string   | 根据实际的相机标定文件存放路径配置   | 否  | 无 |
+| zero_copy   | 使能“zero_copy”  | bool   | True/False                 | 否       | “False”           |
+| camera_calibration_file_path  | 相机标定文件的存放路径  | string   | 根据实际的相机标定文件存放路径配置   | 否  | 空 |
 
 
 ## 运行
@@ -146,9 +146,9 @@ hobot_usb_cam没有默认的标定文件，可使用参数camera_calibration_fil
 ```
 root@ubuntu:~# ros2 run hobot_usb_cam hobot_usb_cam --ros-args --log-level info --ros-args -p video_device:="/dev/video8"
 
-[[WARN] [1661864867.404957444] [hobot_usb_cam]: yaml file:  not exist!
-[WARN] [1661864867.406033600] [hobot_usb_cam]: Unable to parse camera calibration file normally:bad conversion
-[WARN] [1661864867.406198954] [hobot_usb_cam]: get camera calibration parameters failed
+[ERROR] [1661872247.616929290] [hobot_usb_cam]: Camera calibration file:  not exist!
+[WARN] [1661872247.617759426] [hobot_usb_cam]: get camera calibration parameters failed
+
 [INFO] [1661864867.688989561] [hobot_usb_cam]: Set resolution to 640x480
 
 [INFO] [1661864867.718194946] [hobot_usb_cam]: Set framerate to be 30

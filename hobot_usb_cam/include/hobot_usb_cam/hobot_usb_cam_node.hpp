@@ -63,8 +63,8 @@ class HobotUSBCamNode : public rclcpp::Node {
 
   sensor_msgs::msg::CameraInfo camera_calibration_info_;
 
-  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_ = nullptr;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
     hbmem_image_pub_1080_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg540P>::SharedPtr

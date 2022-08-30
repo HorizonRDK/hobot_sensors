@@ -385,8 +385,9 @@ bool ShyCam::ReadCalibrationFile(sensor_msgs::msg::CameraInfo& cam_info, const s
     std::string camera_name;
     std::ifstream fin(file_path.c_str());
     if (!fin) {
-      RCLCPP_WARN(rclcpp::get_logger("rgbd_cam"),
-              "yaml file: %s not exist!", file_path.c_str());
+      RCLCPP_ERROR(rclcpp::get_logger("rgbd_cam"),
+              "Camera calibration file: %s not exist!", file_path.c_str());
+      return false;
     }
     YAML::Node calibration_doc = YAML::Load(fin);
     if (calibration_doc["camera_name"])
