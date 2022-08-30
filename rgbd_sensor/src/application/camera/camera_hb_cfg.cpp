@@ -1,3 +1,7 @@
+#include <fstream>
+#include <string>
+#include <sstream>
+
 #include "camera_hb_cfg.h"
 
 
@@ -26,6 +30,19 @@ static bool is_v4l2_cif(char *buf)
         return true;
     else
         return false;
+}
+
+
+// 3:sdbv3, 4:sdbv4, 5:x3pi
+int GetBoardType(void)
+{
+	int type = 3;
+	std::ifstream som_name("/sys/class/socinfo/som_name");
+	if (som_name.is_open()) {
+		som_name >> type;
+	}
+
+	return type;
 }
 
 int GetVideoDevPath(CAM_TYPE_E eCamType, char *pcCamDirection, int *piCamDevId, PIPELINE_TYPE_E *pePipeType)
@@ -122,11 +139,19 @@ int GetCamI2cDevId(CAM_TYPE_E eCamType, char *pcCamDirection, int *piI2cDevId)
 
 	if ((CAM_TYPE_TOF == eCamType) || (CAM_TYPE_TOF_RGBD == eCamType))
 	{
-		*piI2cDevId = I2C_TOF_DEV_ID;
+		if (5 == GetBoardType()) {
+			*piI2cDevId = 1;
+		} else {
+			*piI2cDevId = 2;
+		}
 	}
 	else if (CAM_TYPE_RGB == eCamType)
 	{
-		*piI2cDevId = I2C_RGB_DEV_ID;
+		if (5 == GetBoardType()) {
+			*piI2cDevId = 1;
+		} else {
+			*piI2cDevId = 2;
+		}
 	}
 	else
 	{
@@ -224,13 +249,18 @@ MIPI_SENSOR_INFO_S *GetIrs2381cSensorInfo(void)
 	pstSensorInfo->deseEnable = 0; // 该 sensor 是否有 serdes（串解器）
 	pstSensorInfo->inputMode = INPUT_MODE_MIPI; // sensor 接入方式,mipi还是dvp
 	pstSnsInfo->port = 1; // sensor的逻辑编号，必须从0开始
-	pstSnsInfo->dev_port = 0; // 每路 sensor 操作的驱动节点，一个驱动支持多个节点。 snsinfo 中的dev_port 必须等于pipeId，多目摄像头设置的时候需要特别注意
+	pstSnsInfo->dev_port = 1; // 每路 sensor 操作的驱动节点，一个驱动支持多个节点。 snsinfo 中的dev_port 必须等于pipeId，多目摄像头设置的时候需要特别注意
 	pstSnsInfo->bus_type = 0; // 访问总线类型， 0 是 i2c,1 是 spi
-	pstSnsInfo->bus_num = 2; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+	if (5 == GetBoardType()) {
+		pstSnsInfo->bus_num = 1; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+		pstSnsInfo->entry_index = 2; // sensor 使用的 mipi 索引, 0~3，对应mipi host的序号
+	} else {
+		pstSnsInfo->bus_num = 2; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+		pstSnsInfo->entry_index = 1; // sensor 使用的 mipi 索引, 0~3，对应mipi host的序号
+	}
 	pstSnsInfo->fps = 10; // 帧率，用来选择使用哪一组帧率的sensor参数
 	pstSnsInfo->resolution = RAW_HEIGHT; // sensor 行数, 必须要和mipi属性配置一致
 	pstSnsInfo->sensor_addr = 0x3d; // sensor i2c 设备地址
-	pstSnsInfo->entry_index = 1; // sensor 使用的 mipi 索引, 0~3，对应mipi host的序号
 	pstSnsInfo->sensor_mode = NORMAL_M; // sensor 工作模式， 1 是 normal,2 是dol2,3 是 dol3
 	pstSnsInfo->reg_width = 16; // sensor 寄存器地址宽度
 	pstSnsInfo->sensor_name = (char*)"irs2381c"; // sensor的名字，在libcam.so中会根据这个名字组合出 libf37.so
@@ -359,7 +389,11 @@ MIPI_SENSOR_INFO_S *GetGc2053SensorInfo(void)
 	pstSnsInfo->port = 0; // sensor的逻辑编号，必须从0开始
 	pstSnsInfo->dev_port = 0; // 每路 sensor 操作的驱动节点，一个驱动支持多个节点。 snsinfo 中的dev_port 必须等于pipeId，多目摄像头设置的时候需要特别注意
 	pstSnsInfo->bus_type = 0; // 访问总线类型， 0 是 i2c,1 是 spi
-	pstSnsInfo->bus_num = 2; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+	if (5 == GetBoardType()) {
+		pstSnsInfo->bus_num = 1; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+	} else {
+		pstSnsInfo->bus_num = 2; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
+	}
 	pstSnsInfo->fps = 10; // 帧率，用来选择使用哪一组帧率的sensor参数
 	pstSnsInfo->resolution = RGB_HEIGHT; // sensor 行数, 必须要和mipi属性配置一致
 	pstSnsInfo->sensor_addr = 0x37; // sensor i2c 设备地址

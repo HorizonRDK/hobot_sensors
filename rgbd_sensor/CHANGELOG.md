@@ -1,5 +1,9 @@
 # Changelog for package rgbd_sensor
 
+hhp_1.0.6 (2022-08-30)
+------------------
+1. RGBD sensor完成x3派适配，可用转接板接到x3派上使用
+
 v1.0.2 (2022-07-20)
 ------------------
 1. 合入最新RGBD厂家SDK

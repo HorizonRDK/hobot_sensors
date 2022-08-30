@@ -92,7 +92,7 @@ void* Open_ShyCamera(int nCamType)
     stCamParam.eCamType = (CAM_TYPE_E)nCamType;  // CAM_TYPE_TOF_RGBD;
     void* pCamHdl = OpenCamera(&stCamParam);
     if (!pCamHdl) {
-        ROS_printf(0, "[%s]open tof camera failed\n", __func__);
+        ROS_printf(0, "[%s]open %d camera failed\n", __func__, nCamType);
         return NULL;
     }
     // gstRgbdPocessCb.pTofHandle = pTofHandle;

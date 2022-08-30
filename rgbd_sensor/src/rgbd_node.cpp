@@ -103,6 +103,9 @@ void RgbdNode::get_params()
   this->get_parameter_or("infra_height", infra_h_, 108);
   this->get_parameter_or("infra_fps", infra_fps_, 10);
   this->get_parameter_or("enable_infra", _enable_infra, true);
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "color %d, enable_depth %d, enable_pointcloud %d, enable_aligned_pointcloud %d, enable_infra %d",
+    _enable_clr, _enable_dep, _enable_pcl, _enable_rgb_pcl, _enable_infra);
 }
 
 void RgbdNode::service_capture(
