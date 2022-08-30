@@ -40,6 +40,9 @@ find_package(hbm_img_msgs REQUIRED)
 # find_package(v4l-utils)
 
 include_directories(include/hobot_usb_cam)
+include_directories(../../../../install/opt/yaml_cpp_vendor/include/)
+
+link_directories(../../../../install/opt/yaml_cpp_vendor/lib/)
 
 add_executable(${PROJECT_NAME}
   src/hobot_usb_cam_exec.cpp
@@ -50,6 +53,7 @@ ament_target_dependencies(${PROJECT_NAME} rclcpp sensor_msgs hbm_img_msgs)
 #   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 #   $<INSTALL_INTERFACE:include>))
 
+target_link_libraries(${PROJECT_NAME} yaml-cpp)
 # target_link_libraries(${PROJECT_NAME}_node
 
 #   ${avcodec_LIBRARIES}

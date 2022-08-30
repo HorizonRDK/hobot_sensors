@@ -18,6 +18,8 @@
 #include <chrono>
 #include <string>
 
+#include "sensor_msgs/msg/camera_info.hpp"
+
 extern "C" {
   #include <linux/videodev2.h>
 }
@@ -63,6 +65,7 @@ class HobotUSBCam {
   bool DeInit();
   bool GetFrame(CamBuffer &cam_buffer);
   bool ReleaseFrame(CamBuffer &cam_buffer);
+  bool ReadCalibrationFile(sensor_msgs::msg::CameraInfo& cam_calibration_info, const std::string &file_path);
 
  private:
   int32_t xioctl(int fh, uint32_t request, void *arg);

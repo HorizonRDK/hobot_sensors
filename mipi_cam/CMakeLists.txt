@@ -60,6 +60,9 @@ include_directories(include
   src/x3_sdk_swap/include
 )
 
+include_directories(../../../../install/opt/yaml_cpp_vendor/include/)
+
+link_directories(../../../../install/opt/yaml_cpp_vendor/lib/)
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
 )
@@ -94,7 +97,7 @@ set(BASE_LIBRARIES pthread vio cam dl)
 set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
 
 target_link_libraries(${PROJECT_NAME}
-  ${BASE_LIBRARIES} ${X3_HAPI_LIB}
+  ${BASE_LIBRARIES} ${X3_HAPI_LIB} yaml-cpp
 )
 
 ament_target_dependencies(
@@ -118,6 +121,11 @@ endif()
 install(
   TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/config/
+  DESTINATION lib/${PROJECT_NAME}/config/
 )
 
 install(DIRECTORY

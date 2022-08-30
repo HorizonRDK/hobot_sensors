@@ -49,15 +49,21 @@ class HobotUSBCamNode : public rclcpp::Node {
   HobotUSBCam cam_;
   std::string video_device_name_;
   std::string frame_id_;
+  std::string camera_calibration_file_path_;
   HobotUSBCam::IOMethod io_method_name_;
   HobotUSBCam::PixelFormat pixel_format_name_;
   int image_width_;
   int image_height_;
   int framerate_;
   bool zero_copy_enabled_;
+  bool read_cam_calibration_enabled_ = true;
   bool reading_;
   std::thread *read_thread_;
   CamNodeState cam_node_state_;
+
+  sensor_msgs::msg::CameraInfo camera_calibration_info_;
+
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
     hbmem_image_pub_1080_;

@@ -94,7 +94,8 @@ websocket接收图像消息和智能结果消息，根据时间戳进行匹配�
 | io_method   | io类型           | string | mmap/read/userptr          | 否       | “mmap”            |
 | pixel_format| 像素格式         | string | 当前只支持mjpeg            | 否        | “mjpeg”           |
 | video_device| 设备驱动名称     | string | 设备名称一般为/dev/videox  | 是        | “/dev/video0”     |
-| zero-copy   | 使能“zero-copy”  | bool   | true/false                 | 否       | “false”           |
+| zero_copy   | 使能“zero-copy”  | bool   | true/false                 | 否       | “false”           |
+| camera_calibration_file_path  | 相机标定文件的存放路径  | string   | 根据实际的相机标定文件存放路径配置   | 否  | 无 |
 
 
 ## 运行
@@ -127,39 +128,76 @@ export ROS_LOG_DIR=/userdata/
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./install/lib/
 
 ./install/lib/hobot_usb_cam/hobot_usb_cam --ros-args --log-level info --ros-args -p video_device:="/dev/video8"
+```
 
 ## 注意事项
 
-目前使用“zero-copy”仅支持1920*1080、960*540、640*480三种分辨率图像，如果需要使用其他分辨率，需要自行创建对应的ros message。
+目前使用“zero-copy”仅支持1920*1080、960*540、640*480三种分辨率图像，如果需要使用其他分辨率，需要自行创建对应的ros message
 
 当配置的分辨率硬件不支持时，会自动选择接近的分辨率进行图像获取
+
+hobot_usb_cam没有默认的标定文件，可使用参数camera_calibration_file_path指定。相机内参发布话题名:/camera_info
 
 # 结果分析
 
 ## X3结果展示
 
+若未指定相机标定文件，会出现无法发布相机信息的警告，但不影响图片消息的发布
 ```
 root@ubuntu:~# ros2 run hobot_usb_cam hobot_usb_cam --ros-args --log-level info --ros-args -p video_device:="/dev/video8"
 
-[INFO] [1653875464.486111221] [hobot_usb_cam]: Set resolution to 640x480
+[[WARN] [1661864867.404957444] [hobot_usb_cam]: yaml file:  not exist!
+[WARN] [1661864867.406033600] [hobot_usb_cam]: Unable to parse camera calibration file normally:bad conversion
+[WARN] [1661864867.406198954] [hobot_usb_cam]: get camera calibration parameters failed
+[INFO] [1661864867.688989561] [hobot_usb_cam]: Set resolution to 640x480
 
-[INFO] [1653875464.488402126] [hobot_usb_cam]: Set framerate to be 30
+[INFO] [1661864867.718194946] [hobot_usb_cam]: Set framerate to be 30
 
-[INFO] [1653875465.134289369] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[WARN] [1661864867.949372256] [hobot_usb_cam]: Unable to publish camera info.
 
-[INFO] [1653875465.138189789] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[INFO] [1661864867.949684008] [hobot_usb_cam]: publish image 640x480 encoding:2 size:82225
 
-[INFO] [1653875465.172409484] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[WARN] [1661864867.981565221] [hobot_usb_cam]: Unable to publish camera info.
 
-[INFO] [1653875465.176569685] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[INFO] [1661864867.981989001] [hobot_usb_cam]: publish image 640x480 encoding:2 size:82194
 
-[INFO] [1653875465.212285274] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[WARN] [1661864868.017477066] [hobot_usb_cam]: Unable to publish camera info.
 
-[INFO] [1653875465.255996155] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[INFO] [1661864868.017740158] [hobot_usb_cam]: publish image 640x480 encoding:2 size:82427
 
-[INFO] [1653875465.296020731] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[WARN] [1661864868.049163958] [hobot_usb_cam]: Unable to publish camera info.
 
-[INFO] [1653875465.336038058] [hobot_usb_cam]: publish image 640x480 encoding:2 size:614400
+[INFO] [1661864868.049382305] [hobot_usb_cam]: publish image 640x480 encoding:2 size:82302
+
+[WARN] [1661864868.081569634] [hobot_usb_cam]: Unable to publish camera info.
+
+[INFO] [1661864868.082001830] [hobot_usb_cam]: publish image 640x480 encoding:2 size:88354
+
+[WARN] [1661864868.117489411] [hobot_usb_cam]: Unable to publish camera info.
+
+```
+若指定相机标定参数路径，相机运行成功并正常获取相机标定文件，则输出以下信息
+```
+[INFO] [1661865235.667735376] [hobot_usb_cam]: [get_cam_calibration]->parse calibration file successfully
+[INFO] [1661865235.925195867] [hobot_usb_cam]: Set resolution to 640x480
+
+[INFO] [1661865235.954375056] [hobot_usb_cam]: Set framerate to be 30
+
+[INFO] [1661865236.185936360] [hobot_usb_cam]: publish camera info.
+
+[INFO] [1661865236.186272480] [hobot_usb_cam]: publish image 640x480 encoding:2 size:83446
+
+[INFO] [1661865236.217417891] [hobot_usb_cam]: publish camera info.
+
+[INFO] [1661865236.217865635] [hobot_usb_cam]: publish image 640x480 encoding:2 size:83342
+
+[INFO] [1661865236.252895697] [hobot_usb_cam]: publish camera info.
+
+[INFO] [1661865236.253140610] [hobot_usb_cam]: publish image 640x480 encoding:2 size:83542
+
+[INFO] [1661865236.285348631] [hobot_usb_cam]: publish camera info.
+
+[INFO] [1661865236.285770625] [hobot_usb_cam]: publish image 640x480 encoding:2 size:83430
 
 ```
 

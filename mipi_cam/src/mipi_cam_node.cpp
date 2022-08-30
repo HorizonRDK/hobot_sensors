@@ -38,9 +38,11 @@ namespace mipi_cam
 MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
 :m_bIsInit(0) ,
   Node("mipi_cam", node_options),
-  img_(new sensor_msgs::msg::Image())
+  img_(new sensor_msgs::msg::Image()),
+  camera_calibration_info_(new sensor_msgs::msg::CameraInfo())
 {
   image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw", PUB_BUF_NUM);
+  info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", PUB_BUF_NUM);
   // declare params
   this->declare_parameter("camera_name", "default_cam");
   this->declare_parameter("camera_info_url", "");
@@ -52,6 +54,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("pixel_format", "yuyv");
   this->declare_parameter("out_format", "bgr8");  // nv12
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
+  this->declare_parameter("camera_calibration_file_path", "./config/F37_calibration.yaml");
   get_params();
   init();  //外部可能会调用了
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
@@ -69,7 +72,7 @@ void MipiCamNode::get_params()
   auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
   for (auto & parameter : parameters_client->get_parameters(
       {"camera_name", "camera_info_url", "out_format", "frame_id", "framerate",
-        "image_height", "image_width", "io_method", "pixel_format", "video_device"}))
+        "image_height", "image_width", "io_method", "pixel_format", "video_device", "camera_calibration_file_path"}))
   {
     if (parameter.get_name() == "camera_name") {
       RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
@@ -99,6 +102,8 @@ void MipiCamNode::get_params()
       pixel_format_name_ = parameter.value_to_string();
     } else if (parameter.get_name() == "video_device") {
       video_device_name_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "camera_calibration_file_path") {
+      camera_calibration_file_path_ = parameter.value_to_string();
     } else {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
         "Invalid parameter name: %s", parameter.get_name().c_str());
@@ -147,6 +152,7 @@ void MipiCamNode::init()
   }
 
   img_->header.frame_id = frame_id_;
+  camera_calibration_info_->header.frame_id = frame_id_;
   RCLCPP_INFO(
     rclcpp::get_logger("mipi_node"),
     "[MipiCamNode::%s]->Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS",
@@ -183,6 +189,11 @@ void MipiCamNode::init()
   }
   mipiCam_.get_formats();
   const int period_ms = 1000.0 / framerate_;
+  if (!mipiCam_.get_cam_calibration(*camera_calibration_info_, camera_calibration_file_path_))
+  {
+    camera_calibration_info_ = nullptr;
+    RCLCPP_WARN(rclcpp::get_logger("mipi_node"), "get camera calibration parameters failed");
+  }
   if (io_method_name_.compare("shared_mem") != 0) {
     timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
       std::bind(&MipiCamNode::update, this));
@@ -206,12 +217,31 @@ bool MipiCamNode::take_and_send_image()
   image_pub_->publish(*img_);
   return true;
 }
+
+bool MipiCamNode::send_calibration(const builtin_interfaces::msg::Time &stamp)
+{
+  if (camera_calibration_info_ != nullptr) {
+    camera_calibration_info_->header.stamp = stamp;
+    info_pub_->publish(*camera_calibration_info_);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void MipiCamNode::update()
 {
   if (mipiCam_.is_capturing()) {
     if (!take_and_send_image()) {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
       "mipi camera did not respond in time.");
+    }
+    if (send_calibration(img_->header.stamp)) {
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
+      "publish camera info.\n");
+    } else {
+      RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+      "Unable to publish camera info.\n");
     }
   }
 }
@@ -230,6 +260,14 @@ void MipiCamNode::hbmem_update()
       }
       msg.index = mSendIdx++;
       publisher_hbmem_->publish(std::move(loanedMsg));
+
+      if (send_calibration(msg.time_stamp)) {
+        RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
+        "publish camera info.\n");
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+        "Unable to publish camera info.\n");
+      }
     } else {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
       "borrow_loaned_message failed");
