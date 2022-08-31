@@ -47,6 +47,7 @@ public:
   void update();
   void hbmem_update();
   bool take_and_send_image();
+  bool send_calibration(const builtin_interfaces::msg::Time &stamp);
 
   void service_capture(
     const std::shared_ptr<rmw_request_id_t> request_header,
@@ -57,8 +58,10 @@ public:
 
   // shared image message
   sensor_msgs::msg::Image::UniquePtr img_;
+  sensor_msgs::msg::CameraInfo::UniquePtr camera_calibration_info_;
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_ = nullptr;
 #ifdef USING_HBMEM
   int32_t mSendIdx = 0;
   rclcpp::TimerBase::SharedPtr timer_hbmem_;
@@ -88,6 +91,7 @@ public:
 
   std::string camera_name_;
   std::string camera_info_url_;
+  std::string camera_calibration_file_path_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   // 滑动窗口测方差 ， 20 s ，标准帧率

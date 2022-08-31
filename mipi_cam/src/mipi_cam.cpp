@@ -25,6 +25,8 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <yaml-cpp/yaml.h>
+#include "sensor_msgs/distortion_models.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -394,6 +396,68 @@ bool MipiCam::get_image_mem(
     __func__, encoding.data(), step, image_->image_size , msStart, msEnd - msStart);
   return true;
 }
+
+bool MipiCam::get_cam_calibration(sensor_msgs::msg::CameraInfo& cam_info, const std::string &file_path)
+{
+  try {
+    std::string camera_name;
+    std::ifstream fin(file_path.c_str());
+    if (!fin) {
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+              "Camera calibration file: %s not exist!", file_path.c_str());
+      return false;
+    }
+    YAML::Node calibration_doc = YAML::Load(fin);
+    if (calibration_doc["camera_name"])
+    {
+      camera_name = calibration_doc["camera_name"].as<std::string>();
+    } else {
+      camera_name = "unknown";
+    }
+    cam_info.width = calibration_doc["image_width"] .as<int>();
+    cam_info.height = calibration_doc["image_height"].as<int>();
+
+    const YAML::Node &camera_matrix = calibration_doc["camera_matrix"];
+    const YAML::Node &camera_matrix_data = camera_matrix["data"];
+    for(int i = 0; i < 9; i++) {
+      cam_info.k[i] = camera_matrix_data[i].as<double>();
+    }
+    const YAML::Node &rectification_matrix = calibration_doc["rectification_matrix"];
+    const YAML::Node &rectification_matrix_data = rectification_matrix["data"];
+    for(int i = 0; i < 9; i++) {
+      cam_info.r[i] = rectification_matrix_data[i].as<double>();
+    }
+    const YAML::Node &projection_matrix = calibration_doc["projection_matrix"];
+    const YAML::Node &projection_matrix_data = projection_matrix["data"];
+    for(int i = 0; i < 12; i++) {
+      cam_info.p[i] = projection_matrix_data[i].as<double>();
+    }
+
+    if (calibration_doc["distortion_model"]) {
+      cam_info.distortion_model = calibration_doc["distortion_model"].as<std::string>();
+    }
+    else {
+      cam_info.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+        RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "Camera calibration file did not specify distortion model, assuming plumb bob");
+    }
+    const YAML::Node& distortion_coefficients = calibration_doc["distortion_coefficients"];
+    int d_rows, d_cols;
+    d_rows = distortion_coefficients["rows"].as<int>();
+    d_cols = distortion_coefficients["cols"].as<int>();
+    const YAML::Node& distortion_coefficients_data = distortion_coefficients["data"];
+    cam_info.d.resize(d_rows*d_cols);
+    for (int i = 0; i < d_rows*d_cols; ++i) {
+      cam_info.d[i] = distortion_coefficients_data[i].as<double>();
+    }
+    RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "[get_cam_calibration]->parse calibration file successfully");
+    return true;
+  }
+  catch (YAML::Exception& e) {
+    RCLCPP_WARN(rclcpp::get_logger("mipi_cam"), "Unable to parse camera calibration file normally:%s",e.what());
+    return false;
+  }
+}
+
 void MipiCam::get_formats()  // std::vector<mipi_cam::msg::Format>& formats)
 {
 }

@@ -42,6 +42,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 include_directories(include
   src/TOF_SDK/include
@@ -56,6 +57,7 @@ include_directories(include
 include_directories(
   ${CMAKE_SYSROOT}/usr/include/vio
 )
+
 
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbmedia/
@@ -95,7 +97,7 @@ set(BASE_LIBRARIES dl rt pthread tof_mod_sdk tof_rgbd_sdk)
 set(X3_HAPI_LIB hbmedia isp vio alog cam ion gdcbin hbmem iar tinyalsa)
 
 target_link_libraries(${PROJECT_NAME}
-  ${BASE_LIBRARIES} ${X3_HAPI_LIB}
+  ${BASE_LIBRARIES} ${X3_HAPI_LIB} yaml-cpp
   # ${ROS_LIB}
 )
 
@@ -104,6 +106,7 @@ ament_target_dependencies(
   rclcpp
   sensor_msgs
   OpenCV
+  yaml_cpp_vendor
   )
 
 if(BUILD_HBMEM)

@@ -19,7 +19,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 
-// #include <sensor_msgs/msg/image.h>
+#include "sensor_msgs/msg/camera_info.hpp"
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -72,6 +73,7 @@ public:
     builtin_interfaces::msg::Time & stamp,
     std::array<uint8_t, 12> & encoding,
     uint32_t & height, uint32_t & width, uint32_t & step, std::array<uint8_t, 6220800> & data, uint32_t & data_size);
+  bool get_cam_calibration(sensor_msgs::msg::CameraInfo& cam_info, const std::string &file_path);
 
   void get_formats();  // std::vector<usb_cam::msg::Format>& formats);
 

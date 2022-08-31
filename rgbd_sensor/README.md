@@ -119,6 +119,8 @@ hbmem_infra
 
  2：需要把校准库 install/lib/libgc2053_linear.so 拷贝到：/lib/sensorlib/
 
+ 3：未读取相机内参文件时，会出现无法发布相机内参的警告，但不影响rgbd_sensor的其他功能
+
 ## X3 Ubuntu系统
 用户直接调用ros2 命令启动即可：
 

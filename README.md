@@ -63,9 +63,9 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
      --no-warn-unused-cli \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake
      
-- 打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。     
-  
   ```
+  
+
 
 
 # Usage
@@ -84,7 +84,9 @@ source ./install/local_setup.sh
 ros2 run mipi_cam mipi_cam
 ```
 
-node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布主题：hbmem_img
+打开了shared mem通信方式，只支持发布 hbmem_img 主题的图片。   
+
+node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布主题：hbmem_img。相机内参发布话题：/camera_info。
 
 利用 rqt_image_view 可以查看发布的图片主题，也可以用图片消费节点。例如：这个repo下的example去直接获取图片进行推理等应用。
 
@@ -103,6 +105,14 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 使用 io_method 参数设置发布图像采用的方式，目前 shared_mem 发布的主题是固定的：hbmem_img
 
 `ros2 run mipi_cam mipi_cam --ros-args -p io_method:=shared_mem`
+
+使用 camera_calibration_file_path 参数设置相机标定文件路径，此处以使用GC4663相机并读取config文件下的GC4663_calibration.yaml为例(打印信息见下方Attention)：
+
+```
+# config中为示例使用的相机标定文件，根据实际安装路径进行拷贝
+cp -r install/lib/mipi_cam/config/ .
+ros2 run mipi_cam mipi_cam --ros-args -p camera_calibration_file_path:=./config/GC4663_calibration.yaml -p video_device:=GC4663
+```
 
 ---
 
@@ -151,3 +161,34 @@ root@xj3ubuntu:/userdata/cc_ws/tros_ws# ros2 run image_subscribe_example subscri
 注意：此项功能，需要安装 ros包 image_transport_plugins，利用命令：
 sudo apt-get install ros-foxy-image-transport-plugins
 
+
+若相机成功运行，正常读取相机标定文件，则会有以下信息输出。mipi_cam提供两种相机型号的标定文件，分别是GC4663和F37，默认是读取config文件下的F37_calibration.yaml。如使用GC4663摄像头，请更换相机标定文件的读取路径！
+```
+[INFO] [1661863164.454533227] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1544567->laps=102 ms.
+
+[INFO] [1661863164.458727776] [mipi_node]: publish camera info.
+
+[INFO] [1661863164.562431009] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1544674->laps=103 ms.
+
+[INFO] [1661863164.566239194] [mipi_node]: publish camera info.
+
+[INFO] [1661863164.671290847] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1544782->laps=104 ms.
+
+[INFO] [1661863164.675211155] [mipi_node]: publish camera info.
+
+[INFO] [1661863164.780465260] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1544891->laps=104 ms.
+
+[INFO] [1661863164.784429400] [mipi_node]: publish camera info.
+
+[INFO] [1661863164.887891555] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1545000->laps=103 ms.
+
+[INFO] [1661863164.891738656] [mipi_node]: publish camera info.
+
+[INFO] [1661863164.994701993] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1545107->laps=103 ms.
+
+[INFO] [1661863164.998455013] [mipi_node]: publish camera info.
+
+[INFO] [1661863165.100916367] [mipi_cam]: [get_image]->enc=bgr8,step=5760, w:h=1920:1080,sz=3110400,start 1545214->laps=102 ms.
+
+[INFO] [1661863165.104211776] [mipi_node]: publish camera info.
+```

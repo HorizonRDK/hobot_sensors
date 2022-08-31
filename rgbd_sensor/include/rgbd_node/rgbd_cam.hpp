@@ -20,6 +20,7 @@
 #include <rclcpp/time.hpp>
 
 // #include <sensor_msgs/msg/image.h>
+#include "sensor_msgs/msg/camera_info.hpp"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -66,7 +67,8 @@ class ShyCam : public CVideoComm {
     int GetUseIdx() { return m_nCurUseIndex; }
     void SetSaveData(bool bSave) { m_bSave = bSave; }   // 查询当前存储图片使用状态
     int CalcTofSync(TTofRgbResult *pOutTofRes);
-
+    bool ReadCalibrationFile(sensor_msgs::msg::CameraInfo& cam_info, const std::string &file_path);
+    
     bool is_capturing() { return m_nDevStat == enDEV_START; }
 
  private:
