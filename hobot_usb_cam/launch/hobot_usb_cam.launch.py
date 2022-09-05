@@ -23,6 +23,7 @@ def generate_launch_description():
               executable='hobot_usb_cam',
               name='hobot_usb_cam',
               parameters=[
+                          {"camera_calibration_file_path": ""},
                           {"frame_id": "default_usb_cam"},
                           {"framerate": 30},
                           {"image_height": 480},
