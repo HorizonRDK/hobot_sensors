@@ -183,10 +183,6 @@ void RgbdNode::exec_loopPub()
       snprintf(tsTopicName, sizeof(tsTopicName), "/rgbd_%s/color/image_rect_raw", _sensor_type.c_str());
       imgClr_pub_ = this->create_publisher<sensor_msgs::msg::Image>(tsTopicName, BUF_PUB_NUM);
     }
-    if (_enabled_read_cam_calibration) {
-      snprintf(tsTopicName, sizeof(tsTopicName), "/rgbd_%s/color/camera_info", _sensor_type.c_str());
-      imgCam_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(tsTopicName, BUF_PUB_NUM);
-    }
   } else {
 #ifdef USING_HBMEM
     // 创建hbmempub
@@ -202,11 +198,12 @@ void RgbdNode::exec_loopPub()
       pub_hbmeminfra_ = this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg480P>(
         "hbmem_infra", BUF_PUB_NUM);
     }
-    if (_enabled_read_cam_calibration) {
-      imgCam_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(tsTopicName, BUF_PUB_NUM);
-    }
 #endif
     bSharedMem = true;
+  }
+  if (_enabled_read_cam_calibration) {
+    snprintf(tsTopicName, sizeof(tsTopicName), "/rgbd_%s/color/camera_info", _sensor_type.c_str());
+    imgCam_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(tsTopicName, BUF_PUB_NUM);
   }
   while (!stop_) {
     if (bSharedMem) {
@@ -354,6 +351,7 @@ void RgbdNode::timer_ros_pub()
         if (_enabled_read_cam_calibration) {
           camera_calibration_info_->header.stamp = img_dep_->header.stamp;
           imgCam_pub_->publish(*camera_calibration_info_);
+          RCLCPP_INFO(rclcpp::get_logger("rgbd_node"),"publish camera info.\n");
         }
         // pub_CamInfo(depCam_pub_,);
         if (_enable_pcl)
@@ -456,6 +454,7 @@ void RgbdNode::timer_hbmem_pub()
           camera_calibration_info_->header.stamp.sec = time_start.tv_sec;
           camera_calibration_info_->header.stamp.nanosec = time_start.tv_nsec;
           imgCam_pub_->publish(*camera_calibration_info_);
+          RCLCPP_INFO(rclcpp::get_logger("rgbd_node"),"publish camera info.\n");
         }
         // pub_ori_pcl(img_pcl_pub_, oResTofPCL.mOriRes, time_start);
         // pub_align_pcl(img_pcl_align_pub_, oResTofPCL.mPclRgb, time_start);

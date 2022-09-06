@@ -133,6 +133,11 @@ install(DIRECTORY
   DESTINATION lib/${PROJECT_NAME}/)
 
 install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/config/
+  DESTINATION lib/${PROJECT_NAME}/config/
+)
+
+install(DIRECTORY
 ${PROJECT_SOURCE_DIR}/launch/
 DESTINATION share/${PROJECT_NAME}/launch)
 
