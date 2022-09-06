@@ -107,7 +107,7 @@ class RgbdNode : public rclcpp::Node
   std::string _sensor_type = "CP3AM";
   std::string _io_mode = "ros";
   std::string frame_id_ = "";
-  std::string camera_calibration_file_path_ = "./config/CP3AM_calibration.yaml";
+  std::string camera_calibration_file_path_ = "/opt/tros/lib/rgbd_sensor/config/CP3AM_calibration.yaml";
     
   bool _enabled_read_cam_calibration = true;
 

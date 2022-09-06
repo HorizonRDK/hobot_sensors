@@ -24,6 +24,7 @@ def generate_launch_description():
             executable='rgbd_sensor',
             output='screen',
             parameters=[
+                {"camera_calibration_file_path": "/opt/tros/lib/rgbd_sensor/config/CP3AM_calibration.yaml"},
                 {"io_method": "ros"}
             ],
             arguments=['--ros-args', '--log-level', 'error']

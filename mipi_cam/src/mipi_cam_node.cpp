@@ -54,7 +54,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("pixel_format", "yuyv");
   this->declare_parameter("out_format", "bgr8");  // nv12
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
-  this->declare_parameter("camera_calibration_file_path", "./config/F37_calibration.yaml");
+  this->declare_parameter("camera_calibration_file_path", "/opt/tros/lib/rgbd_sensor/config/F37_calibration.yaml");
   get_params();
   init();  //外部可能会调用了
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
