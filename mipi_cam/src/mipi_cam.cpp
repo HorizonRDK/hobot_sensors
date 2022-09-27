@@ -166,6 +166,23 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
 
   if (-1 == nRet) {
+    if (errno == 14) {  // 重复打开
+      RCLCPP_ERROR(
+          rclcpp::get_logger("mipi_cam"),
+          "Cannot open '%s': %d, %s! You may have started mipi_cam repeatedly.",
+          camera_dev_.c_str(),
+          errno,
+          strerror(errno));
+      return false;
+    } else if (errno == 121) {  // 摄像头类型错误
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+                   "Cannot open '%s': %d, %s! Please make sure the "
+                   "video_device parameter is correct.",
+                   camera_dev_.c_str(),
+                   errno,
+                   strerror(errno));
+      return false;
+    }
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("mipi_cam"),
                         "Cannot open '" << camera_dev_ << "': " << errno << ", "
                                         << strerror(errno));
@@ -231,13 +248,6 @@ bool MipiCam::start(const std::string &dev,
   } else if (pixel_format == PIXEL_FORMAT_RGB24) {
   } else if (pixel_format == PIXEL_FORMAT_GREY) {
     monochrome_ = true;
-  } else {
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-                 "Unknown pixel format: %d! "
-                 "yuyv、uyvy、mjpeg、yuvmono10、rgb24 and grey "
-                 "are supported! Please modify the parameter pixel_format!",
-                 pixelformat_);
-    return false;  // (EXIT_FAILURE);
   }
   // TODO(oal) throw exceptions instead of return value checking
   if (!open_device()) {

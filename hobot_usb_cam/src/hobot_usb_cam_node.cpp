@@ -52,7 +52,9 @@ HobotUSBCamNode::HobotUSBCamNode(const rclcpp::NodeOptions &ndoe_options)
   }
 
   // This should be done after get_params()
-  SetPublisher();
+  if (SetPublisher() == false) {
+    return;
+  }
   HobotUSBCam::CamInformation cam_information;
   cam_information.dev = video_device_name_;
   cam_information.framerate = framerate_;
@@ -193,7 +195,7 @@ bool HobotUSBCamNode::SetIOMethod(const std::string &io_method_name) {
   return true;
 }
 
-void HobotUSBCamNode::SetPublisher() {
+bool HobotUSBCamNode::SetPublisher() {
   if (zero_copy_enabled_) {
     if (image_width_ == 1920 && image_height_ == 1080) {
       hbmem_image_pub_1080_ =
@@ -230,12 +232,14 @@ void HobotUSBCamNode::SetPublisher() {
                    "image_height or image_width",
                    image_width_,
                    image_height_);
+      return false;
     }
   } else {
     image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image", 5);
   }
   info_pub_ =
       this->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 5);
+  return true;
 }
 
 void HobotUSBCamNode::ReadFrame() {

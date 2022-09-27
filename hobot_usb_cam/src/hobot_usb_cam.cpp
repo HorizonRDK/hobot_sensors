@@ -14,6 +14,7 @@
 
 #include "hobot_usb_cam.hpp"
 
+#include <sys/sysinfo.h>
 #include <yaml-cpp/yaml.h>
 
 #include <rclcpp/rclcpp.hpp>
@@ -109,7 +110,9 @@ bool HobotUSBCam::InitDevice() {
   if (xioctl(cam_fd_, VIDIOC_QUERYCAP, &camera_capability) == -1) {
     if (EINVAL == errno) {
       RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                   "%s is no V4L2 device\\n",
+                   "%s is no V4L2 device! Please use the v4l2 command "
+                   "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+                   " the USB camera is working\\n",
                    cam_information_.dev.c_str());
       return false;
     } else {
@@ -119,7 +122,9 @@ bool HobotUSBCam::InitDevice() {
 
   if (!(camera_capability.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "%s is no video capture device\\n",
+                 "%s is no video capture device! Please use the v4l2 command "
+                 "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+                 " the USB camera is working\\n",
                  cam_information_.dev.c_str());
     return false;
   }
@@ -127,9 +132,12 @@ bool HobotUSBCam::InitDevice() {
   switch (cam_information_.io) {
     case kIO_METHOD_READ:
       if (!(camera_capability.capabilities & V4L2_CAP_READWRITE)) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                     "%s does not support read i/o\n",
-                     cam_information_.dev.c_str());
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "%s does not support read i/o! Please use the v4l2 command "
+            "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+            " the USB camera is working\\n",
+            cam_information_.dev.c_str());
         return false;
       }
       break;
@@ -137,9 +145,12 @@ bool HobotUSBCam::InitDevice() {
     case kIO_METHOD_MMAP:
     case kIO_METHOD_USERPTR:
       if (!(camera_capability.capabilities & V4L2_CAP_STREAMING)) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                     "%s does not support streaming i/o\\n",
-                     cam_information_.dev.c_str());
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "%s does not support streaming i/o! Please use the v4l2 command "
+            "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+            " the USB camera is working\\n",
+            cam_information_.dev.c_str());
         return false;
       }
       break;
@@ -201,10 +212,20 @@ bool HobotUSBCam::InitDevice() {
                 cam_information_.image_width,
                 cam_information_.image_height);
   } else {
-    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
-                "Resolution %dx%d is not support\n",
-                cam_information_.image_width,
-                cam_information_.image_height);
+    struct v4l2_frmsizeenum size;
+    size.index = 0;
+    size.pixel_format = camera_format.fmt.pix.pixelformat;
+    std::stringstream ss;
+    ss << "Resolution " << cam_information_.image_width << "x"
+       << cam_information_.image_height << "is not support! ";
+    for (size.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FRAMESIZES, &size) == 0;
+         ++size.index) {  //获取支持的分辨率
+      ss << size.discrete.width << "x" << size.discrete.height;
+    }
+    ss << " are supported."
+       << "\n";
+    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"), "%s", ss.str().c_str());
+
     cam_information_.image_width = camera_format.fmt.pix.width;
     cam_information_.image_height = camera_format.fmt.pix.height;
     RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
@@ -243,8 +264,31 @@ bool HobotUSBCam::InitDevice() {
       stream_params.parm.capture.timeperframe.denominator =
           cam_information_.framerate;
       if (xioctl(cam_fd_, VIDIOC_S_PARM, &stream_params) < 0) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                     "Set camera framerate failed\n");
+        std::stringstream ss_frame;
+        struct v4l2_frmivalenum interval;
+        interval.index = 0;
+        interval.pixel_format = camera_format.fmt.pix.pixelformat;
+        interval.width = cam_information_.image_width;
+        interval.height = cam_information_.image_height;
+        for (interval.index = 0;
+             xioctl(cam_fd_, VIDIOC_ENUM_FRAMEINTERVALS, &interval) == 0;
+             ++interval.index) {  //获取支持的framerate
+          if (interval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+            ss_frame << interval.discrete.denominator /
+                            interval.discrete.numerator
+                     << " ";
+          }
+          ss_frame << "are supported."
+                   << "\n";
+        }
+        cam_information_.framerate =
+            stream_params.parm.capture.timeperframe.denominator /
+            stream_params.parm.capture.timeperframe.numerator;
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "Set camera framerate failed! %s Use framerate:%d instead\n",
+            ss_frame.str().c_str(),
+            cam_information_.framerate);
       } else {
         if (stream_params.parm.capture.timeperframe.denominator ==
             (uint32_t)cam_information_.framerate) {
@@ -309,9 +353,16 @@ bool HobotUSBCam::InitRead(unsigned int buffer_size) {
   buffers_[0].start = malloc(buffer_size);
 
   if (!buffers_[0].start) {
-    RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Out of memory! Please check the buff size or the system "
-                 "memory size!\n\n");
+    struct sysinfo info;
+    auto ret = sysinfo(&info);
+    if (ret == 0) {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("hobot_usb_cam"),
+          "Out of memory! The buff size: %d and System available memory "
+          "is: %ld byte\n\n",
+          buffer_size,
+          info.totalram);
+    }
     return false;
   }
   return true;
@@ -387,9 +438,17 @@ bool HobotUSBCam::InitUserspace(unsigned int buffer_size) {
     buffers_[n_buffers].length = buffer_size;
     buffers_[n_buffers].start = malloc(buffer_size);
     if (!buffers_[n_buffers].start) {
-      RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                   "Out of memory! Please check the buffer_size or the system "
-                   "memory size!\\n");
+      struct sysinfo info;
+      auto ret = sysinfo(&info);
+      if (ret == 0) {
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "Out of memory! The buff size: %d and System available memory "
+            "is: %ld byte\n\n",
+            buffer_size,
+            info.totalram);
+      }
+      return false;
     }
   }
   return true;

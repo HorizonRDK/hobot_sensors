@@ -15,17 +15,16 @@
 #ifndef HOBOT_USB_CAM_NODE_HPP_
 #define HOBOT_USB_CAM_NODE_HPP_
 
-#include <vector>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <thread>
-#include <rclcpp/rclcpp.hpp>
+#include <vector>
 
+#include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
+#include "hbm_img_msgs/msg/hbm_msg480_p.hpp"
+#include "hbm_img_msgs/msg/hbm_msg540_p.hpp"
 #include "hobot_usb_cam.hpp"
 #include "sensor_msgs/msg/image.hpp"
-#include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
-#include "hbm_img_msgs/msg/hbm_msg540_p.hpp"
-#include "hbm_img_msgs/msg/hbm_msg480_p.hpp"
-
 
 namespace hobot_usb_cam {
 class HobotUSBCamNode : public rclcpp::Node {
@@ -39,12 +38,12 @@ class HobotUSBCamNode : public rclcpp::Node {
     kSTATE_RUNING,
     kSTATE_STOP,
     kSTATE_UNINITIALLED
-  }CamNodeState;
+  } CamNodeState;
   bool GetParams(void);
-  bool AssignParams(const std::vector<rclcpp::Parameter> & parameters);
+  bool AssignParams(const std::vector<rclcpp::Parameter> &parameters);
   bool SetPixelFormat(const std::string &pixel_format_name);
   bool SetIOMethod(const std::string &io_method_name);
-  void SetPublisher(void);
+  bool SetPublisher(void);
   void ReadFrame(void);
   HobotUSBCam cam_;
   std::string video_device_name_;
@@ -63,14 +62,15 @@ class HobotUSBCamNode : public rclcpp::Node {
 
   sensor_msgs::msg::CameraInfo camera_calibration_info_;
 
-  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_ = nullptr;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_ =
+      nullptr;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_ = nullptr;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
-    hbmem_image_pub_1080_;
+      hbmem_image_pub_1080_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg540P>::SharedPtr
-    hbmem_image_pub_540_;
+      hbmem_image_pub_540_;
   rclcpp::PublisherHbmem<hbm_img_msgs::msg::HbmMsg480P>::SharedPtr
-    hbmem_image_pub_480_;
+      hbmem_image_pub_480_;
 };
 }  // namespace hobot_usb_cam
 
