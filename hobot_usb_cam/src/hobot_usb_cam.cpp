@@ -111,8 +111,9 @@ bool HobotUSBCam::InitDevice() {
     if (EINVAL == errno) {
       RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
                    "%s is no V4L2 device! Please use the v4l2 command "
-                   "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+                   "'sudo v4l2-ctl -d %s --all' to confirm that"
                    " the USB camera is working\\n",
+                   cam_information_.dev.c_str(),
                    cam_information_.dev.c_str());
       return false;
     } else {
@@ -123,8 +124,9 @@ bool HobotUSBCam::InitDevice() {
   if (!(camera_capability.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
                  "%s is no video capture device! Please use the v4l2 command "
-                 "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+                 "'sudo v4l2-ctl -d %s --all' to confirm that"
                  " the USB camera is working\\n",
+                 cam_information_.dev.c_str(),
                  cam_information_.dev.c_str());
     return false;
   }
@@ -135,8 +137,9 @@ bool HobotUSBCam::InitDevice() {
         RCLCPP_ERROR(
             rclcpp::get_logger("hobot_usb_cam"),
             "%s does not support read i/o! Please use the v4l2 command "
-            "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+            "'sudo v4l2-ctl -d %s --all' to confirm that"
             " the USB camera is working\\n",
+            cam_information_.dev.c_str(),
             cam_information_.dev.c_str());
         return false;
       }
@@ -148,8 +151,9 @@ bool HobotUSBCam::InitDevice() {
         RCLCPP_ERROR(
             rclcpp::get_logger("hobot_usb_cam"),
             "%s does not support streaming i/o! Please use the v4l2 command "
-            "'sudo v4l2-ctl -d /dev/video8 --all' to confirm that"
+            "'sudo v4l2-ctl -d %s --all' to confirm that"
             " the USB camera is working\\n",
+            cam_information_.dev.c_str(),
             cam_information_.dev.c_str());
         return false;
       }
