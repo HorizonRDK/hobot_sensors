@@ -14,9 +14,11 @@
 
 #include "hobot_usb_cam.hpp"
 
+#include <sys/sysinfo.h>
+#include <yaml-cpp/yaml.h>
+
 #include <rclcpp/rclcpp.hpp>
 
-#include <yaml-cpp/yaml.h>
 #include "sensor_msgs/distortion_models.hpp"
 
 extern "C" {
@@ -47,7 +49,7 @@ bool HobotUSBCam::Init(CamInformation &cam_information) {
   std::lock_guard<std::mutex> lock(cam_mutex_);
   if (cam_state_ != kSTATE_UNINITIALLED) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cmera state is not kSTATE_UNINITIALLED, current state:%d\n",
+                 "Camera state is not kSTATE_UNINITIALLED, current state:%d\n",
                  cam_state_);
     return false;
   }
@@ -55,8 +57,7 @@ bool HobotUSBCam::Init(CamInformation &cam_information) {
   cam_information_ = cam_information;
   // memcpy(&cam_information_, cam_information, sizeof(CamInformation));
 
-  if (OpenDevice() == false)
-    return false;
+  if (OpenDevice() == false) return false;
   if (InitDevice() == false) {
     CloseDevice();
     return false;
@@ -66,27 +67,133 @@ bool HobotUSBCam::Init(CamInformation &cam_information) {
   return ret;
 }
 
+void HobotUSBCam::GetFormats() {
+  RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
+              "This Cameras Supported Formats:");
+  struct v4l2_fmtdesc fmt;
+  fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  fmt.index = 0;
+  for (fmt.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FMT, &fmt) == 0;
+       ++fmt.index) {  //获取device支持的格式
+    RCLCPP_INFO_STREAM(
+        rclcpp::get_logger("hobot_usb_cam"),
+        "  " << fmt.description << "[Index: " << fmt.index
+             << ", Type: " << fmt.type << ", Flags: " << fmt.flags
+             << ", PixelFormat: " << std::hex << fmt.pixelformat << "]");
+
+    struct v4l2_frmsizeenum size;
+    size.index = 0;
+    size.pixel_format = fmt.pixelformat;
+
+    for (size.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FRAMESIZES, &size) == 0;
+         ++size.index) {  //获取支持的分辨率
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
+                         "  width: " << size.discrete.width
+                                     << " x height: " << size.discrete.height);
+      struct v4l2_frmivalenum interval;
+      interval.index = 0;
+      interval.pixel_format = size.pixel_format;
+      interval.width = size.discrete.width;
+      interval.height = size.discrete.height;
+      strFormats size_rate;
+      size_rate.width = interval.width;
+      size_rate.height = interval.height;
+      for (interval.index = 0;
+           xioctl(cam_fd_, VIDIOC_ENUM_FRAMEINTERVALS, &interval) == 0;
+           ++interval.index) {  //获取支持的帧率
+        if (interval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+          RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
+                             "  " << interval.type << " "
+                                  << interval.discrete.numerator << " / "
+                                  << interval.discrete.denominator);
+          int rate =
+              interval.discrete.denominator / interval.discrete.numerator;
+          size_rate.frameRate.push_back(rate);
+        } else {
+          RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"), "other type");
+        }
+      }  // interval loop
+      //信息保存
+      map_formats[fmt.pixelformat].push_back(size_rate);
+    }  // size loop
+  }    // fmt loop
+}
+
+bool HobotUSBCam::CheckResolutionFromFormats(int width, int height) {
+  uint32_t v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+  //根据输入的pixel_format获取V4L2的格式数据，类型为unsigned int
+  switch (cam_information_.pixel_format) {
+    case kPIXEL_FORMAT_MJPEG:
+      v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+      break;
+    case kPIXEL_FORMAT_YUYV:
+      v4l2_fmt = V4L2_PIX_FMT_YUYV;
+      break;
+    case kPIXEL_FORMAT_UYVY:
+      v4l2_fmt = V4L2_PIX_FMT_UYVY;
+      break;
+    case kPIXEL_FORMAT_YUVMONO10:
+      v4l2_fmt = V4L2_PIX_FMT_YUYV;
+      break;
+    case kPIXEL_FORMAT_RGB24:
+      v4l2_fmt = V4L2_PIX_FMT_RGB24;
+      break;
+    case kPIXEL_FORMAT_GREY:
+      v4l2_fmt = V4L2_PIX_FMT_GREY;
+      break;
+    default:
+      v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+  }
+  auto it = map_formats.find(v4l2_fmt);  //从保存的信息中找到对应的格式
+  if (it != map_formats.end()) {
+    for (size_t i = 0; i < it->second.size(); ++i) {  //遍历支持的分辨率
+      if (it->second[i].width == width && it->second[i].height == height) {
+        return true;
+      }
+    }
+    //输入的分辨率不支持，输出error log
+    std::stringstream ss_frame;
+    for (size_t i = 0; i < it->second.size(); ++i) {
+      ss_frame << it->second[i].width << "x" << it->second[i].height << " ";
+    }
+    RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
+                 "Resolution %dx%d is not supported! %sare supported!");
+  }
+
+  return false;
+}
+
 bool HobotUSBCam::OpenDevice(void) {
   struct stat dev_stat;
   if (stat(cam_information_.dev.c_str(), &dev_stat) == -1) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cannot identify '%s': %d, %s\\n",
-                 cam_information_.dev.c_str(), errno, strerror(errno));
+                 "Cannot identify '%s': %d, %s! Please make sure the "
+                 "video_device parameter is correct!\\n",
+                 cam_information_.dev.c_str(),
+                 errno,
+                 strerror(errno));
     return false;
   }
   if (!S_ISCHR(dev_stat.st_mode)) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "%s is not a character device\n", cam_information_.dev.c_str(),
-                 errno, strerror(errno));
+                 "%s is not a character device! Please make sure the "
+                 "video_device parameter is correct!\n",
+                 cam_information_.dev.c_str(),
+                 errno,
+                 strerror(errno));
     return false;
   }
   cam_fd_ = open(cam_information_.dev.c_str(), O_RDWR | O_NONBLOCK, 0);
   if (cam_fd_ == -1) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cannot open '%s': %d, %s\\n", cam_information_.dev.c_str(),
-                 errno, strerror(errno));
+                 "Cannot open '%s': %d, %s! Please make sure the video_device "
+                 "parameter is correct!\\n",
+                 cam_information_.dev.c_str(),
+                 errno,
+                 strerror(errno));
     return false;
   }
+  GetFormats();
   return true;
 }
 
@@ -100,7 +207,11 @@ bool HobotUSBCam::InitDevice() {
   if (xioctl(cam_fd_, VIDIOC_QUERYCAP, &camera_capability) == -1) {
     if (EINVAL == errno) {
       RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                   "%s is no V4L2 device\\n", cam_information_.dev.c_str());
+                   "%s is no V4L2 device! Please use the v4l2 command "
+                   "'sudo v4l2-ctl -d %s --all' to confirm that"
+                   " the USB camera is working\\n",
+                   cam_information_.dev.c_str(),
+                   cam_information_.dev.c_str());
       return false;
     } else {
       errno_exit("VIDIOC_QUERYCAP");
@@ -109,7 +220,10 @@ bool HobotUSBCam::InitDevice() {
 
   if (!(camera_capability.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "%s is no video capture device\\n",
+                 "%s is no video capture device! Please use the v4l2 command "
+                 "'sudo v4l2-ctl -d %s --all' to confirm that"
+                 " the USB camera is working\\n",
+                 cam_information_.dev.c_str(),
                  cam_information_.dev.c_str());
     return false;
   }
@@ -117,9 +231,13 @@ bool HobotUSBCam::InitDevice() {
   switch (cam_information_.io) {
     case kIO_METHOD_READ:
       if (!(camera_capability.capabilities & V4L2_CAP_READWRITE)) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                     "%s does not support read i/o\n",
-                     cam_information_.dev.c_str());
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "%s does not support read i/o! Please use the v4l2 command "
+            "'sudo v4l2-ctl -d %s --all' to confirm that"
+            " the USB camera is working\\n",
+            cam_information_.dev.c_str(),
+            cam_information_.dev.c_str());
         return false;
       }
       break;
@@ -127,9 +245,13 @@ bool HobotUSBCam::InitDevice() {
     case kIO_METHOD_MMAP:
     case kIO_METHOD_USERPTR:
       if (!(camera_capability.capabilities & V4L2_CAP_STREAMING)) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                     "%s does not support streaming i/o\\n",
-                     cam_information_.dev.c_str());
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "%s does not support streaming i/o! Please use the v4l2 command "
+            "'sudo v4l2-ctl -d %s --all' to confirm that"
+            " the USB camera is working\\n",
+            cam_information_.dev.c_str(),
+            cam_information_.dev.c_str());
         return false;
       }
       break;
@@ -187,19 +309,29 @@ bool HobotUSBCam::InitDevice() {
   if (camera_format.fmt.pix.width == (uint32_t)cam_information_.image_width &&
       camera_format.fmt.pix.height == (uint32_t)cam_information_.image_height) {
     RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
-      "Set resolution to %dx%d\n",
-      cam_information_.image_width, cam_information_.image_height);
+                "Set resolution to %dx%d\n",
+                cam_information_.image_width,
+                cam_information_.image_height);
   } else {
-    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
-      "Resolution %dx%d is not support\n",
-      cam_information_.image_width,
-      cam_information_.image_height);
+    std::stringstream ss;
+    ss << "Resolution " << cam_information_.image_width << "x"
+       << cam_information_.image_height << " is not support! ";
+    auto it = map_formats.find(camera_format.fmt.pix.pixelformat);
+    if (it != map_formats.end()) {  //获取支持的分辨率
+      for (size_t i = 0; i < it->second.size(); ++i) {
+        ss << it->second[i].width << "x" << it->second[i].height << " ";
+      }
+    }
+    ss << "are supported."
+       << "\n";
+    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"), "%s", ss.str().c_str());
+
     cam_information_.image_width = camera_format.fmt.pix.width;
     cam_information_.image_height = camera_format.fmt.pix.height;
     RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
-      "Usb resolution %dx%d instead\n",
-      cam_information_.image_width,
-      cam_information_.image_height);
+                "Usb resolution %dx%d instead\n",
+                cam_information_.image_width,
+                cam_information_.image_height);
   }
   /* Buggy driver paranoia. */
   min = camera_format.fmt.pix.width * 2;
@@ -215,36 +347,60 @@ bool HobotUSBCam::InitDevice() {
     stream_params.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (xioctl(cam_fd_, VIDIOC_G_PARM, &stream_params) < 0) {
       RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-        "can't set stream params %d", errno);
+                   "can't set stream params %d",
+                   errno);
       return false;
     }
     if (!(stream_params.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)) {
       cam_information_.framerate =
-        stream_params.parm.capture.timeperframe.denominator /
-        stream_params.parm.capture.timeperframe.numerator;
+          stream_params.parm.capture.timeperframe.denominator /
+          stream_params.parm.capture.timeperframe.numerator;
       RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-        "V4L2_CAP_TIMEPERFRAME not supported."
-        " Use camera default framerate:%d\n", cam_information_.framerate);
+                   "V4L2_CAP_TIMEPERFRAME not supported."
+                   " Use camera default framerate:%d\n",
+                   cam_information_.framerate);
     } else {
       stream_params.parm.capture.timeperframe.numerator = 1;
       stream_params.parm.capture.timeperframe.denominator =
-        cam_information_.framerate;
+          cam_information_.framerate;
       if (xioctl(cam_fd_, VIDIOC_S_PARM, &stream_params) < 0) {
-        RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-          "Set camera framerate failed\n");
-      } else {
-        if (stream_params.parm.capture.timeperframe.denominator ==
-              (uint32_t)cam_information_.framerate) {
-          RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
-            "Set framerate to be %d\n",
-            cam_information_.framerate);
-        } else {
-          cam_information_.framerate =
+        std::stringstream ss_frame;
+        auto it = map_formats.find(camera_format.fmt.pix.pixelformat);
+        if (it != map_formats.end()) {  //获取支持的分辨率
+          for (size_t i = 0; i < it->second.size(); ++i) {
+            if (it->second[i].width == cam_information_.image_width &&
+                it->second[i].height ==
+                    cam_information_.image_height) {  //获取支持的frametrate
+              for (size_t j = 0; j < it->second[i].frameRate.size(); ++j) {
+                ss_frame << it->second[i].frameRate[j] << " ";
+              }
+            }
+          }
+        }
+        ss_frame << "are supported."
+                 << "\n";
+        cam_information_.framerate =
             stream_params.parm.capture.timeperframe.denominator /
             stream_params.parm.capture.timeperframe.numerator;
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "Set camera framerate failed! %s Use framerate:%d instead\n",
+            ss_frame.str().c_str(),
+            cam_information_.framerate);
+      } else {
+        if (stream_params.parm.capture.timeperframe.denominator ==
+            (uint32_t)cam_information_.framerate) {
+          RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
+                      "Set framerate to be %d\n",
+                      cam_information_.framerate);
+        } else {
+          cam_information_.framerate =
+              stream_params.parm.capture.timeperframe.denominator /
+              stream_params.parm.capture.timeperframe.numerator;
           RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
-            "Camera not supported set frame. "
-            " Use camera default framerate:%d\n", cam_information_.framerate);
+                      "Camera not supported set frame. "
+                      " Use camera default framerate:%d\n",
+                      cam_information_.framerate);
         }
       }
     }
@@ -252,15 +408,21 @@ bool HobotUSBCam::InitDevice() {
 
   switch (cam_information_.io) {
     case kIO_METHOD_READ:
-      InitRead(camera_format.fmt.pix.sizeimage);
+      if (InitRead(camera_format.fmt.pix.sizeimage) == false) {
+        return false;
+      }
       break;
 
     case kIO_METHOD_MMAP:
-      InitMmap();
+      if (InitMmap() == false) {
+        return false;
+      }
       break;
 
     case kIO_METHOD_USERPTR:
-      InitUserspace(camera_format.fmt.pix.sizeimage);
+      if (InitUserspace(camera_format.fmt.pix.sizeimage) == false) {
+        return false;
+      }
       break;
   }
   return true;
@@ -277,8 +439,11 @@ int32_t HobotUSBCam::xioctl(int fh, uint32_t request, void *arg) {
 }
 
 void HobotUSBCam::errno_exit(const char *s) {
-  RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"), "%s error %d, %s\\n", s,
-               errno, strerror(errno));
+  RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
+               "%s error %d, %s\\n",
+               s,
+               errno,
+               strerror(errno));
 }
 
 bool HobotUSBCam::InitRead(unsigned int buffer_size) {
@@ -286,7 +451,16 @@ bool HobotUSBCam::InitRead(unsigned int buffer_size) {
   buffers_[0].start = malloc(buffer_size);
 
   if (!buffers_[0].start) {
-    RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"), "Out of memory\\n");
+    struct sysinfo info;
+    auto ret = sysinfo(&info);
+    if (ret == 0) {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("hobot_usb_cam"),
+          "Out of memory! The buff size: %d and System available memory "
+          "is: %ld byte\n\n",
+          buffer_size,
+          info.totalram);
+    }
     return false;
   }
   return true;
@@ -325,10 +499,12 @@ bool HobotUSBCam::InitMmap(void) {
     if (xioctl(cam_fd_, VIDIOC_QUERYBUF, &buffer) == -1)
       errno_exit("VIDIOC_QUERYBUF");
     buffers_[n_buffers].length = buffer.length;
-    buffers_[n_buffers].start =
-        mmap(NULL /* start anywhere */, buffer.length,
-             PROT_READ | PROT_WRITE /* required */,
-             MAP_SHARED /* recommended */, cam_fd_, buffer.m.offset);
+    buffers_[n_buffers].start = mmap(NULL /* start anywhere */,
+                                     buffer.length,
+                                     PROT_READ | PROT_WRITE /* required */,
+                                     MAP_SHARED /* recommended */,
+                                     cam_fd_,
+                                     buffer.m.offset);
 
     if (MAP_FAILED == buffers_[n_buffers].start) errno_exit("mmap");
   }
@@ -360,7 +536,17 @@ bool HobotUSBCam::InitUserspace(unsigned int buffer_size) {
     buffers_[n_buffers].length = buffer_size;
     buffers_[n_buffers].start = malloc(buffer_size);
     if (!buffers_[n_buffers].start) {
-      RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"), "Out of memory\\n");
+      struct sysinfo info;
+      auto ret = sysinfo(&info);
+      if (ret == 0) {
+        RCLCPP_ERROR(
+            rclcpp::get_logger("hobot_usb_cam"),
+            "Out of memory! The buff size: %d and System available memory "
+            "is: %ld byte\n\n",
+            buffer_size,
+            info.totalram);
+      }
+      return false;
     }
   }
   return true;
@@ -435,7 +621,7 @@ bool HobotUSBCam::Stop(void) {
   std::lock_guard<std::mutex> lock(cam_mutex_);
   if (cam_state_ != kSTATE_RUNING) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cmera state is not kSTATE_RUNING, current state:%d\n",
+                 "Camera state is not kSTATE_RUNING, current state:%d\n",
                  cam_state_);
     return false;
   }
@@ -463,25 +649,24 @@ bool HobotUSBCam::DeInit() {
   std::lock_guard<std::mutex> lock(cam_mutex_);
   if (cam_state_ != kSTATE_STOP) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cmera state is not kSTATE_RUNING, current state:%d\n",
+                 "Camera state is not kSTATE_STOP, current state:%d\n",
                  cam_state_);
     return false;
   }
   switch (cam_information_.io) {
-  case kIO_METHOD_READ:
-    free(buffers_[0].start);
-    break;
-  case kIO_METHOD_MMAP:
-    for (i = 0; i < buffer_numbers_; ++i)
-      if (-1 == munmap(buffers_[i].start, buffers_[i].length)) {
-        errno_exit("munmap");
-        ret = false;
-      }
-    break;
-  case kIO_METHOD_USERPTR:
-    for (i = 0; i < buffer_numbers_; ++i)
-      free(buffers_[i].start);
-    break;
+    case kIO_METHOD_READ:
+      free(buffers_[0].start);
+      break;
+    case kIO_METHOD_MMAP:
+      for (i = 0; i < buffer_numbers_; ++i)
+        if (-1 == munmap(buffers_[i].start, buffers_[i].length)) {
+          errno_exit("munmap");
+          ret = false;
+        }
+      break;
+    case kIO_METHOD_USERPTR:
+      for (i = 0; i < buffer_numbers_; ++i) free(buffers_[i].start);
+      break;
   }
   ret = CloseDevice();
   cam_state_ = kSTATE_UNINITIALLED;
@@ -492,7 +677,8 @@ bool HobotUSBCam::GetFrame(CamBuffer &cam_buffer) {
   std::lock_guard<std::mutex> lock(cam_mutex_);
   if (cam_state_ != kSTATE_RUNING) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cmera state is not kSTATE_RUNING, current state:%d\n",
+                 "GetFrame failed! Camera state is not kSTATE_RUNING, current "
+                 "state:%d\n",
                  cam_state_);
     return false;
   }
@@ -516,7 +702,8 @@ bool HobotUSBCam::GetFrame(CamBuffer &cam_buffer) {
     }
 
     if (0 == r) {
-      RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"), "select timeout\\n");
+      RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
+                   "GetFrame failed! select timeout!\\n");
       return false;
     }
 
@@ -570,10 +757,9 @@ bool HobotUSBCam::ReadFrame(CamBuffer &cam_buffer) {
       }
       cam_buffer.length = buffer.bytesused;
       cam_buffer.start = buffers_[buffer.index].start;
-      cam_buffer.time_point = std::chrono::system_clock::time_point {
-          std::chrono::seconds { buffer.timestamp.tv_sec } +
-          std::chrono::microseconds { buffer.timestamp.tv_usec }
-      };
+      cam_buffer.time_point = std::chrono::system_clock::time_point{
+          std::chrono::seconds{buffer.timestamp.tv_sec} +
+          std::chrono::microseconds{buffer.timestamp.tv_usec}};
       cam_buffer.reserved_buffer = buffer;
       break;
 
@@ -604,10 +790,9 @@ bool HobotUSBCam::ReadFrame(CamBuffer &cam_buffer) {
 
       cam_buffer.length = buffer.bytesused;
       cam_buffer.start = buffers_[i].start;
-      cam_buffer.time_point = std::chrono::system_clock::time_point {
-        std::chrono::seconds { buffer.timestamp.tv_sec } +
-        std::chrono::microseconds { buffer.timestamp.tv_usec }
-      };
+      cam_buffer.time_point = std::chrono::system_clock::time_point{
+          std::chrono::seconds{buffer.timestamp.tv_sec} +
+          std::chrono::microseconds{buffer.timestamp.tv_usec}};
       cam_buffer.reserved_buffer = buffer;
       break;
   }
@@ -619,7 +804,8 @@ bool HobotUSBCam::ReleaseFrame(CamBuffer &cam_buffer) {
   std::lock_guard<std::mutex> lock(cam_mutex_);
   if (cam_state_ != kSTATE_RUNING) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-                 "Cmera state is not kSTATE_RUNING, current state:%d\n",
+                 "ReleaseFrame failed! Camera state is not kSTATE_RUNING, "
+                 "current state:%d\n",
                  cam_state_);
     return false;
   }
@@ -640,62 +826,74 @@ bool HobotUSBCam::ReleaseFrame(CamBuffer &cam_buffer) {
   return ret;
 }
 
-bool HobotUSBCam::ReadCalibrationFile(sensor_msgs::msg::CameraInfo& cam_calibration_info, const std::string &file_path) {
+bool HobotUSBCam::ReadCalibrationFile(
+    sensor_msgs::msg::CameraInfo &cam_calibration_info,
+    const std::string &file_path) {
   try {
     std::string camera_name;
     std::ifstream fin(file_path.c_str());
     if (!fin) {
-      RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
-              "Camera calibration file: %s not exist!", file_path.c_str());
+      RCLCPP_ERROR(
+          rclcpp::get_logger("hobot_usb_cam"),
+          "Camera calibration file: %s does not exist! Please make sure the "
+          "calibration file path is correct and the calibration file exists!",
+          file_path.c_str());
       return false;
     }
     YAML::Node calibration_doc = YAML::Load(fin);
-    if (calibration_doc["camera_name"])
-    {
+    if (calibration_doc["camera_name"]) {
       camera_name = calibration_doc["camera_name"].as<std::string>();
     } else {
       camera_name = "unknown";
     }
-    cam_calibration_info.width = calibration_doc["image_width"] .as<int>();
+    cam_calibration_info.width = calibration_doc["image_width"].as<int>();
     cam_calibration_info.height = calibration_doc["image_height"].as<int>();
 
     const YAML::Node &camera_matrix = calibration_doc["camera_matrix"];
     const YAML::Node &camera_matrix_data = camera_matrix["data"];
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
       cam_calibration_info.k[i] = camera_matrix_data[i].as<double>();
     }
-    const YAML::Node &rectification_matrix = calibration_doc["rectification_matrix"];
+    const YAML::Node &rectification_matrix =
+        calibration_doc["rectification_matrix"];
     const YAML::Node &rectification_matrix_data = rectification_matrix["data"];
-    for(int i = 0; i < 9; i++) {
+    for (int i = 0; i < 9; i++) {
       cam_calibration_info.r[i] = rectification_matrix_data[i].as<double>();
     }
     const YAML::Node &projection_matrix = calibration_doc["projection_matrix"];
     const YAML::Node &projection_matrix_data = projection_matrix["data"];
-    for(int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++) {
       cam_calibration_info.p[i] = projection_matrix_data[i].as<double>();
     }
 
     if (calibration_doc["distortion_model"]) {
-      cam_calibration_info.distortion_model = calibration_doc["distortion_model"].as<std::string>();
+      cam_calibration_info.distortion_model =
+          calibration_doc["distortion_model"].as<std::string>();
+    } else {
+      cam_calibration_info.distortion_model =
+          sensor_msgs::distortion_models::PLUMB_BOB;
+      RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
+                  "Camera calibration file did not specify distortion model, "
+                  "assuming plumb bob");
     }
-    else {
-      cam_calibration_info.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
-        RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"), "Camera calibration file did not specify distortion model, assuming plumb bob");
-    }
-    const YAML::Node& distortion_coefficients = calibration_doc["distortion_coefficients"];
+    const YAML::Node &distortion_coefficients =
+        calibration_doc["distortion_coefficients"];
     int d_rows, d_cols;
     d_rows = distortion_coefficients["rows"].as<int>();
     d_cols = distortion_coefficients["cols"].as<int>();
-    const YAML::Node& distortion_coefficients_data = distortion_coefficients["data"];
-    cam_calibration_info.d.resize(d_rows*d_cols);
-    for (int i = 0; i < d_rows*d_cols; ++i) {
+    const YAML::Node &distortion_coefficients_data =
+        distortion_coefficients["data"];
+    cam_calibration_info.d.resize(d_rows * d_cols);
+    for (int i = 0; i < d_rows * d_cols; ++i) {
       cam_calibration_info.d[i] = distortion_coefficients_data[i].as<double>();
     }
-    RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"), "[get_cam_calibration]->parse calibration file successfully");
+    RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
+                "[get_cam_calibration]->parse calibration file successfully");
     return true;
-  }
-  catch (YAML::Exception& e) {
-    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"), "Unable to parse camera calibration file normally:%s",e.what());
+  } catch (YAML::Exception &e) {
+    RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"),
+                "Unable to parse camera calibration file normally:%s",
+                e.what());
     return false;
   }
 }

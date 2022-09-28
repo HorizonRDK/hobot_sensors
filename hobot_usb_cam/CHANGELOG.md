@@ -1,5 +1,9 @@
 # Changelog for package hobot_usb_cam
 
+tros_1.1.2 (2022-09-28)
+------------------
+1. 优化hobot_usb_cam输出日志
+
 hhp_1.0.6RC1 (2022-09-09)
 ------------------
 1. 增加launch文件中的参数：相机标定文件读取路径
