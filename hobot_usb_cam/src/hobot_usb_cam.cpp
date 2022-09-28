@@ -74,7 +74,7 @@ void HobotUSBCam::GetFormats() {
   fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   fmt.index = 0;
   for (fmt.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FMT, &fmt) == 0;
-       ++fmt.index) {
+       ++fmt.index) {  //获取device支持的格式
     RCLCPP_INFO_STREAM(
         rclcpp::get_logger("hobot_usb_cam"),
         "  " << fmt.description << "[Index: " << fmt.index
@@ -86,7 +86,7 @@ void HobotUSBCam::GetFormats() {
     size.pixel_format = fmt.pixelformat;
 
     for (size.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FRAMESIZES, &size) == 0;
-         ++size.index) {
+         ++size.index) {  //获取支持的分辨率
       RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
                          "  width: " << size.discrete.width
                                      << " x height: " << size.discrete.height);
@@ -100,7 +100,7 @@ void HobotUSBCam::GetFormats() {
       size_rate.height = interval.height;
       for (interval.index = 0;
            xioctl(cam_fd_, VIDIOC_ENUM_FRAMEINTERVALS, &interval) == 0;
-           ++interval.index) {
+           ++interval.index) {  //获取支持的帧率
         if (interval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
           RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
                              "  " << interval.type << " "
@@ -113,6 +113,7 @@ void HobotUSBCam::GetFormats() {
           RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"), "other type");
         }
       }  // interval loop
+      //信息保存
       map_formats[fmt.pixelformat].push_back(size_rate);
     }  // size loop
   }    // fmt loop
@@ -120,6 +121,7 @@ void HobotUSBCam::GetFormats() {
 
 bool HobotUSBCam::CheckResolutionFromFormats(int width, int height) {
   uint32_t v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+  //根据输入的pixel_format获取V4L2的格式数据，类型为unsigned int
   switch (cam_information_.pixel_format) {
     case kPIXEL_FORMAT_MJPEG:
       v4l2_fmt = V4L2_PIX_FMT_MJPEG;
@@ -142,13 +144,14 @@ bool HobotUSBCam::CheckResolutionFromFormats(int width, int height) {
     default:
       v4l2_fmt = V4L2_PIX_FMT_MJPEG;
   }
-  auto it = map_formats.find(v4l2_fmt);
+  auto it = map_formats.find(v4l2_fmt);  //从保存的信息中找到对应的格式
   if (it != map_formats.end()) {
-    for (size_t i = 0; i < it->second.size(); ++i) {
+    for (size_t i = 0; i < it->second.size(); ++i) {  //遍历支持的分辨率
       if (it->second[i].width == width && it->second[i].height == height) {
         return true;
       }
     }
+    //输入的分辨率不支持，输出error log
     std::stringstream ss_frame;
     for (size_t i = 0; i < it->second.size(); ++i) {
       ss_frame << it->second[i].width << "x" << it->second[i].height << " ";

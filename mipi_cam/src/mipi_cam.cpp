@@ -177,7 +177,7 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
     } else if (errno == 121) {  // 摄像头类型错误
       RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
                    "Cannot open '%s': %d, %s! Input video_device: %s, "
-                   "'IMX415'、'F37'、'GC4663' and 'IMX586' are supported! "
+                   "'F37' and 'GC4663' are supported! "
                    "Please make sure the "
                    "video_device parameter is correct.",
                    camera_dev_.c_str(),

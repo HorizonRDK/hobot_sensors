@@ -265,13 +265,13 @@ bool MipiCamNode::send_calibration(const builtin_interfaces::msg::Time& stamp) {
 void MipiCamNode::update() {
   if (mipiCam_.is_capturing()) {
     if (!take_and_send_image()) {
-      RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
                   "mipi camera did not respond in time.");
     }
     if (send_calibration(img_->header.stamp)) {
       RCLCPP_INFO(rclcpp::get_logger("mipi_node"), "publish camera info.\n");
     } else {
-      RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
                   "Unable to publish camera info.\n");
     }
   }
@@ -299,11 +299,11 @@ void MipiCamNode::hbmem_update() {
       if (send_calibration(msg.time_stamp)) {
         RCLCPP_INFO(rclcpp::get_logger("mipi_node"), "publish camera info.\n");
       } else {
-        RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+        RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
                     "Unable to publish camera info.\n");
       }
     } else {
-      RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
                   "borrow_loaned_message failed");
     }
   }
