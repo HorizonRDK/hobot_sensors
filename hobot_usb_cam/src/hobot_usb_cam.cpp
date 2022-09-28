@@ -67,6 +67,99 @@ bool HobotUSBCam::Init(CamInformation &cam_information) {
   return ret;
 }
 
+void HobotUSBCam::GetFormats() {
+  RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"),
+              "This Cameras Supported Formats:");
+  struct v4l2_fmtdesc fmt;
+  fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  fmt.index = 0;
+  for (fmt.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FMT, &fmt) == 0;
+       ++fmt.index) {
+    RCLCPP_INFO_STREAM(
+        rclcpp::get_logger("hobot_usb_cam"),
+        "  " << fmt.description << "[Index: " << fmt.index
+             << ", Type: " << fmt.type << ", Flags: " << fmt.flags
+             << ", PixelFormat: " << std::hex << fmt.pixelformat << "]");
+
+    struct v4l2_frmsizeenum size;
+    size.index = 0;
+    size.pixel_format = fmt.pixelformat;
+
+    for (size.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FRAMESIZES, &size) == 0;
+         ++size.index) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
+                         "  width: " << size.discrete.width
+                                     << " x height: " << size.discrete.height);
+      struct v4l2_frmivalenum interval;
+      interval.index = 0;
+      interval.pixel_format = size.pixel_format;
+      interval.width = size.discrete.width;
+      interval.height = size.discrete.height;
+      strFormats size_rate;
+      size_rate.width = interval.width;
+      size_rate.height = interval.height;
+      for (interval.index = 0;
+           xioctl(cam_fd_, VIDIOC_ENUM_FRAMEINTERVALS, &interval) == 0;
+           ++interval.index) {
+        if (interval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+          RCLCPP_INFO_STREAM(rclcpp::get_logger("hobot_usb_cam"),
+                             "  " << interval.type << " "
+                                  << interval.discrete.numerator << " / "
+                                  << interval.discrete.denominator);
+          int rate =
+              interval.discrete.denominator / interval.discrete.numerator;
+          size_rate.frameRate.push_back(rate);
+        } else {
+          RCLCPP_INFO(rclcpp::get_logger("hobot_usb_cam"), "other type");
+        }
+      }  // interval loop
+      map_formats[fmt.pixelformat].push_back(size_rate);
+    }  // size loop
+  }    // fmt loop
+}
+
+bool HobotUSBCam::CheckResolutionFromFormats(int width, int height) {
+  uint32_t v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+  switch (cam_information_.pixel_format) {
+    case kPIXEL_FORMAT_MJPEG:
+      v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+      break;
+    case kPIXEL_FORMAT_YUYV:
+      v4l2_fmt = V4L2_PIX_FMT_YUYV;
+      break;
+    case kPIXEL_FORMAT_UYVY:
+      v4l2_fmt = V4L2_PIX_FMT_UYVY;
+      break;
+    case kPIXEL_FORMAT_YUVMONO10:
+      v4l2_fmt = V4L2_PIX_FMT_YUYV;
+      break;
+    case kPIXEL_FORMAT_RGB24:
+      v4l2_fmt = V4L2_PIX_FMT_RGB24;
+      break;
+    case kPIXEL_FORMAT_GREY:
+      v4l2_fmt = V4L2_PIX_FMT_GREY;
+      break;
+    default:
+      v4l2_fmt = V4L2_PIX_FMT_MJPEG;
+  }
+  auto it = map_formats.find(v4l2_fmt);
+  if (it != map_formats.end()) {
+    for (size_t i = 0; i < it->second.size(); ++i) {
+      if (it->second[i].width == width && it->second[i].height == height) {
+        return true;
+      }
+    }
+    std::stringstream ss_frame;
+    for (size_t i = 0; i < it->second.size(); ++i) {
+      ss_frame << it->second[i].width << "x" << it->second[i].height << " ";
+    }
+    RCLCPP_ERROR(rclcpp::get_logger("hobot_usb_cam"),
+                 "Resolution %dx%d is not supported! %sare supported!");
+  }
+
+  return false;
+}
+
 bool HobotUSBCam::OpenDevice(void) {
   struct stat dev_stat;
   if (stat(cam_information_.dev.c_str(), &dev_stat) == -1) {
@@ -97,6 +190,7 @@ bool HobotUSBCam::OpenDevice(void) {
                  strerror(errno));
     return false;
   }
+  GetFormats();
   return true;
 }
 
@@ -216,17 +310,16 @@ bool HobotUSBCam::InitDevice() {
                 cam_information_.image_width,
                 cam_information_.image_height);
   } else {
-    struct v4l2_frmsizeenum size;
-    size.index = 0;
-    size.pixel_format = camera_format.fmt.pix.pixelformat;
     std::stringstream ss;
     ss << "Resolution " << cam_information_.image_width << "x"
-       << cam_information_.image_height << "is not support! ";
-    for (size.index = 0; xioctl(cam_fd_, VIDIOC_ENUM_FRAMESIZES, &size) == 0;
-         ++size.index) {  //获取支持的分辨率
-      ss << size.discrete.width << "x" << size.discrete.height;
+       << cam_information_.image_height << " is not support! ";
+    auto it = map_formats.find(camera_format.fmt.pix.pixelformat);
+    if (it != map_formats.end()) {  //获取支持的分辨率
+      for (size_t i = 0; i < it->second.size(); ++i) {
+        ss << it->second[i].width << "x" << it->second[i].height << " ";
+      }
     }
-    ss << " are supported."
+    ss << "are supported."
        << "\n";
     RCLCPP_WARN(rclcpp::get_logger("hobot_usb_cam"), "%s", ss.str().c_str());
 
@@ -269,22 +362,20 @@ bool HobotUSBCam::InitDevice() {
           cam_information_.framerate;
       if (xioctl(cam_fd_, VIDIOC_S_PARM, &stream_params) < 0) {
         std::stringstream ss_frame;
-        struct v4l2_frmivalenum interval;
-        interval.index = 0;
-        interval.pixel_format = camera_format.fmt.pix.pixelformat;
-        interval.width = cam_information_.image_width;
-        interval.height = cam_information_.image_height;
-        for (interval.index = 0;
-             xioctl(cam_fd_, VIDIOC_ENUM_FRAMEINTERVALS, &interval) == 0;
-             ++interval.index) {  //获取支持的framerate
-          if (interval.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-            ss_frame << interval.discrete.denominator /
-                            interval.discrete.numerator
-                     << " ";
+        auto it = map_formats.find(camera_format.fmt.pix.pixelformat);
+        if (it != map_formats.end()) {  //获取支持的分辨率
+          for (size_t i = 0; i < it->second.size(); ++i) {
+            if (it->second[i].width == cam_information_.image_width &&
+                it->second[i].height ==
+                    cam_information_.image_height) {  //获取支持的frametrate
+              for (size_t j = 0; j < it->second[i].frameRate.size(); ++j) {
+                ss_frame << it->second[i].frameRate[j] << " ";
+              }
+            }
           }
-          ss_frame << "are supported."
-                   << "\n";
         }
+        ss_frame << "are supported."
+                 << "\n";
         cam_information_.framerate =
             stream_params.parm.capture.timeperframe.denominator /
             stream_params.parm.capture.timeperframe.numerator;

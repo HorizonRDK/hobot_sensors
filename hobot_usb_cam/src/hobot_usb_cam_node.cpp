@@ -51,10 +51,6 @@ HobotUSBCamNode::HobotUSBCamNode(const rclcpp::NodeOptions &ndoe_options)
                 "get camera calibration parameters failed");
   }
 
-  // This should be done after get_params()
-  if (SetPublisher() == false) {
-    return;
-  }
   HobotUSBCam::CamInformation cam_information;
   cam_information.dev = video_device_name_;
   cam_information.framerate = framerate_;
@@ -72,6 +68,11 @@ HobotUSBCamNode::HobotUSBCamNode(const rclcpp::NodeOptions &ndoe_options)
   image_height_ = cam_information.image_height;
   image_width_ = cam_information.image_width;
   pixel_format_name_ = cam_information.pixel_format;
+
+  // This should be done after get_params()
+  if (SetPublisher() == false) {
+    return;
+  }
   if (cam_.Start() == false) {
     RCLCPP_ERROR(this->get_logger(), "Hobot USB Cam Start failed\n\n");
     return;
@@ -197,39 +198,17 @@ bool HobotUSBCamNode::SetIOMethod(const std::string &io_method_name) {
 
 bool HobotUSBCamNode::SetPublisher() {
   if (zero_copy_enabled_) {
-    if (image_width_ == 1920 && image_height_ == 1080) {
+    if (cam_.CheckResolutionFromFormats(image_width_, image_height_)) {
       hbmem_image_pub_1080_ =
           this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
               "hbmem_image", 5);
       hbmem_image_pub_540_ = nullptr;
       hbmem_image_pub_480_ = nullptr;
-      image_pub_ = nullptr;
-    } else if (image_width_ == 960 && image_height_ == 540) {
-      hbmem_image_pub_1080_ =
-          this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
-              "hbmem_image", 5);
-      hbmem_image_pub_540_ = nullptr;
-      // Todo Use different pub for different image resulution
-      // hbmem_image_pub_540_ =
-      //   this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg540P>
-      //     ("hbmem_image", 5);
-      hbmem_image_pub_480_ = nullptr;
-      image_pub_ = nullptr;
-    } else if (image_width_ == 640 && image_height_ == 480) {
-      hbmem_image_pub_1080_ =
-          this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
-              "hbmem_image", 5);
-      hbmem_image_pub_540_ = nullptr;
-      // hbmem_image_pub_480_ =
-      //   this->create_publisher_hbmem<hbm_img_msgs::msg::HbmMsg480P>
-      //     ("hbmem_image", 5);
       image_pub_ = nullptr;
     } else {
       RCLCPP_ERROR(this->get_logger(),
-                   "Invalid publish resolution "
-                   "width:%d height:%d. Supported resolutions are 1920x1080, "
-                   "960x540, 640x480, please modify the parameters "
-                   "image_height or image_width",
+                   "Invalid publish resolution width:%d height:%d. Please "
+                   "modify the parameters image_height or image_width",
                    image_width_,
                    image_height_);
       return false;
