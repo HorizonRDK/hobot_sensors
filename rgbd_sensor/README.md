@@ -77,10 +77,6 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 | color_height  |  模组输出图像高      |         1080                 |         1080           |
 | color_fps     |  模组输出图像帧率    |         10                   |         10            |
 | enable_color  |  是否发布图像        |         True/False          |         True          |
-| color_width   |  模组输出图像宽      |         1920                 |         1920           |
-| color_height  |  模组输出图像高      |         1080                 |         1080           |
-| color_fps     |  模组输出图像帧率    |         10                   |         10            |
-| enable_color  |  是否发布图像        |         True/False          |         True          |
 | depth_width   |  模组输出深度图像宽      |         224                 |         224           |
 | depth_height  |  模组输出深度图像高      |         129                 |         129           |
 | depth_fps     |  模组输出深度图像帧率    |         10                   |         10            |
