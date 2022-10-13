@@ -166,7 +166,7 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
 
   if (-1 == nRet) {
-    if (errno == 14) {  // 重复打开
+    if (errno == 14 || errno == 25) {  // 重复打开
       RCLCPP_ERROR(
           rclcpp::get_logger("mipi_cam"),
           "Cannot open '%s': %d, %s! You may have started mipi_cam repeatedly.",
@@ -357,10 +357,20 @@ bool MipiCam::get_image(builtin_interfaces::msg::Time &stamp,
     memcpy(&data[0], image_->image, data.size());
   } else {
     if (monochrome_) {
+      if (0 != out_format_.compare("mono8")) {
+        RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_cam"),
+                         "Invalid out_format: %s! Use mono8 instead!",
+                         out_format_.c_str());
+      }
       encoding = "mono8";
     } else {
       // TODO(oal) aren't there other encoding types?
       encoding = "bgr8";
+      if (0 != out_format_.compare("bgr8")) {
+        RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_cam"),
+                         "Invalid out_format: %s! Use bgr8 instead!",
+                         out_format_.c_str());
+      }
       step = width * 3;
     }
     // jpeg，png---opencv 转 bgr8
@@ -435,9 +445,15 @@ bool MipiCam::get_image_mem(
   } else {
     if (monochrome_) {
       memcpy(encoding.data(), "mono8", strlen("mono8"));
+      RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_cam"),
+                       "Invalid out_format: %s! Use mono8 instead!",
+                       out_format_.c_str());
     } else {
       // TODO(oal) aren't there other encoding types?
       memcpy(encoding.data(), "bgr8", strlen("bgr8"));
+      RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_cam"),
+                       "Invalid out_format: %s! Use bgr8 instead!",
+                       out_format_.c_str());
       step = width * 3;
     }
     // jpeg，png---opencv 转 bgr8

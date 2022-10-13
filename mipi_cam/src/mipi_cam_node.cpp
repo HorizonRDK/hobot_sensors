@@ -124,6 +124,45 @@ void MipiCamNode::get_params() {
   }
 }
 
+bool MipiCamNode::check_WH() {
+  if (image_width_ > 1920 ||
+      image_width_ < 244) {  // mipi cam 配置vps通道为2，不支持放大
+    RCLCPP_ERROR(
+        rclcpp::get_logger("mipi_node"),
+        "Invalid image_width: %d, the image_width range must be [244, 1920]",
+        image_width_);
+    return false;
+  }
+
+  if (image_height_ > 1080 || image_height_ < 136) {
+    RCLCPP_ERROR(
+        rclcpp::get_logger("mipi_node"),
+        "Invalid image_height: %d, image_height range must be [136,1080]",
+        image_height_);
+    return false;
+  }
+
+  if (image_width_ % 4 != 0) {  //宽度必须为4的整倍数
+    int remain = image_width_ % 4;
+    int recommend_dst_width = image_width_ + 4 - remain;
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
+                 "Invalid image_width: %d, The image_width must "
+                 "be a multiple of 4! The recommended image_width is %d",
+                 image_width_,
+                 recommend_dst_width);
+    return false;
+  }
+
+  if (image_height_ % 2 != 0) {  //高度必须为偶数
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
+                 "Invalid image_height: %d, The image_height must be even",
+                 image_height_);
+    return false;
+  }
+
+  return true;
+}
+
 void MipiCamNode::service_capture(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
@@ -158,6 +197,11 @@ void MipiCamNode::init() {
         "Required Parameters not set...waiting until they are set");
     get_params();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+
+  if (!check_WH()) {
+    rclcpp::shutdown();
+    return;
   }
 
   img_->header.frame_id = frame_id_;
