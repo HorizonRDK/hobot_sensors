@@ -124,7 +124,7 @@ void MipiCamNode::get_params() {
   }
 }
 
-bool MipiCamNode::check_WH() {
+bool MipiCamNode::check_params() {
   if (image_width_ > 1920 ||
       image_width_ < 244) {  // mipi cam 配置vps通道为2，不支持放大
     RCLCPP_ERROR(
@@ -199,7 +199,7 @@ void MipiCamNode::init() {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
-  if (!check_WH()) {
+  if (!check_params()) {
     rclcpp::shutdown();
     return;
   }

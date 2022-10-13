@@ -44,7 +44,7 @@ public:
 
   void init();
   void get_params();
-  bool check_WH();
+  bool check_params();
   void update();
   void hbmem_update();
   bool take_and_send_image();
