@@ -125,8 +125,11 @@ void MipiCamNode::get_params() {
 }
 
 bool MipiCamNode::check_params() {
-  if (image_width_ > 1920 ||
-      image_width_ < 244) {  // 配置vps通道为2，不支持放大,且VPS最多缩小为原尺寸的1/8
+  // F37输出为1920*1080。
+  // GC4663支持2560*1440，但是目前标定文件配置为1920*1080,
+  // 以后扩展需要重新适配。
+  if (image_width_ > 1920 || image_width_ < 244) {
+    // 配置vps通道为2，不支持放大,且VPS最多缩小为原尺寸的1/8
     RCLCPP_ERROR(
         rclcpp::get_logger("mipi_node"),
         "Invalid image_width: %d, the image_width range must be [244, 1920]",
