@@ -178,11 +178,27 @@ int MipiDevice::OpenCamera(const TCamInfo* pCamInfo) {
   if (m_oX3UsbCam.m_infos.m_vin_enable) {
     ret = x3_vin_init(&m_oX3UsbCam.m_infos.m_vin_info);
     if (ret) {
-      RCLCPP_ERROR(
-          rclcpp::get_logger("mipi_cap"),
-          "x3_vin_init failed, %d! Please check if the sensor is connected!",
-          ret);
-      goto vin_err;
+      ROS_printf("x3_vin_init failed: %d!\n", ret);
+      if (-268565506 == ret) {  //重复打开
+        RCLCPP_ERROR(
+            rclcpp::get_logger("mipi_cap"),
+            "Cannot open '%s'! You may have started mipi_cam repeatedly?",
+            m_oCamInfo.devName);
+      } else if (-1 == ret) {  //没有对应的camera设备,摄像头未接or摄像头类型错误
+        RCLCPP_ERROR(
+            rclcpp::get_logger("mipi_cap"),
+            "Cannot open '%s'! Please check if the sensor:%s is "
+            "connected! If you have connected the sensor:%s, may be "
+            "video_device error. You can change the "
+            "video_device parameter in the "
+            "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py' to %s",
+            m_oCamInfo.devName,
+            m_oCamInfo.devName,
+            m_oCamInfo.devName,
+            m_oCamInfo.devName);
+      }
+      x3_vp_deinit();
+      return -2;
     }
     ROS_printf("x3_vin_init ok!\n");
   }

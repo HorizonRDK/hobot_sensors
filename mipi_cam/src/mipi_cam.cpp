@@ -164,27 +164,7 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
   m_oCamInfo.width = image_width;
   int nRet = m_pMipiDev->OpenCamera(&m_oCamInfo);
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
-
-  if (-1 == nRet) {
-    if (errno == 14 || errno == 25) {  // 重复打开
-      RCLCPP_ERROR(
-          rclcpp::get_logger("mipi_cam"),
-          "Cannot open '%s': %d, %s! You may have started mipi_cam repeatedly.",
-          camera_dev_.c_str(),
-          errno,
-          strerror(errno));
-      return false;
-    } else if (errno == 121) {  // 摄像头类型错误
-      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-                   "Cannot open '%s': %d, %s! Input video_device: %s, "
-                   "'F37' and 'GC4663' are supported! "
-                   "Please make sure the "
-                   "video_device parameter is correct.",
-                   camera_dev_.c_str(),
-                   errno,
-                   strerror(errno));
-      return false;
-    }
+  if (-1 == nRet || -2 == nRet) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("mipi_cam"),
                         "Cannot open '" << camera_dev_ << "': " << errno << ", "
                                         << strerror(errno));
