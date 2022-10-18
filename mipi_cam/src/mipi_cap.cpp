@@ -240,6 +240,7 @@ int MipiDevice::OpenCamera(const TCamInfo* pCamInfo) {
       int input_w = m_oCamInfo.width;
       int input_h = m_oCamInfo.height;
       if (!checkParams(sensor_w, sensor_h, input_w, input_h)) {
+        x3_vp_deinit();
         return -3;
       }
     }
