@@ -15,6 +15,9 @@
 #include "mipi_cam/mipi_cam_node.hpp"
 
 #include <sstream>
+
+#include "sensor_f37_config.h"
+#include "sensor_gc4663_config.h"
 // #include <std_srvs/srv/Empty.h>
 
 #include <stdarg.h>

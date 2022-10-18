@@ -98,7 +98,7 @@ node会发布/image_raw topic，对应rgb8格式图片，使用 share mem 发布
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
-使用out_format参数设置发布图片的编码方式，默认是rgb8 编码方式，支持nv12格式（/image_raw topic），例如使用F37 sensor发布960x540分辨率的nv12格式图片：
+使用out_format参数设置发布图片的编码方式，默认是bgr8编码方式，支持nv12格式（/image_raw topic），例如使用F37 sensor发布960x540分辨率的nv12格式图片：
 
 `ros2 run mipi_cam mipi_cam --ros-args --log-level info --ros-args -p out_format:=nv12 -p image_width:=960 -p image_height:=540 -p video_device:=F37`
 
