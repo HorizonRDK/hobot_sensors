@@ -179,23 +179,84 @@ int MipiDevice::OpenCamera(const TCamInfo* pCamInfo) {
     ret = x3_vin_init(&m_oX3UsbCam.m_infos.m_vin_info);
     if (ret) {
       ROS_printf("x3_vin_init failed: %d!\n", ret);
-      if (-268565506 == ret) {  //重复打开
+      if (HB_ERR_VIN_SIF_INIT_FAIL == abs(ret)) {  //重复打开
         RCLCPP_ERROR(
             rclcpp::get_logger("mipi_cap"),
             "Cannot open '%s'! You may have started mipi_cam repeatedly?",
             m_oCamInfo.devName);
       } else if (-1 == ret) {  //没有对应的camera设备,摄像头未接or摄像头类型错误
-        RCLCPP_ERROR(
-            rclcpp::get_logger("mipi_cap"),
-            "Cannot open '%s'! Please check if the sensor:%s is "
-            "connected! If you have connected the sensor:%s, may be "
-            "video_device error. You can change the "
-            "video_device parameter in the "
-            "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py' to %s",
-            m_oCamInfo.devName,
-            m_oCamInfo.devName,
-            m_oCamInfo.devName,
-            m_oCamInfo.devName);
+        std::string cmd = "i2cdetect -y -r 1";
+        char msg[1000] = {0};
+        FILE* fp = NULL;
+        fp = popen(cmd.c_str(), "r");
+        if (fp == NULL) {  // cmd执行失败
+          RCLCPP_ERROR(
+              rclcpp::get_logger("mipi_cap"),
+              "Cannot open '%s'! Please check if the sensor:%s is "
+              "connected! If you have connected the sensor:%s, may be "
+              "video_device error. You can change the "
+              "video_device parameter in the "
+              "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py' to %s",
+              m_oCamInfo.devName,
+              m_oCamInfo.devName,
+              m_oCamInfo.devName,
+              m_oCamInfo.devName);
+        } else {
+          fread(msg, sizeof(char), 1000, fp);
+          pclose(fp);
+          std::string f37_detect =
+              "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
+              "00:          -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "30: -- -- -- -- -- -- -- -- -- -- -- UU -- -- -- -- \n"
+              "40: 40 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "70: -- -- -- -- -- -- -- --                         \n";
+          std::string gc4663_detect =
+              "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
+              "00:          -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "20: -- -- -- -- -- -- -- -- -- 29 -- -- -- -- -- -- \n"
+              "30: -- -- -- -- -- -- -- -- -- -- -- UU -- -- -- -- \n"
+              "40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- \n"
+              "70: -- -- -- -- -- -- -- --                         \n";
+          RCLCPP_ERROR(rclcpp::get_logger("mipi_cap"),
+                       "'i2cdetect -y -r 1' current result: \n%s\n F37: \n%s\n "
+                       "GC4663: \n%s\n",
+                       msg,
+                       f37_detect.c_str(),
+                       gc4663_detect.c_str());
+          if (strcmp(msg, f37_detect.c_str()) == 0 &&
+              strcmp(m_oCamInfo.devName, "F37") != 0 &&
+              strcmp(m_oCamInfo.devName, "f37") != 0) {
+            //连接了f37，但摄像头类型传入非f37
+            RCLCPP_ERROR(rclcpp::get_logger("mipi_cap"),
+                         "You connected F37, but video_device is: %s. You can "
+                         "change the video_device parameter in the "
+                         "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py'",
+                         m_oCamInfo.devName);
+          } else if (strcmp(msg, gc4663_detect.c_str()) == 0 &&
+                     strcmp(m_oCamInfo.devName, "GC4663") != 0 &&
+                     strcmp(m_oCamInfo.devName, "gc4663") != 0) {
+            //连接了GC4663，但摄像头类型传入非GC4663
+            RCLCPP_ERROR(
+                rclcpp::get_logger("mipi_cap"),
+                "You connected GC4663, but video_device is: %s. You can "
+                "change the video_device parameter in the "
+                "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py'",
+                m_oCamInfo.devName);
+          } else {  //未连接摄像头
+            RCLCPP_ERROR(rclcpp::get_logger("mipi_cap"),
+                         "Cannot open '%s'! Please check if the sensor:%s is "
+                         "connected!",
+                         m_oCamInfo.devName,
+                         m_oCamInfo.devName);
+          }
+        }
       }
       x3_vp_deinit();
       return -2;

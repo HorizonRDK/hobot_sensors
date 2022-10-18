@@ -15,6 +15,9 @@
 #include "mipi_cam/mipi_cam_node.hpp"
 
 #include <sstream>
+
+#include "sensor_f37_config.h"
+#include "sensor_gc4663_config.h"
 // #include <std_srvs/srv/Empty.h>
 
 #include <stdarg.h>
@@ -125,23 +128,45 @@ void MipiCamNode::get_params() {
 }
 
 bool MipiCamNode::check_params() {
-  // F37输出为1920*1080。
-  // GC4663支持2560*1440，但是目前标定文件配置为1920*1080,
-  // 以后扩展需要重新适配。
-  if (image_width_ > 1920 || image_width_ < 244) {
+  MIPI_ATTR_S mipi_attr;
+  int width_max = 1920, height_max = 1080, width_min = 244, height_min = 136;
+
+  //通过配置文件获取不同sensor支持的分辨率
+  if (video_device_name_ == "F37" || video_device_name_ == "f37") {
+    mipi_attr = MIPI_1LANE_SENSOR_F37_30FPS_10BIT_LINEAR_ATTR;
+  } else if (video_device_name_ == "GC4663" || video_device_name_ == "gc4663") {
+    mipi_attr = MIPI_SENSOR_GC4663_30FPS_1440P_LINEAR_ATTR;
+  }
+
+  width_max = mipi_attr.mipi_host_cfg.width;
+  height_max = mipi_attr.mipi_host_cfg.height;
+  width_min = width_max / 8;
+  height_min = height_max / 8;
+  int width_remain = width_min % 4;
+  if (width_remain != 0) {  //宽度必须为4的倍数
+    width_min = width_min + 4 - width_remain;
+  }
+  if (height_min % 2 != 0) {  //高度必须为偶数
+    height_min++;
+  }
+
+  if (image_width_ > width_max || image_width_ < width_min) {
     // 配置vps通道为2，不支持放大,且VPS最多缩小为原尺寸的1/8
     RCLCPP_ERROR(
         rclcpp::get_logger("mipi_node"),
-        "Invalid image_width: %d, the image_width range must be [244, 1920]",
-        image_width_);
+        "Invalid image_width: %d, the image_width range must be [%d, %d]",
+        image_width_,
+        width_min,
+        width_max);
     return false;
   }
 
-  if (image_height_ > 1080 || image_height_ < 136) {
-    RCLCPP_ERROR(
-        rclcpp::get_logger("mipi_node"),
-        "Invalid image_height: %d, image_height range must be [136,1080]",
-        image_height_);
+  if (image_height_ > height_max || image_height_ < height_min) {
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
+                 "Invalid image_height: %d, image_height range must be [%d,%d]",
+                 image_height_,
+                 height_min,
+                 height_max);
     return false;
   }
 
