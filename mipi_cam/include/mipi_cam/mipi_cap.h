@@ -56,6 +56,7 @@ class MipiDevice : public CVideoComm {
  public:
   MipiDevice();
   ~MipiDevice();
+  bool checkParams(int sensor_w, int sensor_h, int input_w, int input_h);
   int OpenCamera(const TCamInfo* pCamInfo);
   int GetFrame(void**, unsigned int*);
   // 如果有 vps ，就 输出vps 的分层数据

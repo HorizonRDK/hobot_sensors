@@ -127,70 +127,6 @@ void MipiCamNode::get_params() {
   }
 }
 
-bool MipiCamNode::check_params() {
-  MIPI_ATTR_S mipi_attr;
-  int width_max = 1920, height_max = 1080, width_min = 244, height_min = 136;
-
-  //通过配置文件获取不同sensor支持的分辨率
-  if (video_device_name_ == "F37" || video_device_name_ == "f37") {
-    mipi_attr = MIPI_1LANE_SENSOR_F37_30FPS_10BIT_LINEAR_ATTR;
-  } else if (video_device_name_ == "GC4663" || video_device_name_ == "gc4663") {
-    mipi_attr = MIPI_SENSOR_GC4663_30FPS_1440P_LINEAR_ATTR;
-  }
-
-  width_max = mipi_attr.mipi_host_cfg.width;
-  height_max = mipi_attr.mipi_host_cfg.height;
-  width_min = width_max / 8;
-  height_min = height_max / 8;
-  int width_remain = width_min % 4;
-  if (width_remain != 0) {  //宽度必须为4的倍数
-    width_min = width_min + 4 - width_remain;
-  }
-  if (height_min % 2 != 0) {  //高度必须为偶数
-    height_min++;
-  }
-
-  if (image_width_ > width_max || image_width_ < width_min) {
-    // 配置vps通道为2，不支持放大,且VPS最多缩小为原尺寸的1/8
-    RCLCPP_ERROR(
-        rclcpp::get_logger("mipi_node"),
-        "Invalid image_width: %d, the image_width range must be [%d, %d]",
-        image_width_,
-        width_min,
-        width_max);
-    return false;
-  }
-
-  if (image_height_ > height_max || image_height_ < height_min) {
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
-                 "Invalid image_height: %d, image_height range must be [%d,%d]",
-                 image_height_,
-                 height_min,
-                 height_max);
-    return false;
-  }
-
-  if (image_width_ % 4 != 0) {  //宽度必须为4的整倍数
-    int remain = image_width_ % 4;
-    int recommend_dst_width = image_width_ + 4 - remain;
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
-                 "Invalid image_width: %d, The image_width must "
-                 "be a multiple of 4! The recommended image_width is %d",
-                 image_width_,
-                 recommend_dst_width);
-    return false;
-  }
-
-  if (image_height_ % 2 != 0) {  //高度必须为偶数
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
-                 "Invalid image_height: %d, The image_height must be even",
-                 image_height_);
-    return false;
-  }
-
-  return true;
-}
-
 void MipiCamNode::service_capture(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
@@ -225,11 +161,6 @@ void MipiCamNode::init() {
         "Required Parameters not set...waiting until they are set");
     get_params();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
-
-  if (!check_params()) {
-    rclcpp::shutdown();
-    return;
   }
 
   img_->header.frame_id = frame_id_;

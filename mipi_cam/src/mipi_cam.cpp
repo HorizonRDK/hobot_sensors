@@ -164,6 +164,9 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
   m_oCamInfo.width = image_width;
   int nRet = m_pMipiDev->OpenCamera(&m_oCamInfo);
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
+  if (-3 == nRet) {  //发布分辨率不支持，返回失败
+    return false;
+  }
   if (-1 == nRet || -2 == nRet) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("mipi_cam"),
                         "Cannot open '" << camera_dev_ << "': " << errno << ", "
