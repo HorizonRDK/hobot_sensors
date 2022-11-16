@@ -32,6 +32,9 @@
 #include "sensor_gc4c33_config.h"
 #include "sensor_imx415_config.h"
 #include "sensor_imx586_config.h"
+#include "sensor_imx219_config.h"
+#include "sensor_imx477_config.h"
+#include "sensor_ov5647_config.h"
 #include "x3_preparam.h"
 
 MipiDevice::MipiDevice() {
@@ -141,6 +144,57 @@ int MipiDevice::mgc4c33_linear_vin_param_init(x3_vin_info_t* vin_info) {
   vin_info->pipeinfo = PIPE_ATTR_GC4C33_LINEAR_BASE;
   vin_info->disinfo = DIS_ATTR_GC4C33_BASE;
   vin_info->ldcinfo = LDC_ATTR_GC4C33_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = get_available_pipeid();
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+/******************************* IMX219 方案 **********************************/
+int MipiDevice::mimx219_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_IMX219_30FPS_10BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_IMX219_30FPS_10BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_IMX219_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_IMX219_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_IMX219_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_IMX219_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = get_available_pipeid();
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+/******************************* IMX477 方案 **********************************/
+int MipiDevice::mimx477_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_IMX477_50FPS_12BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_IMX477_50FPS_12BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_IMX477_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_IMX477_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_IMX477_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_IMX477_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = get_available_pipeid();
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+/******************************* OV5647 方案 **********************************/
+int MipiDevice::mov5647_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_OV5647_30FPS_10BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_OV5647_30FPS_10BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_OV5647_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_OV5647_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_OV5647_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_OV5647_LINEAR_BASE;
   vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
 
   // 单目的使用dev_id 和 pipe_id 都设置成0
@@ -370,6 +424,73 @@ vp_err:
 }
 
 #define USE_VPS
+int MipiDevice::sensor_reset(void) {
+  int board_type = 3;
+  std::ifstream som_name("/sys/class/socinfo/som_name");
+  if (som_name.is_open()) {
+    som_name >> board_type;
+  }
+
+  int mipi_idx = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.entry_index;
+  if (5 == board_type) {
+    // x3pi两个sensor使用的同一个reset管脚，只需要复位一次
+    (void)system("echo 19 > /sys/class/gpio/export");
+    (void)system("echo out > /sys/class/gpio/gpio19/direction");
+    (void)system("echo 0 > /sys/class/gpio/gpio19/value");
+    (void)system("sleep 0.2");
+    (void)system("echo 1 > /sys/class/gpio/gpio19/value");
+    (void)system("echo 19 > /sys/class/gpio/unexport");
+    (void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+    (void)system("echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart");
+  } else if (4 == board_type) {
+    /* reset使能*/
+    if (1 == mipi_idx) {
+      (void)system("echo 118 > /sys/class/gpio/export");
+      (void)system("echo out > /sys/class/gpio/gpio118/direction");
+      (void)system("echo 0 > /sys/class/gpio/gpio118/value");
+      (void)system("sleep 0.2");
+      (void)system("echo 1 > /sys/class/gpio/gpio118/value");
+      (void)system("echo 118 > /sys/class/gpio/unexport");
+      (void)system(
+          "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
+    } else if (0 == mipi_idx) {
+      (void)system("echo 119 > /sys/class/gpio/export");
+      (void)system("echo out > /sys/class/gpio/gpio119/direction");
+      (void)system("echo 0 > /sys/class/gpio/gpio119/value");
+      (void)system("sleep 0.2");
+      (void)system("echo 1 > /sys/class/gpio/gpio119/value");
+      (void)system("echo 119 > /sys/class/gpio/unexport");
+      (void)system(
+          "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+    }
+  } else if (3 == board_type) {
+    /* reset使能*/
+    if (1 == mipi_idx) {
+      (void)system("echo 111 > /sys/class/gpio/export");
+      (void)system("echo out > /sys/class/gpio/gpio111/direction");
+      (void)system("echo 0 > /sys/class/gpio/gpio111/value");
+      (void)system("sleep 0.2");
+      (void)system("echo 1 > /sys/class/gpio/gpio111/value");
+      (void)system("echo 111 > /sys/class/gpio/unexport");
+      (void)system(
+          "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
+    } else if (0 == mipi_idx) {
+      (void)system("echo 119 > /sys/class/gpio/export");
+      (void)system("echo out > /sys/class/gpio/gpio119/direction");
+      (void)system("echo 0 > /sys/class/gpio/gpio119/value");
+      (void)system("sleep 0.2");
+      (void)system("echo 1 > /sys/class/gpio/gpio119/value");
+      (void)system("echo 119 > /sys/class/gpio/unexport");
+      (void)system(
+          "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+    }
+  } else {
+    ROS_printf("Unsupported board type %d！", board_type);
+    return -1;
+  }
+  return 0;
+}
+
 int MipiDevice::init_param(void) {
   int ret = 0;
   char sensor_name[32] = {0};
@@ -389,39 +510,9 @@ int MipiDevice::init_param(void) {
   } else if (strcmp(sensor_name, "F37") == 0 ||
              strcmp(sensor_name, "f37") == 0) {
     ret = mf37_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
-    int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
-    std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
-    if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
-      // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
-      for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
-        dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
-        if (access(dev_i2c.data(), F_OK) == 0) {
-          m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
-          ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d",
-                     bus_num,
-                     m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
-          break;
-        }
-      }
-    }
   } else if (strcmp(sensor_name, "GC4663") == 0 ||
              strcmp(sensor_name, "gc4663") == 0) {
     ret = mgc4663_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
-    int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
-    std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
-    if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
-      // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
-      for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
-        dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
-        if (access(dev_i2c.data(), F_OK) == 0) {
-          m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
-          ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d",
-                     bus_num,
-                     m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
-          break;
-        }
-      }
-    }
   } else if (strcmp(sensor_name, "IMX586") == 0 ||
              strcmp(sensor_name, "imx586") == 0) {
     // enable, sdb3.0
@@ -433,46 +524,43 @@ int MipiDevice::init_param(void) {
     for (const auto& sys_cmd : sys_cmds) {
       system(sys_cmd.data());
     }
-
     ret = mimx586_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
-    int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
-    std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
-    if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
-      // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
-      for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
-        dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
-        if (access(dev_i2c.data(), F_OK) == 0) {
-          m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
-          ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d",
-                     bus_num,
-                     m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
-          break;
-        }
-      }
-    }
   } else if (strcmp(sensor_name, "GC4C33") == 0 ||
              strcmp(sensor_name, "gc4c33") == 0) {
     ret = mgc4c33_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
-    int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
-    std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
-    if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
-      // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
-      for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
-        dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
-        if (access(dev_i2c.data(), F_OK) == 0) {
-          m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
-          ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d",
-                     bus_num,
-                     m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
-          break;
-        }
-      }
-    }
+  } else if (strcmp(sensor_name, "IMX219") == 0 ||
+             strcmp(sensor_name, "imx219") == 0) {
+    ret = mimx219_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+  } else if (strcmp(sensor_name, "IMX477") == 0 ||
+             strcmp(sensor_name, "imx477") == 0) {
+    ret = mimx477_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+  } else if (strcmp(sensor_name, "OV5647") == 0 ||
+             strcmp(sensor_name, "ov5647") == 0) {
+    ret = mov5647_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
   } else {
     ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
     m_oX3UsbCam.m_infos.m_vin_enable = 0;
     return -1;
   }
+
+  int bus_num = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num;
+  std::string dev_i2c = "/dev/i2c-" + std::to_string(bus_num);
+  if (access(dev_i2c.data(), F_OK) != 0 && bus_num > 0) {
+    // 默认配置的i2c无效，自适应i2c号，实现对硬件平台的自适应。
+    for (int dev_id = bus_num - 1; dev_id >= 0; dev_id--) {
+      dev_i2c = "/dev/i2c-" + std::to_string(dev_id);
+      if (access(dev_i2c.data(), F_OK) == 0) {
+        m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num = dev_id;
+        ROS_printf("Adapt bus_num for /dev/i2c- from %d to %d", bus_num,
+                   m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.bus_num);
+        break;
+      }
+    }
+  }
+
+  // 复位sensor
+  sensor_reset();
+
   // 减少ddr带宽使用量
   m_oX3UsbCam.m_infos.m_vin_info.vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;
   // 2. 根据vin中的分辨率配置vps

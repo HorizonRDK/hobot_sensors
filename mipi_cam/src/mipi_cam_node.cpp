@@ -146,6 +146,7 @@ void MipiCamNode::init() {
 
   // 使能sensor mclk
   std::vector<std::string> sys_cmds{
+      "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart",
       "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart",
       "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
       "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",

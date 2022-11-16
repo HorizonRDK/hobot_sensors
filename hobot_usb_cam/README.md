@@ -94,7 +94,7 @@ websocket接收图像消息和智能结果消息，根据时间戳进行匹配�
 | io_method   | io类型           | string | mmap/read/userptr          | 否       | “mmap”            |
 | pixel_format| 像素格式         | string | 当前只支持mjpeg            | 否        | “mjpeg”           |
 | video_device| 设备驱动名称     | string | 设备名称一般为/dev/videox  | 是        | “/dev/video0”     |
-| zero_copy   | 使能“zero_copy”  | bool   | True/False                 | 否       | “False”           |
+| zero_copy   | 使能“zero_copy”  | bool   | True/False                 | 否       | “True”           |
 | camera_calibration_file_path  | 相机标定文件的存放路径  | string   | 根据实际的相机标定文件存放路径配置   | 否  | 空 |
 
 
