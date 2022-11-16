@@ -69,10 +69,14 @@ class MipiDevice : public CVideoComm {
   int mgc4663_linear_vin_param_init(x3_vin_info_t* vin_info);
   int mimx586_linear_vin_param_init(x3_vin_info_t* vin_info);
   int mgc4c33_linear_vin_param_init(x3_vin_info_t* vin_info);
+  int mimx219_linear_vin_param_init(x3_vin_info_t* vin_info);
+  int mimx477_linear_vin_param_init(x3_vin_info_t* vin_info);
+  int mov5647_linear_vin_param_init(x3_vin_info_t* vin_info);
   int x3_cam_uninit(void);
   int x3_mipi_cam_stop(void);
   int x3_mipi_cam_start(void);
   int init_param(void);
+  int sensor_reset(void);
   // 得到可用的 pipe_id,0-7,进程id 对应
   // pipe_id,假设pipe_id对应的进程已不存在，则使用id，并更新为当前进程id
   int get_available_pipeid();
