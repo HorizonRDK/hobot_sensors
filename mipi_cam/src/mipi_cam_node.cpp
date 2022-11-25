@@ -50,7 +50,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
   if (file.good()) {
     RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
                  "mipi camera already in use.\n");
-    throw std::runtime_error("mipi camera already in use.");
+    rclcpp::shutdown();
   } else {
     std::ofstream output(camera_isopen_file_path_);
   }
