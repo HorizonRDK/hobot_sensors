@@ -25,6 +25,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <cstdio>
 
 extern "C" int ROS_printf(char* fmt, ...) {
   char buf[512] = {0};
@@ -42,6 +44,17 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
       Node("mipi_cam", node_options),
       img_(new sensor_msgs::msg::Image()),
       camera_calibration_info_(new sensor_msgs::msg::CameraInfo()) {
+  // 判断是否已经启动过camera
+  camera_isopen_file_path_ = "/tmp/mipi_camera";
+  std::ifstream file(camera_isopen_file_path_);
+  if (file.good()) {
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
+                 "mipi camera already in use.\n");
+    throw std::runtime_error("mipi camera already in use.");
+  } else {
+    std::ofstream output(camera_isopen_file_path_);
+  }
+
   image_pub_ =
       this->create_publisher<sensor_msgs::msg::Image>("image_raw", PUB_BUF_NUM);
   info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(
@@ -69,6 +82,8 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
 MipiCamNode::~MipiCamNode() {
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"), "shutting down");
   mipiCam_.shutdown();
+
+  std::remove(camera_isopen_file_path_.c_str());
 }
 
 void MipiCamNode::get_params() {
