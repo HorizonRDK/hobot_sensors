@@ -1,5 +1,10 @@
 # Changelog for package mipi_cam
 
+tros_1.1.3rc1 (2022-11-25)
+------------------
+1. mipi_cam自适应video_device
+2. 解决配置错误的摄像头，报错信息里面没有适配新增摄像头设备号的问题
+
 tros_1.1.3 (2022-11-16)
 ------------------
 1. mipi_cam适配imx219, imx477, ov5647

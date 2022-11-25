@@ -59,26 +59,76 @@ E_CHIP_TYPE x3_get_chip_type(void)
 typedef struct sensor_id {
   int i2c_bus;           // sensor挂在哪条总线上
   int i2c_dev_addr;      // sensor i2c设备地址
-  int i2c_addr_width;
-  int det_reg;
-  char sensor_name[10];
-  int enable_bit; // 本sensor对应的list中的bit位
+  int i2c_addr_width;    // 总线地址宽（1/2字节）
+  int det_reg;           // 读取的寄存器地址
+  char sensor_name[10];  // sensor名字
 } sensor_id_t;
 
 #define I2C_ADDR_8		1
 #define I2C_ADDR_16		2
 
-sensor_id_t sensor_id_list[] =
-{
-	{3, 0x36, I2C_ADDR_16, 0x0100, "ov8856", SENSOR_OV8856_SUPPORT}, // ov8856
-	{2, 0x40, I2C_ADDR_8, 0x0B, "f37", SENSOR_F37_SUPPORT},           // F37
-	{2, 0x36, I2C_ADDR_16, 0x0100, "os8a10", SENSOR_OS8A10_SUPPORT},     // os8a10
-	{2, 0x1a, I2C_ADDR_16, 0x0000, "imx415", SENSOR_IMX415_SUPPORT},     // imx514
-	{2, 0x1a, I2C_ADDR_16, 0x0000, "imx586", SENSOR_IMX586_SUPPORT},     // imx586
-	{2, 0x29, I2C_ADDR_16, 0x0000, "gc4c33", SENSOR_GC4C33_SUPPORT},     // gc4c33
+// mipi sensor的信息数组
+sensor_id_t sensor_id_list[] = {
+    {2, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
+    {1, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
+    {2, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
+    {1, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
+    {1, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
+		{2, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
+    {1, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
+		{2, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
+    {1, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
+		{2, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
+    {1, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
+		{2, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
+    {2, 0x1a, I2C_ADDR_16, 0x0000, "imx586"},  // imx586
+		{1, 0x1a, I2C_ADDR_16, 0x0000, "imx586"},  // imx586
+    {2, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
+		{1, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
+    // {3, 0x36, I2C_ADDR_16, 0x0100, "ov8856"},  // ov8856
+    // {3, 0x10, I2C_ADDR_16, 0x0100, "ov8856"},  // ov8856
+    // {2, 0x36, I2C_ADDR_16, 0x0100, "os8a10"},  // os8a10
 };
 #define ARRAY_SIZE(a) ((sizeof(a) / sizeof(a[0])))
 
+// 获取连接的video_device
+char *x3_get_video_device() {
+  int i = 0;
+  char cmd[128] = {0};
+  char result[1024] = {0};
+  int length = ARRAY_SIZE(sensor_id_list);
+  for (i = 0; i < length; i++) {
+    /* 通过i2ctransfer命令读取特定寄存器，判断是否读取成功来判断是否支持相应的sensor
+     */
+    memset(cmd, '\0', sizeof(cmd));
+    memset(result, '\0', sizeof(result));
+    if (sensor_id_list[i].i2c_addr_width == I2C_ADDR_8) {
+      sprintf(cmd,
+              "i2ctransfer -y -f %d w1@0x%x 0x%x r1 2>&1",
+              sensor_id_list[i].i2c_bus,
+              sensor_id_list[i].i2c_dev_addr,
+              sensor_id_list[i].det_reg);
+    } else if (sensor_id_list[i].i2c_addr_width == I2C_ADDR_16) {
+      sprintf(cmd,
+              "i2ctransfer -y -f %d w2@0x%x 0x%x 0x%x r1 2>&1",
+              sensor_id_list[i].i2c_bus,
+              sensor_id_list[i].i2c_dev_addr,
+              sensor_id_list[i].det_reg >> 8,
+              sensor_id_list[i].det_reg & 0xFF);
+    } else {
+      continue;
+    }
+    exec_cmd_ex(cmd, result, 1024);
+    if (strstr(result, "Error") ==
+        NULL) {  // 返回结果中不带Error, 说明sensor找到了
+      printf("match sensor:%s\n", sensor_id_list[i].sensor_name);
+      return sensor_id_list[i].sensor_name;
+    }
+  }
+  return "";
+}
+
+// popen运行cmd，并获取cmd返回结果
 int exec_cmd_ex(const char *cmd, char* res, int max)
 {
 	if(cmd == NULL || res == NULL || max <= 0)

@@ -42,6 +42,12 @@ extern "C" {
 E_CHIP_TYPE x3_get_chip_type(void);
 int x3_get_hard_capability(hard_capability_t *capability);
 
+// popen运行cmd，并获取cmd返回结果
+int exec_cmd_ex(const char *cmd, char *res, int max);
+
+// 获取连接的video_device
+char *x3_get_video_device();
+
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */

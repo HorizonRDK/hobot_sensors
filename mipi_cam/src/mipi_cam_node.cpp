@@ -156,6 +156,19 @@ void MipiCamNode::init() {
     system(sys_cmd.data());
   }
 
+  // 自适应获取video_device_name
+  std::string video_device_name_temp = x3_get_video_device(); // 获取目前连接的video_device
+  if(video_device_name_temp.empty()) { // 未检测到有video_device连接
+    RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_cap"),
+                       "No camera detected! Please check if camera is connected!");
+  } else if(strcasecmp(video_device_name_temp.c_str(),video_device_name_.c_str())) { 
+    // 与用户传入的video_device不一致，比较不区分大小写
+    RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_node"),
+                   "video_device: %s is error, but mipi_cam detected %s, mipi_cam will open %s device",
+                   video_device_name_.c_str(), video_device_name_temp.c_str(),video_device_name_temp.c_str());
+    video_device_name_ = video_device_name_temp;
+  } 
+
   while (frame_id_ == "") {
     RCLCPP_WARN_ONCE(
         rclcpp::get_logger("mipi_node"),
