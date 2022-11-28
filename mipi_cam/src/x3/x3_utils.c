@@ -92,7 +92,7 @@ sensor_id_t sensor_id_list[] = {
 #define ARRAY_SIZE(a) ((sizeof(a) / sizeof(a[0])))
 
 // 获取连接的video_device
-// 成功返回sensor_name，失败返回空字符串
+// 成功返回sensor_id_list中对应的sensor_name，失败返回空字符串
 char *x3_get_video_device() {
   int i = 0;
   char cmd[128] = {0};
@@ -117,6 +117,7 @@ char *x3_get_video_device() {
               sensor_id_list[i].det_reg >> 8,
               sensor_id_list[i].det_reg & 0xFF);
     } else {
+			ROS_printf("error, invalid i2c_addr_width: %d!!", sensor_id_list[i].i2c_addr_width);
       continue;
     }
     exec_cmd_ex(cmd, result, 1024);
@@ -124,7 +125,10 @@ char *x3_get_video_device() {
 				//返回结果中不带Error, 说明sensor找到了
       ROS_printf("match sensor:%s\n", sensor_id_list[i].sensor_name);
       return sensor_id_list[i].sensor_name;
-    }
+    } else {
+			// do nothing 
+			// 当前检测的摄像头不是连接的摄像头，继续检测下一个
+		}
   }
   return "";
 }

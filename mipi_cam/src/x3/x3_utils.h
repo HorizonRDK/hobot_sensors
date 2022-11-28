@@ -46,7 +46,7 @@ int x3_get_hard_capability(hard_capability_t *capability);
 int exec_cmd_ex(const char *cmd, char *res, int max);
 
 // 获取连接的video_device
-// 成功返回sensor_name，失败返回空字符串
+// 成功返回sensor_id_list中对应的sensor_name，失败返回空字符串
 char *x3_get_video_device();
 
 #ifdef __cplusplus
