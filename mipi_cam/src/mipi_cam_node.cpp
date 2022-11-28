@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <cstdio>
 
 extern "C" int ROS_printf(char* fmt, ...) {
   char buf[512] = {0};
@@ -44,15 +43,17 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
       Node("mipi_cam", node_options),
       img_(new sensor_msgs::msg::Image()),
       camera_calibration_info_(new sensor_msgs::msg::CameraInfo()) {
-  // 判断是否已经启动过camera
-  camera_isopen_file_path_ = "/tmp/mipi_camera";
-  std::ifstream file(camera_isopen_file_path_);
-  if (file.good()) {
+  std::string cfg_info;
+  std::ifstream sif_info("/sys/devices/platform/soc/a4001000.sif/cfg_info");
+  if (sif_info.is_open()) {
+    sif_info >> cfg_info;
+  }
+  // 若mipi camera已打开，sif_info返回“pipeid”
+  if (!cfg_info.compare("pipeid")) {
     RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
                  "mipi camera already in use.\n");
-    rclcpp::shutdown();
-  } else {
-    std::ofstream output(camera_isopen_file_path_);
+    exit(0);  //还未创建node，直接退出即可，或者抛出异常
+    // throw std::runtime_error("mipi camera already in use.");
   }
 
   image_pub_ =
