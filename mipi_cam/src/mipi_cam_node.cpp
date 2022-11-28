@@ -52,7 +52,8 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
   if (!cfg_info.compare("pipeid")) {
     RCLCPP_ERROR(rclcpp::get_logger("mipi_node"),
                  "mipi camera already in use.\n");
-    rclcpp::shutdown();
+    exit(0);  //还未创建node，直接退出即可，或者抛出异常
+    // throw std::runtime_error("mipi camera already in use.");
   }
 
   image_pub_ =
