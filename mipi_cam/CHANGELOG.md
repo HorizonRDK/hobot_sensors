@@ -1,5 +1,9 @@
 # Changelog for package mipi_cam
 
+tros_1.1.4 (2022-11-28)
+------------------
+1. mipi_cam自适应video_device
+
 tros_1.1.3rc1 (2022-11-28)
 ------------------
 1. 解决mipi_cam重复启动，第一次启动的程序异常退出问题
