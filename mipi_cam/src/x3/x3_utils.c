@@ -120,8 +120,8 @@ char *x3_get_video_device() {
       continue;
     }
     exec_cmd_ex(cmd, result, 1024);
-    if (strstr(result, "Error") ==
-        NULL) {  // 返回结果中不带Error, 说明sensor找到了
+    if (strstr(result, "Error") == NULL) {  // 读取sensor寄存器失败的时候返回结果中会有Error
+				//返回结果中不带Error, 说明sensor找到了
       ROS_printf("match sensor:%s\n", sensor_id_list[i].sensor_name);
       return sensor_id_list[i].sensor_name;
     }
