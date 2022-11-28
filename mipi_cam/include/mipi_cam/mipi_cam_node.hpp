@@ -93,8 +93,6 @@ public:
   std::string camera_info_url_;
   std::string camera_calibration_file_path_;
 
-  std::string camera_isopen_file_path_;
-
   rclcpp::TimerBase::SharedPtr timer_;
   // 滑动窗口测方差 ， 20 s ，标准帧率
   /*std::vector<int> m_vecFps;
