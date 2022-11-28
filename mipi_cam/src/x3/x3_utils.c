@@ -92,13 +92,14 @@ sensor_id_t sensor_id_list[] = {
 #define ARRAY_SIZE(a) ((sizeof(a) / sizeof(a[0])))
 
 // 获取连接的video_device
+// 成功返回sensor_name，失败返回空字符串
 char *x3_get_video_device() {
   int i = 0;
   char cmd[128] = {0};
   char result[1024] = {0};
   int length = ARRAY_SIZE(sensor_id_list);
   for (i = 0; i < length; i++) {
-    /* 通过i2ctransfer命令读取特定寄存器，判断是否读取成功来判断是否支持相应的sensor
+    /* 通过i2ctransfer命令读取sensor寄存器，判断是否读取成功来判断是否支持相应的sensor
      */
     memset(cmd, '\0', sizeof(cmd));
     memset(result, '\0', sizeof(result));
@@ -121,7 +122,7 @@ char *x3_get_video_device() {
     exec_cmd_ex(cmd, result, 1024);
     if (strstr(result, "Error") ==
         NULL) {  // 返回结果中不带Error, 说明sensor找到了
-      printf("match sensor:%s\n", sensor_id_list[i].sensor_name);
+      ROS_printf("match sensor:%s\n", sensor_id_list[i].sensor_name);
       return sensor_id_list[i].sensor_name;
     }
   }

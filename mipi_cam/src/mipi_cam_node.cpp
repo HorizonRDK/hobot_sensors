@@ -83,8 +83,6 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
 MipiCamNode::~MipiCamNode() {
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"), "shutting down");
   mipiCam_.shutdown();
-
-  std::remove(camera_isopen_file_path_.c_str());
 }
 
 void MipiCamNode::get_params() {
@@ -177,13 +175,21 @@ void MipiCamNode::init() {
   if(video_device_name_temp.empty()) { // 未检测到有video_device连接
     RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_cap"),
                        "No camera detected! Please check if camera is connected!");
+    rclcpp::shutdown();
+    return;
   } else if(strcasecmp(video_device_name_temp.c_str(),video_device_name_.c_str())) { 
     // 与用户传入的video_device不一致，比较不区分大小写
+    // 当检测到的sensor与用户传入的不一致时，打开检测到的sensor，并输出log提示用户
     RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_node"),
-                   "video_device: %s is error, but mipi_cam detected %s, mipi_cam will open %s device",
-                   video_device_name_.c_str(), video_device_name_temp.c_str(),video_device_name_temp.c_str());
+                   "No %s video_device was detected, but mipi_cam detected %s, mipi_cam will open %s device!"
+                   " You can change the video_device parameter to %s in the "
+                   "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py'",
+                   video_device_name_.c_str(), 
+                   video_device_name_temp.c_str(),
+                   video_device_name_temp.c_str(),
+                   video_device_name_temp.c_str());
     video_device_name_ = video_device_name_temp;
-  } 
+  }
 
   while (frame_id_ == "") {
     RCLCPP_WARN_ONCE(
