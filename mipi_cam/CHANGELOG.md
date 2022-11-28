@@ -1,5 +1,9 @@
 # Changelog for package mipi_cam
 
+tros_1.1.3rc1 (2022-11-28)
+------------------
+1. 解决mipi_cam重复启动，第一次启动的程序异常退出问题
+
 tros_1.1.3 (2022-11-16)
 ------------------
 1. mipi_cam适配imx219, imx477, ov5647
