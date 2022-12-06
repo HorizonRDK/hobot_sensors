@@ -74,12 +74,8 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 运行方式1，用户直接调用ros2 命令启动即可：
 
 ```
-
-# 添加sensor库路径, 或者将sensor库拷贝到系统库路径cp install/mipi_cam/sensorlib/lib* /usr/lib
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:install/mipi_cam/sensorlib
-
 export COLCON_CURRENT_PREFIX=./install
-source ./install/local_setup.sh
+source ./install/setup.bash
 # 默认F37 sensor
 ros2 run mipi_cam mipi_cam
 ```
