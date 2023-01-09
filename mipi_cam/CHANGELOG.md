@@ -1,5 +1,9 @@
 # Changelog for package mipi_cam
 
+tros_1.1.4rc1 (2023-1-9)
+------------------
+1. 修复启动时sensor状态未初始化导致自适应video_device失败的问题
+
 tros_1.1.4 (2022-11-28)
 ------------------
 1. mipi_cam自适应video_device
