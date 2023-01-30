@@ -45,7 +45,7 @@ MipiDevice::MipiDevice() {
   this->m_curCaptureIdx = -1;
   mState = 0;
 }
-MipiDevice::~MipiDevice() { x3_cam_uninit(); }
+MipiDevice::~MipiDevice() { x3_cam_uninit();}
 int MipiDevice::get_available_pipeid() {
   // 一种文件保存信息，一种是共享内存
   return 0;
@@ -332,6 +332,7 @@ int MipiDevice::OpenCamera(const TCamInfo* pCamInfo) {
       goto vps_bind_err;
     }
   }
+  HB_ISP_GetSetInit();
   ROS_printf("=====>[wuwl]->x3_ipc_init success.\n");
   m_nDevStat = 1;
   return ret;
@@ -532,6 +533,7 @@ int MipiDevice::x3_cam_uninit(void) {
     x3_vin_deinit(&m_oX3UsbCam.m_infos.m_vin_info);
   }
   x3_vp_deinit();
+  HB_ISP_GetSetExit();
   return 0;
 }
 
@@ -605,7 +607,8 @@ int MipiDevice::childStop() {
 // #define TEST_CLR
 extern void TestSave(char* pFilePath, char* imgData, int nDlen);
 int MipiDevice::GetVpsFrame(
-    int nChnID, int* nVOutW, int* nVOutH, void** frame_buf, unsigned int* len) {
+    int nChnID, int* nVOutW, int* nVOutH, void** frame_buf,
+    unsigned int* len, uint64_t &timestamp) {
   int size = -1, ret = 0;
   struct timeval select_timeout = {0};
   hb_vio_buffer_t vOut;
@@ -651,6 +654,7 @@ int MipiDevice::GetVpsFrame(
       usleep(10 * 1000);
       continue;
     }
+    timestamp = vOut.img_info.tv.tv_sec * 1e9 + vOut.img_info.tv.tv_usec * 1e3;
     size = vOut.img_addr.stride_size * vOut.img_addr.height;
     stride = vOut.img_addr.stride_size;
     width = vOut.img_addr.width;
@@ -658,6 +662,14 @@ int MipiDevice::GetVpsFrame(
     *nVOutW = width;
     *nVOutH = height;
     *len = width * height * 3 / 2;
+    ISP_AE_PARAM_S stAeParam;
+    stAeParam.GainOpType = static_cast<ISP_OP_TYPE_E>(0);
+    stAeParam.IntegrationOpType = static_cast<ISP_OP_TYPE_E>(0);
+    ret = HB_ISP_GetAeParam(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,
+            &stAeParam);
+    if (ret == 0) {
+      timestamp += stAeParam.u32IntegrationTime / 2 * 1e3;
+    }
     if (stride == width) {
       memcpy(*frame_buf, vOut.img_addr.addr[0], width * height);
       memcpy(*frame_buf + width * height,

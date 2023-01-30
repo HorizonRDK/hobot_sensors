@@ -21,6 +21,7 @@
 using mipi_cam::MipiCamNode;
 
 int main(int argc, char** argv) {
+  std::cout << "This is version for optimizing camera timestamp " << std::endl;
   rclcpp::init(argc, argv);
   RCLCPP_WARN(rclcpp::get_logger("example"), "[wuwl]->This is camera!");
   
