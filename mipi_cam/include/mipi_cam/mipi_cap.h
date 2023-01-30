@@ -21,6 +21,7 @@
 #include "video_comm.h"
 #include "x3_sdk_wrap.h"
 #include "x3_utils.h"
+#include <cstdint>
 
 typedef struct {
   int m_enable;
@@ -60,7 +61,8 @@ class MipiDevice : public CVideoComm {
   int OpenCamera(const TCamInfo* pCamInfo);
   int GetFrame(void**, unsigned int*);
   // 如果有 vps ，就 输出vps 的分层数据
-  int GetVpsFrame(int nChnID, int* nVOutW, int* nVOutH, void**, unsigned int*);
+  int GetVpsFrame(int nChnID, int* nVOutW, int* nVOutH,
+          void**, unsigned int*, uint64_t&);
 
  private:
   int mf37_linear_vin_param_init(x3_vin_info_t* vin_info);

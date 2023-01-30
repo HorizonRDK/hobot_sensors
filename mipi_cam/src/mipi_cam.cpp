@@ -303,6 +303,7 @@ bool MipiCam::get_image(builtin_interfaces::msg::Time &stamp,
                         uint32_t &width,
                         uint32_t &step,
                         std::vector<uint8_t> &data) {
+  uint64_t timestamp;
   if ((image_->width == 0) || (image_->height == 0)) {
     RCLCPP_ERROR(
         rclcpp::get_logger("mipi_cam"),
@@ -325,11 +326,11 @@ bool MipiCam::get_image(builtin_interfaces::msg::Time &stamp,
           &image_pub_->width,
           &image_pub_->height,
           reinterpret_cast<void **>(&image_->image),
-          reinterpret_cast<unsigned int *>(&image_->image_size)))
+          reinterpret_cast<unsigned int *>(&image_->image_size),
+          timestamp))
     return false;
-  clock_gettime(CLOCK_REALTIME, &time_start);
-  stamp.sec = time_start.tv_sec;
-  stamp.nanosec = time_start.tv_nsec;
+  stamp.sec = timestamp / 1e9;
+  stamp.nanosec = timestamp - stamp.sec * 1e9;
   height = image_pub_->height;
   width = image_pub_->width;
   //这里出来都是 yuv 的
@@ -389,6 +390,7 @@ bool MipiCam::get_image_mem(
     uint32_t &step,
     std::array<uint8_t, 6220800> &data,
     uint32_t &data_size) {
+  uint64_t timestamp;
   if ((image_->width == 0) || (image_->height == 0)) {
     RCLCPP_ERROR(
         rclcpp::get_logger("mipi_cam"),
@@ -411,12 +413,11 @@ bool MipiCam::get_image_mem(
           &image_pub_->width,
           &image_pub_->height,
           reinterpret_cast<void **>(&image_->image),
-          reinterpret_cast<unsigned int *>(&image_->image_size)))
+          reinterpret_cast<unsigned int *>(&image_->image_size), timestamp))
     return false;
-  clock_gettime(CLOCK_REALTIME, &time_start);
-  // stamp =  (time_start.tv_sec * 1000 + time_start.tv_nsec / 1000000);
-  stamp.sec = time_start.tv_sec;
-  stamp.nanosec = time_start.tv_nsec;
+  stamp.sec = timestamp / 1e9;
+  stamp.nanosec = timestamp - stamp.sec * 1e9;
+
   height = image_pub_->height;
   width = image_pub_->width;
   //这里出来都是 yuv 的
