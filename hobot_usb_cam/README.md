@@ -21,7 +21,7 @@ hbm_img_msgs为自定义消息格式，用于发布shared memory类型图像数�
 
 - 编程语言: C/C++
 - 开发平台: X3/X86
-- 系统版本：Ubuntu 20.0.4
+- 系统版本：Ubuntu 20.04
 - 编译工具链:Linux GCC 9.3.0/Linaro GCC 9.3.0
 
 ## 编译
@@ -31,7 +31,7 @@ hbm_img_msgs为自定义消息格式，用于发布shared memory类型图像数�
 ### X3/X86 Ubuntu编译
 
 1. 编译环境确认 
-   - Ubuntu系统为Ubuntu 20.0.4。
+   - Ubuntu系统为Ubuntu 20.04。
    - 当前编译终端已设置TogetherROS环境变量：`source PATH/setup.bash`。其中PATH为TogetherROS的安装路径。
    - 已安装ROS2编译工具colcon，安装命令：`pip install -U colcon-common-extensions`
 2. 编译
