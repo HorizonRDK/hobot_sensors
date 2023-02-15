@@ -20,22 +20,6 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-OPTION(BUILD_HBMEM    "BUILD_HBMEM work environment"    OFF)
-
-# Using image_transport pkg to publish compressed img with default config
-# 
-# Publishing nv12 img only and do not depend on image_transport pkg:
-# colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=OFF
-# 
-# For tros, the building cmd is:
-# colcon build --packages-select mipi_cam \
-#   --merge-install \
-#   --cmake-force-configure \
-#   --cmake-args \
-#   --no-warn-unused-cli \
-#   -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
-#   -DIMAGE_TRANSPORT_PKG=OFF \
-#   -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker/
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
