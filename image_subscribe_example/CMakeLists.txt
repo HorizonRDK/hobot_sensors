@@ -29,7 +29,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-OPTION(BUILD_HBMEM    "BUILD_HBMEM work environment"    OFF)
 
 if(BUILD_HBMEM)
 add_definitions(-DUSING_HBMEM)
