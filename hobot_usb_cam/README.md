@@ -21,17 +21,17 @@ hbm_img_msgs为自定义消息格式，用于发布shared memory类型图像数�
 
 - 编程语言: C/C++
 - 开发平台: X3/X86
-- 系统版本：Ubuntu 20.0.4
+- 系统版本：Ubuntu 20.04
 - 编译工具链:Linux GCC 9.3.0/Linaro GCC 9.3.0
 
 ## 编译
 
- 支持在X3 Ubuntu系统上编译和在PC上使用docker交叉编译两种方式。
+ 支持在X3/X86 Ubuntu系统上编译和在X86 Ubuntu上使用docker交叉编译两种方式。
 
-### Ubuntu板端编译
+### X3/X86 Ubuntu编译
 
 1. 编译环境确认 
-   - 板端已安装X3 Ubuntu系统。
+   - Ubuntu系统为Ubuntu 20.04。
    - 当前编译终端已设置TogetherROS环境变量：`source PATH/setup.bash`。其中PATH为TogetherROS的安装路径。
    - 已安装ROS2编译工具colcon，安装命令：`pip install -U colcon-common-extensions`
 2. 编译
@@ -39,7 +39,7 @@ hbm_img_msgs为自定义消息格式，用于发布shared memory类型图像数�
 编译命令：`colcon build --packages-select hobot_usb_cam
 `
 
-### Docker交叉编译
+### X86 Ubuntu Docker交叉编译
 
 1. 编译环境确认
 
@@ -100,9 +100,9 @@ websocket接收图像消息和智能结果消息，根据时间戳进行匹配�
 
 ## 运行
 
-编译成功后，将生成的install路径拷贝到地平线X3开发板上（如果是在X3上编译，忽略拷贝步骤），并执行如下命令运行：
+编译成功后，将生成的install路径拷贝到地平线X3开发板上（如果是在X3/X86 Ubuntu上编译，忽略拷贝步骤），并执行如下命令运行：
 
-### **Ubuntu**
+### **X3/X86 Ubuntu**
 
 source setup.bash
 
@@ -140,7 +140,7 @@ hobot_usb_cam没有默认的标定文件，可使用参数camera_calibration_fil
 
 # 结果分析
 
-## X3结果展示
+## 结果展示
 
 若未指定相机标定文件，会出现无法发布相机信息的警告，但不影响图片消息的发布
 ```
