@@ -1,5 +1,9 @@
 # Changelog for package hobot_usb_cam
 
+tros_1.1.6a (2023-02-16)
+------------------
+1. README增加x86平台编译使用说明
+
 tros_1.1.3 (2022-11-16)
 ------------------
 1. 修改readme中参数zero_copy默认值为“True”
