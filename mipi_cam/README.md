@@ -19,7 +19,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 ## 开发环境
 - 编程语言：C/C++
 - 开发平台：X3/X86
-- 系统版本：Ubuntu 20.0.4
+- 系统版本：Ubuntu 20.04
 - 编译工具链：Linux GCC 9.3.0/Linaro GCC 9.3.0
 ## package说明
 ---
