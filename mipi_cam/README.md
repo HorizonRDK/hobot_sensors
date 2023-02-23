@@ -19,7 +19,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
 ## 开发环境
 - 编程语言：C/C++
 - 开发平台：X3/X86
-- 系统版本：Ubuntu 20.04
+- 系统版本：Ubuntu 20.0.4
 - 编译工具链：Linux GCC 9.3.0/Linaro GCC 9.3.0
 ## package说明
 ---
@@ -61,6 +61,8 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
      --cmake-force-configure \
      --cmake-args \
      --no-warn-unused-cli \
+     -DBUILD_HBMEM=ON \
+     -DPLATFORM_X3=ON \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake
      
   ```

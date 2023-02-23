@@ -20,6 +20,22 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
+OPTION(BUILD_HBMEM    "BUILD_HBMEM work environment"    OFF)
+
+# Using image_transport pkg to publish compressed img with default config
+# 
+# Publishing nv12 img only and do not depend on image_transport pkg:
+# colcon build --packages-select mipi_cam --cmake-args -DIMAGE_TRANSPORT_PKG=OFF
+# 
+# For tros, the building cmd is:
+# colcon build --packages-select mipi_cam \
+#   --merge-install \
+#   --cmake-force-configure \
+#   --cmake-args \
+#   --no-warn-unused-cli \
+#   -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake \
+#   -DIMAGE_TRANSPORT_PKG=OFF \
+#   -DSYS_ROOT=/mnt/test/cc_ws/sysroot_docker/
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -39,46 +55,88 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
+set(PREFIX_PATH x3)
+
+message("PREFIX_PATH: ${PREFIX_PATH}")
+
+
+
+if(PLATFORM_X3)
+  message("build platform X3")
+  add_definitions(-DPLATFORM_X3)
+  set(PREFIX_PATH x3)
+  set(SRC_PLATFORM_FILE 
+    src/x3/x3_sdk_swap/src/x3_sdk_wrap.c
+    src/x3/x3_sdk_swap/src/x3_vio_bind.c
+    src/x3/x3_sdk_swap/src/x3_vio_vin.c
+    src/x3/x3_sdk_swap/src/x3_vio_vps.c
+    src/x3/x3_sdk_swap/src/x3_vio_vp.cpp
+    src/x3/sensor/sensor_f37_config.c
+    src/x3/sensor/sensor_gc4c33_config.c
+    src/x3/sensor/sensor_gc4663_config.c
+    src/x3/sensor/sensor_imx415_config.c
+    src/x3/sensor/sensor_imx586_config.c
+    src/x3/sensor/x3_preparam.c
+    src/x3/sensor/x3_utils.c
+  )
+  include_directories(include 
+    src/x3/x3_sdk_swap/include
+    src/x3/sensor
+  )
+elseif(PLATFORM_J5)
+  message("build platform J5")
+  add_definitions(-DPLATFORM_J5)
+  set(PREFIX_PATH j5)
+elseif(PLATFORM_X86)
+  message("build platform X86")
+  add_definitions(-DPLATFORM_X86)
+  set(PREFIX_PATH x86)
+  message("THIRD_PARTY is " ${THIRD_PARTY})
+  include_directories(
+    /usr/include/
+    ${THIRD_PARTY}/usr/include/
+  )
+  link_directories(
+    /lib/
+    ${THIRD_PARTY}/usr/lib/hbbpu/
+  )
+else()
+  message("invalid platform, build platform X3 default")
+  add_definitions(-DPLATFORM_X3)
+  set(PREFIX_PATH x3)
+endif()
+
 include_directories(include
-  src/x3
-  src/x3_sdk_swap/include
+  include/${PREFIX_PATH}
+  ${PROJECT_SOURCE_DIR}
+  ${CMAKE_SYSROOT}/usr/
 )
 
 link_directories(
-  ${CMAKE_SYSROOT}/usr/lib/hbmedia/
+  ${CMAKE_SYSROOT}/usr/lib/hbmedia
 )
 
-## Build the mipi camera library
 add_executable(${PROJECT_NAME}
   src/camera.cpp
-  src/mipi_cam_node.cpp
-  src/mipi_cam.cpp
-  src/mipi_cap.cpp
-#  src/x3/*.c
-  src/x3/sensor_f37_config.c
-  src/x3/sensor_imx415_config.c
-  src/x3/sensor_gc4663_config.c
-  src/x3/sensor_imx586_config.c
-  src/x3/sensor_gc4c33_config.c
-  src/x3/sensor_imx219_config.c
-  src/x3/sensor_imx477_config.c
-  src/x3/sensor_ov5647_config.c
-  src/x3/x3_preparam.c
-  src/x3/x3_utils.c
-  src/x3_sdk_swap/src/x3_sdk_wrap.c
-  src/x3_sdk_swap/src/x3_vio_bind.c
-  src/x3_sdk_swap/src/x3_vio_rgn.c
-  src/x3_sdk_swap/src/x3_vio_utils.c
-  src/x3_sdk_swap/src/x3_vio_vdec.c
-  src/x3_sdk_swap/src/x3_vio_vin.c
-  src/x3_sdk_swap/src/x3_vio_vot.c
-  src/x3_sdk_swap/src/x3_vio_vps.c
-  src/x3_sdk_swap/src/x3_vio_venc.cpp
-  src/x3_sdk_swap/src/x3_vio_vp.cpp
+  src/hobot_mipi_node.cpp
+  src/hobot_mipi_cam.cpp
+  src/${PREFIX_PATH}/hobot_mipi_cap_iml.cpp
+  src/${PREFIX_PATH}/hobot_mipi_cap_iml_x3pi.cpp
+  src/${PREFIX_PATH}/hobot_mipi_factory.cpp
+  ${SRC_PLATFORM_FILE}
 )
 
 set(BASE_LIBRARIES pthread vio cam dl)
-set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
+if(PLATFORM_X3)
+  set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
+
+elseif(PLATFORM_J5)
+elseif(PLATFORM_X86)
+else()
+  set(BASE_LIBRARIES pthread vio cam dl)
+  set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
+endif()
+
 
 target_link_libraries(${PROJECT_NAME}
   ${BASE_LIBRARIES} ${X3_HAPI_LIB} yaml-cpp
@@ -92,7 +150,7 @@ ament_target_dependencies(
   )
 
 if(BUILD_HBMEM)
-target_link_libraries(${PROJECT_NAME}
+  target_link_libraries(${PROJECT_NAME}
   hbmem
 )
 ament_target_dependencies(
