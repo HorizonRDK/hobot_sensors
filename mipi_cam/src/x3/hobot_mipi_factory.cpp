@@ -17,7 +17,6 @@
 #include <fstream>
 #include "hobot_mipi_cap.hpp"
 #include "hobot_mipi_cap_iml.hpp"
-#include "hobot_mipi_cap_iml_x3pi.hpp"
 
 namespace mipi_cam {
 std::shared_ptr<HobotMipiCap> create_mipiCap(const std::string &dev_name) {

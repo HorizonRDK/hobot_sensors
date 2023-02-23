@@ -81,6 +81,31 @@ class HobotMipiCapIml : public HobotMipiCap {
   int vps_enable_ = true;
 };
 
+class HobotMipiCapIml_x3pi : public HobotMipiCapIml {
+ public:
+  HobotMipiCapIml_x3pi() {}
+  ~HobotMipiCapIml_x3pi() {}
+
+  // 初始化设备环境，如X3的sensor GPIO配置和时钟配置
+  // 返回值：0，成功；-1，配置失败
+  int initEnv(std::string sensor);
+
+  // 复位sensor和时钟，如X3的sensor GPIO配置和时钟配置
+  // 返回值：0，成功；-1，配置失败
+  int reset_sensor(std::string sensor);
+
+  // 判断设备是否支持遍历设备连接的sensor
+  // 返回值：true,支持；false，不支持
+  bool has_list_sensor();
+
+  // 遍历设备连接的sensor
+  std::vector<std::string> list_sensor();
+
+  // 获取对应board相关的i2c-bus id。
+  int get_sensor_bus(std::string &sensor_name);
+};
+
+
 }  // namespace mipi_cam
 
 

@@ -108,7 +108,6 @@ add_executable(${PROJECT_NAME}
   src/hobot_mipi_node.cpp
   src/hobot_mipi_cam.cpp
   src/${PREFIX_PATH}/hobot_mipi_cap_iml.cpp
-  src/${PREFIX_PATH}/hobot_mipi_cap_iml_x3pi.cpp
   src/${PREFIX_PATH}/hobot_mipi_factory.cpp
   ${SRC_PLATFORM_FILE}
 )
