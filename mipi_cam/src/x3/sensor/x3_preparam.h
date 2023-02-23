@@ -26,6 +26,9 @@ int imx415_linear_vin_param_init(x3_vin_info_t* vin_info);
 int imx586_linear_vin_param_init(x3_vin_info_t* vin_info);
 int gc4c33_linear_vin_param_init(x3_vin_info_t* vin_info);
 int gc4663_linear_vin_param_init(x3_vin_info_t* vin_info);
+int imx219_linear_vin_param_init(x3_vin_info_t* vin_info);
+int imx477_linear_vin_param_init(x3_vin_info_t* vin_info);
+int ov5647_linear_vin_param_init(x3_vin_info_t* vin_info);
 int vps_grp_param_init(x3_vps_info_t *vps_info, int width, int height);
 int vps_chn_param_init(x3_vps_chn_attr_t *vps_chn_attr, int chn_id, int width, int height, int fps);
 

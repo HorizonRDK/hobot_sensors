@@ -297,11 +297,20 @@ int HobotMipiCapIml::parse_config(std::string sensor_name,
     imx586_linear_vin_param_init(&vin_info_);
   } else if ((sensor_name == "GC4C33") || (sensor_name == "gc4c33")) {
     gc4c33_linear_vin_param_init(&vin_info_);
+  } else if ((sensor_name == "IMX219") || (sensor_name == "imx219")) {
+    imx219_linear_vin_param_init(&vin_info_);
+  } else if ((sensor_name == "IMX477") || (sensor_name == "imx477")) {
+    imx477_linear_vin_param_init(&vin_info_);
+  } else if ((sensor_name == "OV5647") || (sensor_name == "ov5647")) {
+    ov5647_linear_vin_param_init(&vin_info_);
   } else {
     ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
     // m_oX3UsbCam.m_infos.m_vin_enable = 0;
     return -1;
   }
+  auto sensor_bus = get_sensor_bus(sensor_name);
+  if (sensor_bus != 0xff)
+    vin_info_.snsinfo.sensorInfo.bus_num = sensor_bus;
 
     // 减少ddr带宽使用量
   vin_info_.vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;
@@ -344,6 +353,10 @@ bool HobotMipiCapIml::check_pipeline_opened(int pipeline_idx) {
 int HobotMipiCapIml::reset_sensor(std::string sensor) {
   std::cout << "HobotMipiCapIml::reset_sensor" << std::endl;
   return 0;
+}
+
+int HobotMipiCapIml::get_sensor_bus(std::string &sensor_name) {
+  return 0xff;
 }
 
 }  // namespace mipi_cam

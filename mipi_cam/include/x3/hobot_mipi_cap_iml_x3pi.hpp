@@ -40,6 +40,9 @@ class HobotMipiCapIml_x3pi : public HobotMipiCapIml {
 
   // 遍历设备连接的sensor
   std::vector<std::string> list_sensor();
+
+  // 获取对应board相关的i2c-bus id。
+  int get_sensor_bus(std::string &sensor_name);
 };
 
 }  // namespace mipi_cam

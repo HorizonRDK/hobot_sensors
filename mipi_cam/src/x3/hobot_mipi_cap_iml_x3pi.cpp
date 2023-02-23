@@ -24,28 +24,23 @@
 namespace mipi_cam {
 
 int HobotMipiCapIml_x3pi::initEnv(std::string sensor) {
-  std::vector<std::string> sys_cmds;
-  #if ngy
-  if ((sensor == "f37") || (sensor == "F37")) {
-    std::vector<std::string> sys_cmds = {
-      "echo 19 > /sys/class/gpio/export",
-      "echo out > /sys/class/gpio/gpio19/direction",
-      "echo 0 > /sys/class/gpio/gpio19/value",
-      "sleep 0.2",
-      "echo 1 > /sys/class/gpio/gpio19/value",
-      "echo 19 > /sys/class/gpio/unexport",
-      "echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en",
-      "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
-      "echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq",
-      "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",
-      "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart",
-      "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart"
-    };
-  }
+  std::vector<std::string> sys_cmds = {
+    "echo 19 > /sys/class/gpio/export",
+    "echo out > /sys/class/gpio/gpio19/direction",
+    "echo 0 > /sys/class/gpio/gpio19/value",
+    "sleep 0.2",
+    "echo 1 > /sys/class/gpio/gpio19/value",
+    "echo 19 > /sys/class/gpio/unexport",
+    "echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en",
+    "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
+    "echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq",
+    "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",
+    "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart",
+    "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart"
+  };
   for (const auto& sys_cmd : sys_cmds) {
     system(sys_cmd.data());
   }
-  #endif
   return 0;
 }
 
@@ -123,8 +118,31 @@ int HobotMipiCapIml_x3pi::reset_sensor(std::string sensor) {
   (void)system("sleep 0.2");
   (void)system("echo 1 > /sys/class/gpio/gpio19/value");
   (void)system("echo 19 > /sys/class/gpio/unexport");
-  (void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
+  (void)system("echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en");
+  (void)system("echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq");
   (void)system("echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart");
+}
+
+int HobotMipiCapIml_x3pi::get_sensor_bus(std::string &sensor_name) {
+  int ret = 0xff;
+  if ((sensor_name == "IMX415") || (sensor_name == "imx415")) {
+    ret = 1;
+  } else if ((sensor_name == "F37") || (sensor_name == "f37")) {
+     ret = 1;
+  } else if ((sensor_name == "GC4663") || (sensor_name == "gc4663")) {
+     ret = 1;
+  } else if ((sensor_name == "IMX586") || (sensor_name == "imx586")) {
+     ret = 1;
+  } else if ((sensor_name == "GC4C33") || (sensor_name == "gc4c33")) {
+     ret = 1;
+  } else if ((sensor_name == "IMX219") || (sensor_name == "imx219")) {
+     ret = 1;
+  } else if ((sensor_name == "IMX477") || (sensor_name == "imx477")) {
+     ret = 1;
+  } else if ((sensor_name == "OV5647") || (sensor_name == "ov5647")) {
+     ret = 1;
+  }
+  return ret;
 }
 
 }  // namespace mipi_cam

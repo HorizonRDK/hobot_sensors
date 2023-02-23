@@ -70,6 +70,7 @@ class HobotMipiCapIml : public HobotMipiCap {
   bool check_pipeline_opened(int pipeline_idx);
 
  protected:
+  virtual int get_sensor_bus(std::string &sensor_name);
   bool m_inited_ = false;
   bool m_started = false;
 

@@ -18,6 +18,9 @@
 #include "sensor_imx586_config.h"
 #include "sensor_gc4c33_config.h"
 #include "sensor_gc4663_config.h"
+#include "sensor_imx219_config.h"
+#include "sensor_imx477_config.h"
+#include "sensor_ov5647_config.h"
 #include "x3_sdk_wrap.h"
 
 /******************************* F37 方案 **********************************/
@@ -116,6 +119,60 @@ int gc4663_linear_vin_param_init(x3_vin_info_t* vin_info) {
   vin_info->dev_id = 0;
   vin_info->pipe_id = 0;
   vin_info->enable_dev_attr_ex = 0;
+  return 0;
+}
+
+/******************************* IMX219 方案 **********************************/
+int imx219_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_IMX219_30FPS_10BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_IMX219_30FPS_10BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_IMX219_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_IMX219_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_IMX219_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_IMX219_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = 0;
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+
+/******************************* IMX477 方案 **********************************/
+int imx477_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_IMX477_50FPS_12BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_IMX477_50FPS_12BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_IMX477_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_IMX477_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_IMX477_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_IMX477_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = 0;
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+
+/******************************* OV5647 方案 **********************************/
+int ov5647_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_2LANE_OV5647_30FPS_10BIT_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_2LANE_SENSOR_OV5647_30FPS_10BIT_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_OV5647_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_OV5647_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_OV5647_LINEAR_BASE;
+  vin_info->ldcinfo = LDC_ATTR_OV5647_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = 0;
+  vin_info->enable_dev_attr_ex = 0;
+
   return 0;
 }
 

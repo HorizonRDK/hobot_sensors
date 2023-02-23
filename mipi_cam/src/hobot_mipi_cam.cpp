@@ -130,7 +130,7 @@ int MipiCamIml::init(struct NodePara &para) {
   cap_info.height = nodePare_.image_height_;
   cap_info.fps = nodePare_.framerate_;
 
-  // mipiCap_ptr_->initEnv(nodePare_.video_device_name_);
+  mipiCap_ptr_->initEnv(nodePare_.video_device_name_);
   if (mipiCap_ptr_->has_list_sensor()) {
     bool detect_device = false;
     auto mipicap_v = mipiCap_ptr_->list_sensor();
