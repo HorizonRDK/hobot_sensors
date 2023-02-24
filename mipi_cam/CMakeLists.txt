@@ -50,10 +50,10 @@ if(PLATFORM_X3)
   add_definitions(-DPLATFORM_X3)
   set(PREFIX_PATH x3)
   set(SRC_PLATFORM_FILE 
-    src/x3/x3_sdk_swap/src/x3_sdk_wrap.c
-    src/x3/x3_sdk_swap/src/x3_vio_bind.c
-    src/x3/x3_sdk_swap/src/x3_vio_vin.c
-    src/x3/x3_sdk_swap/src/x3_vio_vps.c
+    src/x3/x3_sdk_swap/src/x3_sdk_wrap.cpp
+    src/x3/x3_sdk_swap/src/x3_vio_bind.cpp
+    src/x3/x3_sdk_swap/src/x3_vio_vin.cpp
+    src/x3/x3_sdk_swap/src/x3_vio_vps.cpp
     src/x3/x3_sdk_swap/src/x3_vio_vp.cpp
     src/x3/sensor/sensor_f37_config.c
     src/x3/sensor/sensor_gc4c33_config.c
@@ -64,7 +64,7 @@ if(PLATFORM_X3)
     src/x3/sensor/sensor_imx477_config.c
     src/x3/sensor/sensor_ov5647_config.c
     src/x3/sensor/x3_preparam.c
-    src/x3/sensor/x3_utils.c
+    src/x3/sensor/x3_utils.cpp
   )
   include_directories(include 
     src/x3/x3_sdk_swap/include

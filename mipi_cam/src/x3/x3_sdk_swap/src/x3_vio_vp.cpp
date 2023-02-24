@@ -14,8 +14,7 @@
 #include "vio/hb_vp_api.h"
 
 #include "x3_vio_vp.h"
-
-extern "C" int ROS_printf(char *fmt, ...);
+#include <rclcpp/rclcpp.hpp>
 
 int x3_vp_init() {
     VP_CONFIG_S struVpConf;
@@ -24,11 +23,14 @@ int x3_vp_init() {
     HB_VP_SetConfig(&struVpConf);
 
     int ret = HB_VP_Init();
-    ROS_printf("[%s]->ret %d.",__func__,ret);
+    RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+      "[%s]->ret %d.", __func__, ret);
     if (!ret) {
-        ROS_printf("hb_vp_init success.\n");
+       RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+         "hb_vp_init success.\n");
     } else {
-        ROS_printf("hb_vp_init failed, ret: %d.\n", ret);
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "hb_vp_init failed, ret: %d.\n", ret);
     }
     return ret;
 }
@@ -41,11 +43,13 @@ int x3_vp_alloc(vp_param_t *param) {
         ret = HB_SYS_Alloc(&vp_param->mmz_paddr[i],
             (void **)&vp_param->mmz_vaddr[i], vp_param->mmz_size);
         if (!ret) {
-            LOGD_print("mmzAlloc paddr = 0x%x, vaddr = 0x%x, %d/%d , %d",
+            RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+                    "mmzAlloc paddr = 0x%x, vaddr = 0x%x, %d/%d , %d",
                     vp_param->mmz_paddr[i], vp_param->mmz_vaddr[i], i,
                     vp_param->mmz_cnt, vp_param->mmz_size);
         } else {
-            LOGE_print("hb_vp_alloc failed, ret: %d", ret);
+            RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+              "hb_vp_alloc failed, ret: %d", ret);
             return -1;
         }
     }
@@ -58,7 +62,8 @@ int x3_vp_free(vp_param_t *param) {
     for (i = 0; i < vp_param->mmz_cnt; i++) {
         ret = HB_SYS_Free(vp_param->mmz_paddr[i], vp_param->mmz_vaddr[i]);
         if (ret == 0) {
-            LOGD_print("mmzFree paddr = 0x%x, vaddr = 0x%x i = %d",
+            RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+                "mmzFree paddr = 0x%x, vaddr = 0x%x i = %d",
                 vp_param->mmz_paddr[i], vp_param->mmz_vaddr[i], i);
         }
     }
@@ -68,9 +73,11 @@ int x3_vp_free(vp_param_t *param) {
 int x3_vp_deinit() {
     int ret = HB_VP_Exit();
     if (!ret) {
-        ROS_printf("hb_vp_deinit success\n");
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "hb_vp_deinit success\n");
     } else {
-        ROS_printf("hb_vp_deinit failed, ret: %d\n", ret);
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "hb_vp_deinit failed, ret: %d\n", ret);
     }
     return ret;
 }

@@ -33,6 +33,8 @@
 #include "x3_preparam.h"
 #include "x3_utils.h"
 
+#include <rclcpp/rclcpp.hpp>
+
 namespace mipi_cam {
 
 int HobotMipiCapIml::initEnv(std::string sensor) {
@@ -49,7 +51,8 @@ int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
 
   ret = x3_vp_init();
   if (ret) {
-    ROS_printf("[%s]->hb_vp_init failed, ret: %d.\n", __func__, ret);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->hb_vp_init failed, ret: %d.\n", __func__, ret);
     goto vp_err;
   }
   // 初始化算法模块
@@ -67,23 +70,26 @@ int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
     // }
 
   if (ret) {
-    ROS_printf("x3_vin_init failed: %d!\n", ret);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "x3_vin_init failed: %d!\n", ret);
     if (HB_ERR_VIN_SIF_INIT_FAIL == abs(ret)) {  //重复打开
-      ROS_printf("Cannot open '%s'! You may have started mipi_cam repeatedly?",
-          info.sensor_type);
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+        "Cannot open '%s'! You may have started mipi_cam repeatedly?",
+        info.sensor_type);
     }
     x3_vp_deinit();
     return -2;
   }
-  ROS_printf("x3_vin_init ok!\n");
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_vin_init ok!\n");
   // 2. 初始化 vps，创建 group
   if (vps_enable_) {
     ret = x3_vps_init_wrap(&vps_infos_.m_vps_info[0]);
     if (ret) {
-      ROS_printf("x3_vps_init failed = %d.\n", ret);
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+        "x3_vps_init failed = %d.\n", ret);
       goto vps_err;
     }
-    ROS_printf("x3_vps_init_wrap ok!\n");
+    RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_vps_init_wrap ok!\n");
   }
   // 4 vin bind vps
   if (vin_enable_ && vps_enable_) {
@@ -92,11 +98,13 @@ int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
         vps_infos_.m_vps_info[0].m_vps_grp_id,
         vin_info_.vin_vps_mode);
     if (ret) {
-      ROS_printf("[%s]x3_vin_bind_vps failed, %d.\n", __func__, ret);
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+        "[%s]x3_vin_bind_vps failed, %d.\n", __func__, ret);
       goto vps_bind_err;
     }
   }
-  ROS_printf("=====>[wuwl]->x3_ipc_init success.\n");
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+    "=====>[wuwl]->x3_ipc_init success.\n");
   std::cout << "HobotMipiCapIml::init,ret:" << ret << std::endl;
   // m_nDevStat = 1;
   return ret;
@@ -111,13 +119,15 @@ vps_err:
 vin_err:
   x3_vp_deinit();
 vp_err:
-  ROS_printf("[%s]->err.\n", __func__);
+  RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+    "[%s]->vp create err.\n", __func__);
   return -1;
 }
 
 int HobotMipiCapIml::deinit() {
   int i = 0;
-  ROS_printf("x3_cam_uninit start.\n");
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+    "x3_cam_deinit start.\n");
   if (vin_enable_ && vps_enable_) {
     x3_vin_unbind_vps(
         vin_info_.pipe_id,
@@ -144,16 +154,18 @@ int HobotMipiCapIml::start() {
       ret = x3_vps_start(
           vps_infos_.m_vps_info[i].m_vps_grp_id);
       if (ret) {
-        ROS_printf("x3_vps_start failed, %d", ret);
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "x3_vps_start failed, %d", ret);
         return -3;
       }
     }
-    ROS_printf("x3_vps_start ok!");
+    RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_vps_start ok!");
   }
   if (vin_enable_) {
     ret = x3_vin_start(&vin_info_);
     if (ret) {
-      ROS_printf("x3_vin_start failed, %d", ret);
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+        "x3_vin_start failed, %d", ret);
       return -3003;
     }
   }
@@ -165,23 +177,24 @@ int HobotMipiCapIml::start() {
 int HobotMipiCapIml::stop() {
   int i = 0, ret = 0;
   // if (2 == mState) return 0;
-  ROS_printf("x3_mipi_cam_stop start.\n");
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_mipi_cam_stop start.\n");
   if (vin_enable_) {
     x3_vin_stop(&vin_info_);
   }
-  ROS_printf("x3_mipi_cam_stop groupNum=%d.\n",
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_mipi_cam_stop groupNum=%d.\n",
              vps_infos_.m_group_num);
   // stop vps
   if (vps_enable_) {
     for (i = 0; i < vps_infos_.m_group_num; i++) {
       x3_vps_stop(vps_infos_.m_vps_info[i].m_vps_grp_id);
       if (ret) {
-        ROS_printf("x3_vps_stop failed, %d", ret);
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "x3_vps_stop failed, %d", ret);
         return -1;
       }
     }
   }
-  ROS_printf("x3_mipi_cam_stop end.\n");
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_mipi_cam_stop end.\n");
   // mState = 2;
   return 0;
 }
@@ -213,21 +226,21 @@ int HobotMipiCapIml::GetFrame(int nChnID, int* nVOutW, int* nVOutH,
       if (++nTry > 3) {
         if (ret == -268696577 || ret == -268696579 ||
             ret == -268696580) {  // group不存在或非法
-           ROS_printf(
+           RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
             "Invalid groupID: %d! Please check if this group has been "
             "closed in unexpected places!",
             vps_infos_.m_vps_info[0].m_vps_grp_id);
           return -1;
         } else if (ret == -268696581 ||
                    -268696587 == ret) {  // 通道未使能或不存在
-           ROS_printf(
+           RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
             "Invalid chn:%d in groupID: %d! Please check if this channel "
             "has been closed in unexpected places!",
             nChnID,
             vps_infos_.m_vps_info[0].m_vps_grp_id);
           return -1;
         }
-        ROS_printf(
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
           "[GetVpsFrame]->HB_VPS_GetChnFrame chn=%d,goupID=%d,error =%d "
           "!!!\n",
           nChnID,
@@ -246,6 +259,8 @@ int HobotMipiCapIml::GetFrame(int nChnID, int* nVOutW, int* nVOutH,
     *nVOutH = height;
     *len = width * height * 3 / 2;
     if (bufsize < *len) {
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+        "buf size(%d) < frame size(%d)", bufsize, *len);
       return -1;
     }
     if (stride == width) {
@@ -305,7 +320,8 @@ int HobotMipiCapIml::parse_config(std::string sensor_name,
   } else if ((sensor_name == "OV5647") || (sensor_name == "ov5647")) {
     ov5647_linear_vin_param_init(&vin_info_);
   } else {
-    ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->sensor name not found(%s).\n", __func__, sensor_name);
     // m_oX3UsbCam.m_infos.m_vin_enable = 0;
     return -1;
   }
@@ -330,7 +346,7 @@ int HobotMipiCapIml::parse_config(std::string sensor_name,
   ret |= vps_chn_param_init(
       &vps_infos_.m_vps_info[0].m_vps_chn_attrs[0],
       2, w, h, fps);
-  ROS_printf(
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
       "[%s]-> w:h=%d:%d ,fps=%d sucess.\n", __func__, w, h, fps);
 }
 
@@ -343,7 +359,8 @@ bool HobotMipiCapIml::check_pipeline_opened(int pipeline_idx) {
       std::string pipe_line_info =
             "pipe " + std::to_string(pipeline_idx) + " not inited";
       if (!cfg_info.compare(pipe_line_info)) {
-        ROS_printf("mipi camera already in use.\n");
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "mipi camera already in use.\n");
         return false;
       }
     }
@@ -352,7 +369,7 @@ bool HobotMipiCapIml::check_pipeline_opened(int pipeline_idx) {
 }
 
 int HobotMipiCapIml::reset_sensor(std::string sensor) {
-  std::cout << "HobotMipiCapIml::reset_sensor" << std::endl;
+  RCLCPP_WARN(rclcpp::get_logger("mipi_cam"), "HobotMipiCapIml::reset_sensor");
   return 0;
 }
 

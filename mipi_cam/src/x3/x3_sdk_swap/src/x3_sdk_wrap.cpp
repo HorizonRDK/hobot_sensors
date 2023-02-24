@@ -30,31 +30,42 @@
 #include "x3_vio_vps.h"
 #include "x3_vio_vp.h"
 #include "x3_sdk_wrap.h"
+#include <rclcpp/rclcpp.hpp>
 
 // 打印 vin isp vpu venc等模块的调试信息
 void print_debug_infos(void)
 {
-	ROS_printf("========================= SIF ==========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= SIF ==========================\n");
 	system("cat /sys/devices/platform/soc/a4001000.sif/cfg_info");
-	ROS_printf("========================= ISP ==========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= ISP ==========================\n");
 	system("cat /sys/devices/platform/soc/b3000000.isp/isp_status");
-	ROS_printf("========================= IPU PIPE enable ==============\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= IPU PIPE enable ==============\n");
 	system("cat /sys/devices/platform/soc/a4040000.ipu/info/enabled_pipeline");
-	ROS_printf("========================= IPU PIPE config ==============\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= IPU PIPE config ==============\n");
 	system("cat /sys/devices/platform/soc/a4040000.ipu/info/pipeline0_info");
 	system("cat /sys/devices/platform/soc/a4040000.ipu/info/pipeline1_info");
-	ROS_printf("========================= VENC =========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= VENC =========================\n");
 	system("cat /sys/kernel/debug/vpu/venc");
-	ROS_printf("========================= VDEC =========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= VDEC =========================\n");
 	system("cat /sys/kernel/debug/vpu/vdec");
-	ROS_printf("========================= JENC =========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= JENC =========================\n");
 	system("cat /sys/kernel/debug/jpu/jenc");
-	ROS_printf("========================= IAR ==========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= IAR ==========================\n");
 	system("cat /sys/kernel/debug/iar");
-	ROS_printf("========================= ION ==========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= ION ==========================\n");
 	system("cat /sys/kernel/debug/ion/heaps/carveout");
 	system("cat /sys/kernel/debug/ion/heaps/ion_cma");
-	ROS_printf("========================= END ===========================\n");
+	RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+	  "========================= END ===========================\n");
 }
 
 
@@ -81,7 +92,8 @@ int x3_vps_init_wrap(x3_vps_info_t *vps_info)
 		if (vps_info->m_vps_chn_attrs[i].m_chn_enable) {
 			ret = x3_vps_chn_init(vps_info->m_vps_grp_id, vps_info->m_vps_chn_attrs[i].m_chn_id,
 				&vps_info->m_vps_chn_attrs[i].m_chn_attr);
-			LOGI_print("[%s]->vps chn%d/%d init ret=%d.\n",
+			RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+			    "[%s]->vps chn%d/%d init ret=%d.\n",
 				__func__, vps_info->m_vps_chn_attrs[i].m_chn_id, vps_info->m_chn_num,ret);
 			if (ret) {
 				HB_VPS_DestroyGrp(vps_info->m_vps_grp_id);

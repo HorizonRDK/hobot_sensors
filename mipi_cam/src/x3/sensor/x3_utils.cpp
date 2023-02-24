@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include "x3_utils.h"
+#include <rclcpp/rclcpp.hpp>
 
 // popen运行cmd，并获取cmd返回结果
 int exec_cmd_ex(const char *cmd, char* res, int max) {
@@ -21,7 +22,8 @@ int exec_cmd_ex(const char *cmd, char* res, int max) {
     return -1;
   FILE *pp = popen(cmd, "r");
   if (!pp) {
-    ROS_printf("error, cannot popen cmd: %s\n", cmd);
+   RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+     "error, cannot popen cmd: %s\n", cmd);
     return -1;
   }
   int length;
@@ -29,7 +31,8 @@ int exec_cmd_ex(const char *cmd, char* res, int max) {
   length = max;
   if (max > 1024)
     length = 1024;
-  ROS_printf("[%s]->cmd %s, fp=0x%x, len=%d.\n", __func__, cmd, pp, max);
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+    "[%s]->cmd %s, fp=0x%x, len=%d.\n", __func__, cmd, pp, max);
   while (fgets(tmp, length, pp) != NULL) {
     sscanf(tmp, "%s", res);
   }

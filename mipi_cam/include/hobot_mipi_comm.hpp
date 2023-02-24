@@ -20,7 +20,6 @@
 extern "C" {
 #include <string.h>
 #include <stdlib.h>
-extern int ROS_printf(char *fmt, ...);
 }
 
 namespace mipi_cam

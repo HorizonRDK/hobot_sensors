@@ -18,6 +18,7 @@
 #include "hobot_mipi_factory.hpp"
 
 #include "sensor_msgs/distortion_models.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 #include <errno.h>
 #include <malloc.h>
@@ -120,8 +121,9 @@ int MipiCamIml::init(struct NodePara &para) {
   // mipiCap_ptr_ = create_mipiCap(nodePare_.camera_name_);
   mipiCap_ptr_ = create_mipiCap(board_type);
   if (!mipiCap_ptr_) {
-    ROS_printf("[%s]->cap %s create capture failture.\r\n",
-       __func__, board_type);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->cap %s create capture failture.\r\n",
+      __func__, board_type);
     return -1;
   }
   MIPI_CAP_INFO_ST cap_info;
@@ -136,31 +138,19 @@ int MipiCamIml::init(struct NodePara &para) {
     auto mipicap_v = mipiCap_ptr_->list_sensor();
     for (std::string video_device_name_temp : mipicap_v) {
       if (video_device_name_temp.empty()) {  // 未检测到有video_device连接
-        ROS_printf(
+        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
           "[%s]->cam %s No camera detected!"
           " Please check if camera is connected.\r\n",
           __func__);
         return -2;
       } else if (!strcasecmp(video_device_name_temp.c_str(),
           nodePare_.video_device_name_.c_str())) {
-        // 与用户传入的video_device不一致，比较不区分大小写
-        // 当检测到的sensor与用户传入的不一致时，打开检测到的sensor，并输出log提示用户
-        ROS_printf(
-          "[%s]->cam No %s video_device was detected,"
-          " but mipi_cam detected %s,"
-          "mipi_cam will open %s device!"
-          " You can change the video_device parameter to %s in the "
-          "'/opt/tros/share/mipi_cam/launch/mipi_cam.launch.py'",
-          nodePare_.video_device_name_.c_str(),
-          video_device_name_temp.c_str(),
-          video_device_name_temp.c_str(),
-          video_device_name_temp.c_str());
         detect_device = true;
         break;
       }
     }
     if (detect_device == false) {
-      ROS_printf(
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
         "[%s]->cam %s No camera detected!"
         " Please check if camera is connected.\r\n",
         __func__, nodePare_.video_device_name_);
@@ -174,15 +164,17 @@ int MipiCamIml::init(struct NodePara &para) {
     }
   }
   if (pipeline_id >= 8) {
-    ROS_printf("[%s]->cam 8 channel pipeline ID was used .\r\n", __func__);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->cam 8 channel pipeline ID was used .\r\n", __func__);
     return -4;
   }
   cap_info.pipeline_idx = pipeline_id;
   if (mipiCap_ptr_->init(cap_info) != 0) {
-    ROS_printf("[%s]->cap capture init failture.\r\n", __func__);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->cap capture init failture.\r\n", __func__);
     return -5;
   }
-  ROS_printf(
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
     "[%s]->cap %s init success.\r\n", __func__, nodePare_.video_device_name_);
   lsInit_ = true;
   return 0;
@@ -203,10 +195,12 @@ int MipiCamIml::start() {
   }
   int ret = 0;
   if (mipiCap_ptr_->start()) {
-    ROS_printf("[%s]->cap capture start failture.\r\n", __func__);
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "[%s]->cap capture start failture.\r\n", __func__);
   }
 
-  ROS_printf("[%s]->w:h=%d:%d.\n",
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+              "[%s]->w:h=%d:%d.\n",
               __func__,
               nodePare_.image_width_,
               nodePare_.image_height_);
@@ -220,6 +214,8 @@ int MipiCamIml::stop() {
     ret = mipiCap_ptr_->stop();
   }
   is_capturing_ = false;
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+    "mipi_cam is stoped");
   return ret;
 }
 
@@ -232,12 +228,12 @@ bool MipiCamIml::get_image(builtin_interfaces::msg::Time &stamp,
                         uint32_t &step,
                         std::vector<uint8_t> &data) {
   if (!is_capturing_) {
-    ROS_printf(
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
       "[%s][%-%d] Camera isn't captureing", __FILE__, __func__, __LINE__);
     return false;
   }
   if ((nodePare_.image_width_ == 0) || (nodePare_.image_height_ == 0)) {
-    ROS_printf(
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
       "Invalid publish width:%d height: %d! Please check the image_width "
       "and image_height parameters!",
       nodePare_.image_width_,
@@ -274,7 +270,8 @@ bool MipiCamIml::get_image(builtin_interfaces::msg::Time &stamp,
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msEnd = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  ROS_printf("[%s]->enc=%s,step=%d, w:h=%d:%d,sz=%d,start %ld->laps=%ld ms.\n",
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+             "[%s]->enc=%s,step=%d, w:h=%d:%d,sz=%d,start %ld->laps=%ld ms.\n",
               __func__,
               encoding.c_str(),
               step,
@@ -295,12 +292,12 @@ bool MipiCamIml::get_image_mem(
     std::array<uint8_t, 6220800> &data,
     uint32_t &data_size) {
   if (!is_capturing_) {
-    ROS_printf(
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
       "[%s][%-%d] Camera isn't captureing", __FILE__, __func__, __LINE__);
     return false;
   }
   if ((nodePare_.image_width_ == 0) || (nodePare_.image_height_ == 0)) {
-    ROS_printf(
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
       "Invalid publish width:%d height: %d! Please check the image_width "
       "and image_height parameters!",
       nodePare_.image_width_,
@@ -333,7 +330,8 @@ bool MipiCamIml::get_image_mem(
     clock_gettime(CLOCK_MONOTONIC, &ts);
     msEnd = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
   }
-  ROS_printf("[%s]->hbmem enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
+  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+             "[%s]->hbmem enc=%s,step=%d,sz=%d,start %ld->laps=%ld ms.\n",
               __func__,
               encoding.data(),
               step,
@@ -349,7 +347,8 @@ bool MipiCamIml::get_cam_calibration(sensor_msgs::msg::CameraInfo &cam_info,
     std::string camera_name;
     std::ifstream fin(file_path.c_str());
     if (!fin) {
-      ROS_printf("Camera calibration file: %s not exist! Please make sure the "
+     RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "Camera calibration file: %s not exist! Please make sure the "
           "calibration file path is correct and the calibration file exists!",
           file_path.c_str());
       return false;
@@ -385,7 +384,8 @@ bool MipiCamIml::get_cam_calibration(sensor_msgs::msg::CameraInfo &cam_info,
           calibration_doc["distortion_model"].as<std::string>();
     } else {
       cam_info.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
-      ROS_printf("Camera calibration file did not specify distortion model, "
+      RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+                 "Camera calibration file did not specify distortion model, "
                   "assuming plumb bob");
     }
     const YAML::Node &distortion_coefficients =
@@ -399,11 +399,13 @@ bool MipiCamIml::get_cam_calibration(sensor_msgs::msg::CameraInfo &cam_info,
     for (int i = 0; i < d_rows * d_cols; ++i) {
       cam_info.d[i] = distortion_coefficients_data[i].as<double>();
     }
-    ROS_printf("[get_cam_calibration]->parse calibration file successfully");
+    RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
+      "[get_cam_calibration]->parse calibration file successfully");
     return true;
   } catch (YAML::Exception &e) {
-    ROS_printf("Unable to parse camera calibration file normally:%s",
-                e.what());
+    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "Unable to parse camera calibration file normally:%s",
+      e.what());
     return false;
   }
 }

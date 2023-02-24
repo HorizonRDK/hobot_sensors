@@ -8,8 +8,6 @@
 
 #include "stdint.h"
 #include "stddef.h"
-#include "vio/hb_vio_interface.h"
-#include "vio/hb_mode.h"
 #include "x3_sdk_wrap.h"
 
 #ifdef __cplusplus
@@ -24,7 +22,6 @@ int x3_vin_get_ouput(int pipeId, hb_vio_buffer_t *buffer);
 int x3_vin_output_release(int pipeId, hb_vio_buffer_t *buffer);
 int x3_vin_sif_raw_dump(int pipeId, char *file_name);
 int x3_vin_isp_yuv_dump(int pipeId, char *file_name);
-int x3_vin_isp_yuv_dump_to_jpeg(VENC_CHN, int pipeId, char *file_name);
 
 #ifdef __cplusplus
 };

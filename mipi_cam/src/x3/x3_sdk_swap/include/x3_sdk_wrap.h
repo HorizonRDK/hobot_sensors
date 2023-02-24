@@ -16,6 +16,10 @@
 #define X3_SDK_WRAP_H_
 
 // SDK 提供的接口都经过这里封装好向上提供
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 #include "vio/hb_vin_api.h"
 #include "vio/hb_mipi_api.h"
 #include "vio/hb_vio_interface.h"
@@ -24,11 +28,9 @@
 #include "vio/hb_comm_vdec.h"
 #include "vio/hb_common_vot.h"
 #include "vio/hb_vps_api.h"
-
-//#include "x3_bpu.h"
-#define LOGE_print ROS_printf
-#define LOGI_print ROS_printf
-#define LOGD_print ROS_printf
+#ifdef __cplusplus
+};
+#endif /* __cplusplus */
 
 typedef struct {
 	/* gdc 配置文件 */
@@ -107,7 +109,6 @@ typedef struct x3_vin_info {
 extern "C" {
 #endif /* __cplusplus */
 void print_debug_infos(void);
-extern int ROS_printf(char *fmt, ...);
 
 int x3_vps_init_wrap(x3_vps_info_t *vps_info);
 void x3_vps_uninit_wrap(x3_vps_info_t *vps_info);

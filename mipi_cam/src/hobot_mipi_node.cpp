@@ -21,14 +21,6 @@
 #include <vector>
 #include <fstream>
 
-extern "C" int ROS_printf(char* fmt, ...) {
-  char buf[512] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf(buf, fmt, args);
-  RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "%s", buf);
-  va_end(args);
-}
 
 #define PUB_BUF_NUM 5
 namespace mipi_cam {
