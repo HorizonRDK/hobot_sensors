@@ -63,6 +63,7 @@ hbm_img_msgs pkg是在hobot_msgs中自定义的图片消息格式，用于shared
      --no-warn-unused-cli \
      -DBUILD_HBMEM=ON \
      -DPLATFORM_X3=ON \
+     -DPLATFORM_J5=OFF \
      -DCMAKE_TOOLCHAIN_FILE=`pwd`/robot_dev_config/aarch64_toolchainfile.cmake
      
   ```

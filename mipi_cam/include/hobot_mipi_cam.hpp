@@ -42,7 +42,7 @@ class MipiCam
 
   // 反初始化摄像机；
   // 返回值：0，反初始化成功；-1，反初始化失败。
-  virtual int deinit() = 0;
+  virtual int deInit() = 0;
 
   // 启动摄像机的码流；
   // 返回值：0，启动成功；-1，启动失败。
@@ -53,14 +53,14 @@ class MipiCam
   virtual int stop() = 0;
 
   // grabs a new image from the camera
-  virtual bool get_image(
+  virtual bool getImage(
     builtin_interfaces::msg::Time & stamp,
     std::string & encoding,
     uint32_t & height, uint32_t & width, uint32_t & step,
     std::vector<uint8_t> & data) = 0;
 
   // grabs a new hbmem's image hbmem from the camera
-  virtual bool get_image_mem(
+  virtual bool getImageMem(
     // uint64_t & stamp,
     builtin_interfaces::msg::Time & stamp,
     std::array<uint8_t, 12> & encoding,
@@ -68,10 +68,10 @@ class MipiCam
     std::array<uint8_t, 6220800> & data, uint32_t & data_size) = 0;
 
   // gen camera calibration
-  virtual bool get_cam_calibration(sensor_msgs::msg::CameraInfo& cam_info,
+  virtual bool getCamCalibration(sensor_msgs::msg::CameraInfo& cam_info,
                const std::string &file_path) = 0;
 
-  virtual bool is_capturing() = 0;
+  virtual bool isCapturing() = 0;
 };
 
 }  // namespace mipi_cam

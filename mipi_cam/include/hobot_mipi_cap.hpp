@@ -45,7 +45,7 @@ class HobotMipiCap {
 
   // 反初始化相关sensor的VIO pipeline ；
   // 返回值：0，反初始化成功；-1，反初始化失败。
-  virtual int deinit() = 0;
+  virtual int deInit() = 0;
 
   // 启动相关sensor的VIO pipeline的码流；
   // 返回值：0，启动成功；-1，启动失败。
@@ -57,19 +57,19 @@ class HobotMipiCap {
 
   // 判断设备是否支持遍历设备连接的sensor
   // 返回值：true,支持；false，不支持
-  virtual bool has_list_sensor() = 0;
+  virtual bool hasListSensor() = 0;
 
   // 遍历设备连接的sensor
-  virtual std::vector<std::string> list_sensor() = 0;
+  virtual std::vector<std::string> listSensor() = 0;
 
   // 如果有 vps ，就 输出vps 的分层数据
-  virtual int GetFrame(int nChnID, int* nVOutW, int* nVOutH,
+  virtual int getFrame(int nChnID, int* nVOutW, int* nVOutH,
               void* buf, unsigned int bufsize, unsigned int*) = 0;
 
   // 检测对应的pipeline是否已经打开；
   // 输入参数：pipeline_idx pipeline的group ID。
   // 返回值：true，已经打开；false，没有打开。
-  virtual bool check_pipeline_opened(int pipeline_idx) = 0;
+  virtual bool checkPipelineOpened(int pipeline_idx) = 0;
 };
 
 }  // namespace mipi_cam

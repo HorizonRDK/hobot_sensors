@@ -31,7 +31,6 @@
 #include "x3_vio_vp.h"
 #include "x3_vio_vps.h"
 #include "x3_preparam.h"
-#include "x3_utils.h"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,10 +43,10 @@ int HobotMipiCapIml::initEnv(std::string sensor) {
 int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
   int ret = 0;
 
-  parse_config(info.sensor_type, info.width, info.height, info.fps);
+  parseConfig(info.sensor_type, info.width, info.height, info.fps);
   vin_info_.pipe_id = info.pipeline_idx;
 
-  reset_sensor(info.sensor_type);
+  resetSensor(info.sensor_type);
 
   ret = x3_vp_init();
   if (ret) {
@@ -124,7 +123,7 @@ vp_err:
   return -1;
 }
 
-int HobotMipiCapIml::deinit() {
+int HobotMipiCapIml::deInit() {
   int i = 0;
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
     "x3_cam_deinit start.\n");
@@ -147,7 +146,6 @@ int HobotMipiCapIml::deinit() {
 
 int HobotMipiCapIml::start() {
   int i = 0, ret = 0;
-  // if (1 == mState) return 0;
   // 使能 vps
   if (vps_enable_) {
     for (i = 0; i < vps_infos_.m_group_num; i++) {
@@ -169,14 +167,17 @@ int HobotMipiCapIml::start() {
       return -3003;
     }
   }
-  // print_debug_infos();   // disable by wuwl 20220514
-  // mState = 1;
+  started_ = true;
   return 0;
 }
 
 int HobotMipiCapIml::stop() {
   int i = 0, ret = 0;
-  // if (2 == mState) return 0;
+  if (!started_) {
+     RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "x3 camera isn't started");
+    return -1;
+  }
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_mipi_cam_stop start.\n");
   if (vin_enable_) {
     x3_vin_stop(&vin_info_);
@@ -195,24 +196,27 @@ int HobotMipiCapIml::stop() {
     }
   }
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"), "x3_mipi_cam_stop end.\n");
-  // mState = 2;
   return 0;
 }
 
-std::vector<std::string> HobotMipiCapIml::list_sensor() {
+std::vector<std::string> HobotMipiCapIml::listSensor() {
   std::vector<std::string> device;
   return device;
 }
-bool HobotMipiCapIml::has_list_sensor() {
+bool HobotMipiCapIml::hasListSensor() {
   return false;
 }
 
-int HobotMipiCapIml::GetFrame(int nChnID, int* nVOutW, int* nVOutH,
+int HobotMipiCapIml::getFrame(int nChnID, int* nVOutW, int* nVOutH,
         void* frame_buf, unsigned int bufsize, unsigned int* len) {
   int size = -1, ret = 0;
   struct timeval select_timeout = {0};
   hb_vio_buffer_t vOut;
-
+  if (!started_) {
+     RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+      "x3 camera isn't started");
+    return -1;
+  }
   int i = 0;
   int stride = 0, width = 0, height = 0;
   int nTry = 0;
@@ -291,7 +295,7 @@ int HobotMipiCapIml::GetFrame(int nChnID, int* nVOutW, int* nVOutH,
   return 0;
 }
 
-int HobotMipiCapIml::parse_config(std::string sensor_name,
+int HobotMipiCapIml::parseConfig(std::string sensor_name,
                                    int w, int h, int fps) {
   int ret = 0;
   if ((sensor_name == "IMX415") || (sensor_name == "imx415")) {
@@ -325,7 +329,7 @@ int HobotMipiCapIml::parse_config(std::string sensor_name,
     // m_oX3UsbCam.m_infos.m_vin_enable = 0;
     return -1;
   }
-  auto sensor_bus = get_sensor_bus(sensor_name);
+  auto sensor_bus = getSensorBus(sensor_name);
   if (sensor_bus != 0xff)
     vin_info_.snsinfo.sensorInfo.bus_num = sensor_bus;
 
@@ -350,7 +354,7 @@ int HobotMipiCapIml::parse_config(std::string sensor_name,
       "[%s]-> w:h=%d:%d ,fps=%d sucess.\n", __func__, w, h, fps);
 }
 
-bool HobotMipiCapIml::check_pipeline_opened(int pipeline_idx) {
+bool HobotMipiCapIml::checkPipelineOpened(int pipeline_idx) {
   std::string cfg_info;
   // 若mipi camera已打开，sif_info返回“pipeid”
   std::ifstream sif_info("/sys/devices/platform/soc/a4001000.sif/cfg_info");
@@ -368,16 +372,16 @@ bool HobotMipiCapIml::check_pipeline_opened(int pipeline_idx) {
   return true;
 }
 
-int HobotMipiCapIml::reset_sensor(std::string sensor) {
-  RCLCPP_WARN(rclcpp::get_logger("mipi_cam"), "HobotMipiCapIml::reset_sensor");
+int HobotMipiCapIml::resetSensor(std::string sensor) {
+  RCLCPP_WARN(rclcpp::get_logger("mipi_cam"), "HobotMipiCapIml::resetSensor");
   return 0;
 }
 
-int HobotMipiCapIml::get_sensor_bus(std::string &sensor_name) {
+int HobotMipiCapIml::getSensorBus(std::string &sensor_name) {
   return 0xff;
 }
 
-int HobotMipiCapIml_x3pi::initEnv(std::string sensor) {
+int HobotMipiCapImlX3pi::initEnv(std::string sensor) {
   std::vector<std::string> sys_cmds = {
     "echo 19 > /sys/class/gpio/export",
     "echo out > /sys/class/gpio/gpio19/direction",
@@ -399,7 +403,7 @@ int HobotMipiCapIml_x3pi::initEnv(std::string sensor) {
 }
 
 // mipi sensor的信息数组
-sensor_id_t sensor_id_list_x3pi[] = {
+SENSOR_ID_T sensor_id_list_x3pi[] = {
     {2, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
     {1, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
     {2, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
@@ -418,7 +422,7 @@ sensor_id_t sensor_id_list_x3pi[] = {
     {1, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
 };
 
-std::vector<std::string> HobotMipiCapIml_x3pi::list_sensor() {
+std::vector<std::string> HobotMipiCapImlX3pi::listSensor() {
   std::vector<std::string> device;
   int i = 0;
   char cmd[256];
@@ -458,13 +462,12 @@ std::vector<std::string> HobotMipiCapIml_x3pi::list_sensor() {
   return device;
 }
 
-bool HobotMipiCapIml_x3pi::has_list_sensor() {
+bool HobotMipiCapImlX3pi::hasListSensor() {
   return true;
 }
 
-int HobotMipiCapIml_x3pi::reset_sensor(std::string sensor) {
-  std::cout << "HobotMipiCapIml_x3pi::reset_sensor" << std::endl;
-  int mipi_idx = vin_info_.snsinfo.sensorInfo.entry_index;
+int HobotMipiCapImlX3pi::resetSensor(std::string sensor) {
+  std::cout << "HobotMipiCapImlX3pi::resetSensor" << std::endl;
   // x3pi两个sensor使用的同一个reset管脚，只需要复位一次
   (void)system("echo 19 > /sys/class/gpio/export");
   (void)system("echo out > /sys/class/gpio/gpio19/direction");
@@ -477,7 +480,7 @@ int HobotMipiCapIml_x3pi::reset_sensor(std::string sensor) {
   (void)system("echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart");
 }
 
-int HobotMipiCapIml_x3pi::get_sensor_bus(std::string &sensor_name) {
+int HobotMipiCapImlX3pi::getSensorBus(std::string &sensor_name) {
   int ret = 0xff;
   if ((sensor_name == "IMX415") || (sensor_name == "imx415")) {
     ret = 1;

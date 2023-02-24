@@ -44,11 +44,11 @@ class MipiCamNode : public rclcpp::Node {
   ~MipiCamNode();
   void init();
   void update();
-  void hbmem_update();
+  void hbmemUpdate();
 
  private:
-  void get_params();
-  bool send_calibration(const builtin_interfaces::msg::Time &stamp);
+  void getParams();
+  bool sendCalibration(const builtin_interfaces::msg::Time &stamp);
 
   std::shared_ptr<MipiCam> mipiCam_ptr_;
 

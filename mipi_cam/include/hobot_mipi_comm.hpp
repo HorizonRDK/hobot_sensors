@@ -37,5 +37,23 @@ struct NodePara {
   int framerate_;
 };
 
+typedef struct sensor_id {
+  int i2c_bus;           // sensor挂在哪条总线上
+  int i2c_dev_addr;      // sensor i2c设备地址
+  int i2c_addr_width;    // 总线地址宽（1/2字节）
+  int det_reg;           // 读取的寄存器地址
+  char sensor_name[10];  // sensor名字
+} SENSOR_ID_T;
+
+#define I2C_ADDR_8    1
+#define I2C_ADDR_16   2
+
+#define ARRAY_SIZE(a) ((sizeof(a) / sizeof(a[0])))
+
+
+// popen运行cmd，并获取cmd返回结果
+int exec_cmd_ex(const char *cmd, char *res, int max);
+
+
 }  // namespace mipi_cam
 #endif  // MIPI_MIPI_COMM_HPP_

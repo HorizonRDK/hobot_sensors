@@ -39,11 +39,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-set(PREFIX_PATH x3)
-
-message("PREFIX_PATH: ${PREFIX_PATH}")
-
-
+#set(PREFIX_PATH x3)
 
 if(PLATFORM_X3)
   message("build platform X3")
@@ -64,7 +60,6 @@ if(PLATFORM_X3)
     src/x3/sensor/sensor_imx477_config.c
     src/x3/sensor/sensor_ov5647_config.c
     src/x3/sensor/x3_preparam.c
-    src/x3/sensor/x3_utils.cpp
   )
   include_directories(include 
     src/x3/x3_sdk_swap/include
@@ -74,24 +69,13 @@ elseif(PLATFORM_J5)
   message("build platform J5")
   add_definitions(-DPLATFORM_J5)
   set(PREFIX_PATH j5)
-elseif(PLATFORM_X86)
-  message("build platform X86")
-  add_definitions(-DPLATFORM_X86)
-  set(PREFIX_PATH x86)
-  message("THIRD_PARTY is " ${THIRD_PARTY})
-  include_directories(
-    /usr/include/
-    ${THIRD_PARTY}/usr/include/
-  )
-  link_directories(
-    /lib/
-    ${THIRD_PARTY}/usr/lib/hbbpu/
-  )
 else()
   message("invalid platform, build platform X3 default")
   add_definitions(-DPLATFORM_X3)
   set(PREFIX_PATH x3)
 endif()
+
+message("PREFIX_PATH: ${PREFIX_PATH}")
 
 include_directories(include
   include/${PREFIX_PATH}
@@ -115,9 +99,8 @@ add_executable(${PROJECT_NAME}
 set(BASE_LIBRARIES pthread vio cam dl)
 if(PLATFORM_X3)
   set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
-
 elseif(PLATFORM_J5)
-elseif(PLATFORM_X86)
+  set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
 else()
   set(BASE_LIBRARIES pthread vio cam dl)
   set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)

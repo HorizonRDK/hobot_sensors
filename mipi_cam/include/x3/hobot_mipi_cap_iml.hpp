@@ -32,7 +32,7 @@ class HobotMipiCapIml : public HobotMipiCap {
 
   // 复位sensor和时钟，如X3的sensor GPIO配置和时钟配置
   // 返回值：0，成功；-1，配置失败
-  virtual int reset_sensor(std::string sensor);
+  virtual int resetSensor(std::string sensor);
 
   // 初始化相关sensor的VIO pipeline；
   // 输入参数：info--sensor的配置参数。
@@ -41,7 +41,7 @@ class HobotMipiCapIml : public HobotMipiCap {
 
   // 反初始化相关sensor的VIO pipeline ；
   // 返回值：0，反初始化成功；-1，反初始化失败。
-  int deinit();
+  int deInit();
 
   // 启动相关sensor的VIO pipeline的码流；
   // 返回值：0，启动成功；-1，启动失败。
@@ -53,26 +53,26 @@ class HobotMipiCapIml : public HobotMipiCap {
 
   // 判断设备是否支持遍历设备连接的sensor
   // 返回值：true,支持；false，不支持
-  virtual bool has_list_sensor();
+  virtual bool hasListSensor();
 
   // 遍历设备连接的sensor
-  virtual std::vector<std::string> list_sensor();
+  virtual std::vector<std::string> listSensor();
 
   // 如果有 vps ，就 输出vps 的分层数据
-  int GetFrame(int nChnID, int* nVOutW, int* nVOutH,
+  int getFrame(int nChnID, int* nVOutW, int* nVOutH,
                void* buf, unsigned int bufsize, unsigned int*);
 
-  int parse_config(std::string sensor_name, int w, int h, int fps);
+  int parseConfig(std::string sensor_name, int w, int h, int fps);
 
   // 检测对应的pipeline是否已经打开；
   // 输入参数：pipeline_idx pipeline的group ID。
   // 返回值：true，已经打开；false，没有打开。
-  bool check_pipeline_opened(int pipeline_idx);
+  bool checkPipelineOpened(int pipeline_idx);
 
  protected:
-  virtual int get_sensor_bus(std::string &sensor_name);
+  virtual int getSensorBus(std::string &sensor_name);
   bool m_inited_ = false;
-  bool m_started = false;
+  bool started_ = false;
 
 
   x3_vin_info_t vin_info_;
@@ -81,10 +81,10 @@ class HobotMipiCapIml : public HobotMipiCap {
   int vps_enable_ = true;
 };
 
-class HobotMipiCapIml_x3pi : public HobotMipiCapIml {
+class HobotMipiCapImlX3pi : public HobotMipiCapIml {
  public:
-  HobotMipiCapIml_x3pi() {}
-  ~HobotMipiCapIml_x3pi() {}
+  HobotMipiCapImlX3pi() {}
+  ~HobotMipiCapImlX3pi() {}
 
   // 初始化设备环境，如X3的sensor GPIO配置和时钟配置
   // 返回值：0，成功；-1，配置失败
@@ -92,17 +92,17 @@ class HobotMipiCapIml_x3pi : public HobotMipiCapIml {
 
   // 复位sensor和时钟，如X3的sensor GPIO配置和时钟配置
   // 返回值：0，成功；-1，配置失败
-  int reset_sensor(std::string sensor);
+  int resetSensor(std::string sensor);
 
   // 判断设备是否支持遍历设备连接的sensor
   // 返回值：true,支持；false，不支持
-  bool has_list_sensor();
+  bool hasListSensor();
 
   // 遍历设备连接的sensor
-  std::vector<std::string> list_sensor();
+  std::vector<std::string> listSensor();
 
   // 获取对应board相关的i2c-bus id。
-  int get_sensor_bus(std::string &sensor_name);
+  int getSensorBus(std::string &sensor_name);
 };
 
 

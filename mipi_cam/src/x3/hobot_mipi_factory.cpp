@@ -19,17 +19,17 @@
 #include "hobot_mipi_cap_iml.hpp"
 
 namespace mipi_cam {
-std::shared_ptr<HobotMipiCap> create_mipiCap(const std::string &dev_name) {
+std::shared_ptr<HobotMipiCap> createMipiCap(const std::string &dev_name) {
   std::shared_ptr<HobotMipiCap> cap_ptr;
   if (dev_name == "x3pi") {
-    cap_ptr = std::make_shared<HobotMipiCapIml_x3pi>();
+    cap_ptr = std::make_shared<HobotMipiCapImlX3pi>();
   } else if (dev_name == "x3sdb") {
     cap_ptr = std::make_shared<HobotMipiCapIml>();
   }
   return cap_ptr;
 }
 
-std::string get_board_type() {
+std::string getBoardType() {
   int board_type = 0;
   bool auto_detect = false;
   std::ifstream som_name("/sys/class/socinfo/som_name");
