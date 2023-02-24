@@ -103,7 +103,7 @@ int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
     }
   }
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
-    "=====>[wuwl]->x3_ipc_init success.\n");
+    "x3 camera init success.\n");
   std::cout << "HobotMipiCapIml::init,ret:" << ret << std::endl;
   // m_nDevStat = 1;
   return ret;
