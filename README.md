@@ -18,3 +18,7 @@ mipi摄像头获取并发送图像数据
 # rgbd_sensor
 
 rgbd摄像头获取并发送图像数据
+
+# imu_sensor
+
+IMU sensor publishes acceleration and angular velocity of body
