@@ -1,8 +1,10 @@
  Getting Started with IMU Sensor Node
 ---
 #Intro
-imu_sensor包用于发布sensor_msgs::msg::imu ROS2话题，话题内包括物体运动的角速度和线性加速度以及精调的时间戳。
-本文详细介绍了如何编译并使用imu_sensor包。
+imu_sensor package is used for publishing ROS2 topic
+ of sensor_msgs::msg::imu which contains the angular_velocity, linear_acceleration and fine-tuned
+ timestamp of the robot.
+In this doc, users can learn how to compile and use imu_sensor package in very detailed.
 ---
 
 # Build
@@ -21,31 +23,36 @@ ros2 package：
 - Operating System：Ubuntu 20.04
 - Compiling Toolchain：Linux GCC 9.3.0/Linaro GCC 9.3.0
 ## package Description
-imu_sensor包编译完毕后，config和launch目录以及.so库分别安装在
-install/lib/imu_sensor or install/share/imu_sensor 目录下。
+
+After package imu_sensor is compilied completely，the directory of 
+config and launch as well as .so can be found in directory of
+install/lib/imu_sensor or install/share/imu_sensor.
 
 ## Compiling
-包支持X3板端编译和PC端的交叉编译。
+Either of ways of compiling on X3 in Ubuntu or PC in docker is supported.
+ 
 ### Compiling on X3 in Ubuntu
-1、确认编译环境
-- X3安装Ubuntu系统
-- source TogetheROS bash file `source $TogetheROS_PATH/setup.bash` 其中$TogetheROS_PATH 是TogetheROS的安装目录
-- colcon 已安装完毕, 否则 :`pip install -U colcon-common-extensions`
+1、verify your compiling environment
+- Ubuntu is running freely your X3
+- source your TogetheROS bash file `source $TogetheROS_PATH/setup.bash` where
+the $TogetheROS_PATH depends on your install directory
+- colcon is installed already, if not :`pip install -U colcon-common-extensions`
 
-2、编译：
+2、compiling：
   `colcon build --packages-select imu_sensor`。
 
 
 ### Cross compiling on PC in docker 
 
-1、确认编译环境
-- 参考这篇文档安装编译环境
+1、verify your compiling environment
+- Please refer docker environment deployment documentary
  (https://c-gitlab.horizon.ai/HHP/robot_dev_config/-/blob/develop/README.md)
+  for deploying your cross compiling environment.
 
 
-2、编译
+2、compiling
 
-- 编译命令： 
+- compiling command： 
 
   ```
   export TARGET_ARCH=aarch64
@@ -72,21 +79,23 @@ export COLCON_CURRENT_PREFIX=./install
 source ./install/setup.bash
 ros2 run imu_sensor imu_sensor --ros-args -p config_file_path:=./config/bmi088.yaml
 ```
-其中 config_file_path 是配置文件, 配置文件中的字段i2c_bus, data range 以及 bandwidth的含义如下所示。
+The config_file_path in which the name, i2c_bus, data range and bandwidth
+of imu are configured is read by imu_sensor node. 
+The details of the configuration file are mentioned as followed.
 ```YAML
 name: "bmi088"
-# i2c_bus 总线号
+# i2c_bus serial number
 i2c_bus: 1
-# 加速度计量程, 单位 'g'
+# accelerometer range, unit 'g'
 acc_range: 12
-# 陀螺仪量程, 单位 'deg/s'
+# gyroscope range, unit 'deg/s'
 gyro_range: 1000
-# 加速度计低通滤波器带宽
+# accelerometer low pass filter bandwidth
 acc_bandwidth: 40
-# 陀螺仪低通滤波器带宽
+# gyroscope low pass filter bandwidth
 gyro_bandwidth: 40
 # group_delay of imu,
-# which means the latency of the motion of body to data ready, 单位 'ms'
+# which means the latency of the motion of body to data ready, unit 'ms'
 group_delay: 7
 ```
 
