@@ -39,10 +39,10 @@ struct bmi088 : public imu_struct {
 
 private:
   uint group_delay_ = 7 * 1e6;
-  char* acc_addr = "0x19";
-  char* gyro_addr = "0x69";
-  const char *imu_data_path_ = "/dev/input/event2";
-  const char *imu_virtual_path_ = "/sys/devices/virtual/input/input0/";
+  std::string acc_addr = "0x19";
+  std::string gyro_addr = "0x69";
+  std::string imu_data_path_ = "/dev/input/event2";
+  std::string imu_virtual_path_ = "/sys/devices/virtual/input/input0/";
   uint8_t i2c_bus = 1;
   int event_fd_ = -1;
   std::atomic_bool is_running_;

@@ -75,9 +75,15 @@ the $TogetheROS_PATH depends on your install directory
 Launched by 'ros2 run'：
 
 ```
-export COLCON_CURRENT_PREFIX=./install
-source ./install/setup.bash
-ros2 run imu_sensor imu_sensor --ros-args -p config_file_path:=./config/bmi088.yaml
+export COLCON_CURRENT_PREFIX=$YOUR_TROS_PATH
+source $COLCON_CURRENT_PREFIX/setup.bash
+ros2 run imu_sensor imu_sensor --ros-args -p config_file_path:=./install/lib/imu_sensor/config/bmi088.yaml
+```
+Launched by 'ros2 launch'：
+```
+export COLCON_CURRENT_PREFIX=$YOUR_TROS_PATH
+source $COLCON_CURRENT_PREFIX/setup.bash
+ros2 launch imu_sensor imu_sensor.launch.py
 ```
 The config_file_path in which the name, i2c_bus, data range and bandwidth
 of imu are configured is read by imu_sensor node. 
@@ -97,6 +103,10 @@ gyro_bandwidth: 40
 # group_delay of imu,
 # which means the latency of the motion of body to data ready, unit 'ms'
 group_delay: 7
+# imu_data_path from which we read imu data
+imu_data_path: "/dev/input/event2"
+# imu_virtual_path from which we init imu
+imu_virtual_path: "/sys/devices/virtual/input/input0/"
 ```
 
 ---

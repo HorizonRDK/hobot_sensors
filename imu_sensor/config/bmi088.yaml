@@ -12,3 +12,7 @@ gyro_bandwidth: 40
 # group_delay of imu,
 # which means the latency of the motion of body to data ready, unit 'ms'
 group_delay: 7
+# imu_data_path from which we read imu data
+imu_data_path: "/dev/input/event2"
+# imu_virtual_path from which we init imu
+imu_virtual_path: "/sys/devices/virtual/input/input0/"

@@ -68,10 +68,17 @@ install/lib/imu_sensor or install/share/imu_sensor 目录下。
 Launched by 'ros2 run'：
 
 ```
-export COLCON_CURRENT_PREFIX=./install
-source ./install/setup.bash
-ros2 run imu_sensor imu_sensor --ros-args -p config_file_path:=./config/bmi088.yaml
+export COLCON_CURRENT_PREFIX=$YOUR_TROS_PATH
+source $COLCON_CURRENT_PREFIX/setup.bash
+ros2 run imu_sensor imu_sensor --ros-args -p config_file_path:=./install/lib/imu_sensor/config/bmi088.yaml
 ```
+Launched by 'ros2 launch'：
+```
+export COLCON_CURRENT_PREFIX=$YOUR_TROS_PATH
+source $COLCON_CURRENT_PREFIX/setup.bash
+ros2 launch imu_sensor imu_sensor.launch.py
+```
+
 其中 config_file_path 是配置文件, 配置文件中的字段i2c_bus, data range 以及 bandwidth的含义如下所示。
 ```YAML
 name: "bmi088"
@@ -88,6 +95,10 @@ gyro_bandwidth: 40
 # group_delay of imu,
 # which means the latency of the motion of body to data ready, 单位 'ms'
 group_delay: 7
+# imu_data_path from which we read imu data
+imu_data_path: "/dev/input/event2"
+# imu_virtual_path from which we init imu
+imu_virtual_path: "/sys/devices/virtual/input/input0/"
 ```
 
 ---

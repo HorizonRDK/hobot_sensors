@@ -40,7 +40,7 @@ static int imu_mod_install() {
 static int imu_priorities_set() {
   char buffer[128];
   char cmd[128];
-  uint imu_irq_pid = 0;
+  int imu_irq_pid = 0;
   FILE *fp = popen("ps -eLo pid,cmd "
                    "| grep -i \"irq/161-bmi08\" | grep -v grep", "r");
   int ret = fread(buffer, sizeof(char), sizeof(buffer), fp);
@@ -58,7 +58,7 @@ static int imu_priorities_set() {
 
 static void write_imu_i2c(
         uint8_t i2c_bus,
-        char* addr, char* register_addr, uint8_t value) {
+        const char* addr, const char* register_addr, uint8_t value) {
   char cmd[128];
   printf("-------\n");
   sprintf(cmd, "i2cget -f -y %d %s %s",
@@ -77,12 +77,12 @@ static void write_imu_i2c(
 
 static int imu_range_set(
         uint8_t i2c_bus,
-        char*acc_addr, char *gyro_addr,
+        const char*acc_addr, const char *gyro_addr,
         int acc_range, int gyro_range) {
   uint acc_register_value = 0x03;
   uint gyro_register_value = 0x00;
-  char* acc_range_addr = "0x41";
-  char* gyro_range_addr = "0x0F";
+  const char* acc_range_addr = "0x41";
+  const char* gyro_range_addr = "0x0F";
   switch (acc_range) {
     case 24 :
       break;
@@ -124,12 +124,14 @@ static int imu_range_set(
 }
 
 static int imu_filter_set(uint8_t i2c_bus,
-        char*acc_addr, char *gyro_addr,
+        const char*acc_addr, const char *gyro_addr,
         uint acc_bandwidth, uint gyro_bandwidth) {
   uint8_t acc_bwp = 0x0a;
   uint8_t acc_odr = 0x0a;
-  char *acc_band_addr = "0x40";
-  char *gyro_band_addr = "0x10";
+  const char *acc_band_addr = "0x40";
+  (void)gyro_addr;
+  (void)gyro_bandwidth;
+  //  const char *gyro_band_addr = "0x10";
   switch (acc_bandwidth) {
     case 145:
       break;
@@ -205,10 +207,9 @@ void bmi088::PollTread() {
   input_event event{};
   uint64_t lost = 0;
   while (is_running_) {
-    struct pollfd pfd = {
-            .fd = event_fd_,
-            .events = POLLIN,
-    };
+    struct pollfd pfd;
+    pfd.fd = event_fd_;
+    pfd.events = POLLIN;
     ret = poll(&pfd, 1, 200);
     if (ret <= 0) {
       printf("poll failed: %d!\n", ret);
@@ -278,7 +279,7 @@ void bmi088::PollTread() {
         //printf("l: %llu\n", lost);
       }
     } else {
-      printf( "read bytes: %d, but deserve: %d\n", ret, sizeof(event));
+      printf( "read bytes: %d, but deserve: %ld\n", ret, sizeof(event));
     }
   }
 }
@@ -287,7 +288,7 @@ int bmi088::write_node(
         const char* node, char *val, int num) {
   int ret = 0;
   char *node_full_path = nullptr;
-  ret = asprintf(&node_full_path, "%s%s", imu_virtual_path_, node);
+  ret = asprintf(&node_full_path, "%s%s", imu_virtual_path_.c_str(), node);
   if (ret < 0) {
     return -ENOMEM;
   }
@@ -317,6 +318,15 @@ if (imu_yaml[key]) {\
   exit(-1);\
 }
 
+#define GET_YAML_STRING(key, value) \
+if (imu_yaml[key]) {\
+  value = imu_yaml[key].as<std::string>();\
+  printf("%s: %s\n", key, value.c_str());\
+} else {\
+  printf("can not find imu setting key: %s, exit!\n", key);\
+  exit(-1);\
+}
+
 int bmi088::init(const std::string &config_file) {
   int ret;
   char buf = '1';
@@ -335,20 +345,28 @@ int bmi088::init(const std::string &config_file) {
   GET_YAML_INT("acc_bandwidth", group_delay_);
   GET_YAML_INT("gyro_bandwidth", group_delay_);
   GET_YAML_INT("group_delay", group_delay_);
+  GET_YAML_STRING("imu_data_path", imu_data_path_);
+  GET_YAML_STRING("imu_virtual_path", imu_virtual_path_);
 
   imu_mod_install();
   ret = write_node("sensor_init", &buf, 1);
+  if (ret < 0) {
+    exit(-1);
+  }
   ret = write_node("data_sync", &buf, 1);
+  if (ret < 0) {
+    exit(-1);
+  }
   imu_filter_set(i2c_bus,
-                 acc_addr, gyro_addr, 40, 40);
+                 acc_addr.c_str(), gyro_addr.c_str(), 40, 40);
   imu_range_set(i2c_bus,
-                acc_addr, gyro_addr, acc_range_, gyro_range_);
+                acc_addr.c_str(), gyro_addr.c_str(), acc_range_, gyro_range_);
   imu_priorities_set();
-  event_fd_ = open(imu_data_path_, O_RDONLY);
+  event_fd_ = open(imu_data_path_.c_str(), O_RDONLY);
   if (event_fd_ < 0) {
     printf( "Fail to open device:%s.\n"
                     "Please confirm the path or you have permission to do this.\n",
-            imu_data_path_);
+            imu_data_path_.c_str());
     exit(-1);
   }
   is_running_ = true;
