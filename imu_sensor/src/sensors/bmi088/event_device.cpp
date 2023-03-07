@@ -342,11 +342,13 @@ int bmi088::init(const std::string &config_file) {
   GET_YAML_INT("i2c_bus", i2c_bus);
   GET_YAML_INT("acc_range", acc_range_);
   GET_YAML_INT("gyro_range", gyro_range_);
-  GET_YAML_INT("acc_bandwidth", group_delay_);
-  GET_YAML_INT("gyro_bandwidth", group_delay_);
+  GET_YAML_INT("acc_bandwidth", acc_bandwidth_);
+  GET_YAML_INT("gyro_bandwidth", gyro_bandwidth_);
   GET_YAML_INT("group_delay", group_delay_);
   GET_YAML_STRING("imu_data_path", imu_data_path_);
   GET_YAML_STRING("imu_virtual_path", imu_virtual_path_);
+
+  group_delay_ = group_delay_ * 1e6;
 
   imu_mod_install();
   ret = write_node("sensor_init", &buf, 1);
@@ -358,7 +360,7 @@ int bmi088::init(const std::string &config_file) {
     exit(-1);
   }
   imu_filter_set(i2c_bus,
-                 acc_addr.c_str(), gyro_addr.c_str(), 40, 40);
+                 acc_addr.c_str(), gyro_addr.c_str(), acc_bandwidth_, gyro_bandwidth_);
   imu_range_set(i2c_bus,
                 acc_addr.c_str(), gyro_addr.c_str(), acc_range_, gyro_range_);
   imu_priorities_set();

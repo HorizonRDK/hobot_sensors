@@ -48,6 +48,8 @@ private:
   std::atomic_bool is_running_;
   int gyro_range_ = 1000;
   int acc_range_ = 12;
+  int acc_bandwidth_ = 40;
+  int gyro_bandwidth_ = 40;
 
 private:
   std::mutex mtx_;
