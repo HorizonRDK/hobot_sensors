@@ -222,7 +222,7 @@ void bmi088::PollTread() {
             imu[0] = -lsb_to_mps2(event.value, acc_range_, 16);
             break;
           case 1:
-            imu[1] = lsb_to_mps2(event.value, acc_range_, 16);
+            imu[1] = -lsb_to_mps2(event.value, acc_range_, 16);
             break;
           case 2:
             imu[2] = lsb_to_mps2(event.value, acc_range_, 16);
@@ -232,7 +232,7 @@ void bmi088::PollTread() {
                     16, get_uc_range(gyro_range_)) * M_PI / 180;
             break;
           case 4:
-            imu[4] = lsb_to_dps(event.value, gyro_range_,
+            imu[4] = -lsb_to_dps(event.value, gyro_range_,
                     16, get_uc_range(gyro_range_)) * M_PI / 180;
             break;
           case 5:
