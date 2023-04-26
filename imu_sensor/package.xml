@@ -2,9 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>imu_sensor</name>
-  <version>1.0.0</version>
-  <description>A ROS2 Driver for IMU</description>
-
+  <version>1.1.6</version>
+  <description>A TogetheROS Driver for IMU</description>
   <maintainer email="huaiyu.zhang@horizon.ai">zhy</maintainer>
   <license>Apache License 2.0</license>
   

@@ -130,6 +130,9 @@ void MipiCamNode::get_params() {
     } else if (parameter.get_name() == "pixel_format") {
       pixel_format_name_ = parameter.value_to_string();
     } else if (parameter.get_name() == "video_device") {
+      RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
+                  "video_device value: %s",
+                  parameter.value_to_string().c_str());
       video_device_name_ = parameter.value_to_string();
     } else if (parameter.get_name() == "camera_calibration_file_path") {
       camera_calibration_file_path_ = parameter.value_to_string();
