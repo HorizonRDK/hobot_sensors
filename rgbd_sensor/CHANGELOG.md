@@ -1,5 +1,9 @@
 # Changelog for package rgbd_sensor
 
+tros_2.0.0 (2023-05-11)
+------------------
+1. 更新package.xml，支持应用独立打包
+
 hhp_1.0.6RC1 (2022-09-09)
 ------------------
 1. 新增CP3AM型号摄像头的标定文件
