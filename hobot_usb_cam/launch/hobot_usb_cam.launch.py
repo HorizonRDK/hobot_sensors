@@ -22,7 +22,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'usb_camera_calibration_file_path',
-            default_value='',
+            default_value='/opt/tros/lib/hobot_usb_cam/config/usb_camera_calibration.yaml',
             description='camera calibration file path'),
         DeclareLaunchArgument(
             'usb_frame_id',
@@ -71,6 +71,7 @@ def generate_launch_description():
                 {"pixel_format": LaunchConfiguration('usb_pixel_format')},
                 {"video_device": LaunchConfiguration('usb_video_device')},
                 {"zero_copy": LaunchConfiguration('usb_zero_copy')}
-            ]
+            ],
+            arguments=['--ros-args', '--log-level', 'error']
         )
     ])
