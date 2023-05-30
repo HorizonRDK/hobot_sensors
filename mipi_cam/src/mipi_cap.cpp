@@ -262,18 +262,8 @@ bool MipiDevice::checkParams(int sensor_w,
 int MipiDevice::OpenCamera(const TCamInfo* pCamInfo) {
   int ret = 0;
   memcpy(&m_oCamInfo, pCamInfo, sizeof(TCamInfo));
-  // 获取芯片型号和接入的sensor型号 ->x3m
-  memset(&m_oHardCapability, 0, sizeof(m_oHardCapability));
-  x3_get_hard_capability(&m_oHardCapability);
 
-  ROS_printf("[%s]->0 cap type=%d,sensor=%d.\n",
-             __func__,
-             m_oHardCapability.m_chip_type,
-             m_oHardCapability.m_sensor_list);
   init_param();
-  // sdb 生态开发板，使能sensor mclk
-  HB_MIPI_EnableSensorClock(0);
-  HB_MIPI_EnableSensorClock(1);
 
   ret = x3_vp_init();
   if (ret) {
@@ -352,73 +342,6 @@ vp_err:
 }
 
 #define USE_VPS
-int MipiDevice::sensor_reset(void) {
-  int board_type = 3;
-  std::ifstream som_name("/sys/class/socinfo/som_name");
-  if (som_name.is_open()) {
-    som_name >> board_type;
-  }
-
-  int mipi_idx = m_oX3UsbCam.m_infos.m_vin_info.snsinfo.sensorInfo.entry_index;
-  if (5 == board_type) {
-    // x3pi两个sensor使用的同一个reset管脚，只需要复位一次
-    (void)system("echo 19 > /sys/class/gpio/export");
-    (void)system("echo out > /sys/class/gpio/gpio19/direction");
-    (void)system("echo 0 > /sys/class/gpio/gpio19/value");
-    (void)system("sleep 0.2");
-    (void)system("echo 1 > /sys/class/gpio/gpio19/value");
-    (void)system("echo 19 > /sys/class/gpio/unexport");
-    (void)system("echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
-    (void)system("echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart");
-  } else if (4 == board_type) {
-    /* reset使能*/
-    if (1 == mipi_idx) {
-      (void)system("echo 118 > /sys/class/gpio/export");
-      (void)system("echo out > /sys/class/gpio/gpio118/direction");
-      (void)system("echo 0 > /sys/class/gpio/gpio118/value");
-      (void)system("sleep 0.2");
-      (void)system("echo 1 > /sys/class/gpio/gpio118/value");
-      (void)system("echo 118 > /sys/class/gpio/unexport");
-      (void)system(
-          "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
-    } else if (0 == mipi_idx) {
-      (void)system("echo 119 > /sys/class/gpio/export");
-      (void)system("echo out > /sys/class/gpio/gpio119/direction");
-      (void)system("echo 0 > /sys/class/gpio/gpio119/value");
-      (void)system("sleep 0.2");
-      (void)system("echo 1 > /sys/class/gpio/gpio119/value");
-      (void)system("echo 119 > /sys/class/gpio/unexport");
-      (void)system(
-          "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
-    }
-  } else if (3 == board_type) {
-    /* reset使能*/
-    if (1 == mipi_idx) {
-      (void)system("echo 111 > /sys/class/gpio/export");
-      (void)system("echo out > /sys/class/gpio/gpio111/direction");
-      (void)system("echo 0 > /sys/class/gpio/gpio111/value");
-      (void)system("sleep 0.2");
-      (void)system("echo 1 > /sys/class/gpio/gpio111/value");
-      (void)system("echo 111 > /sys/class/gpio/unexport");
-      (void)system(
-          "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart");
-    } else if (0 == mipi_idx) {
-      (void)system("echo 119 > /sys/class/gpio/export");
-      (void)system("echo out > /sys/class/gpio/gpio119/direction");
-      (void)system("echo 0 > /sys/class/gpio/gpio119/value");
-      (void)system("sleep 0.2");
-      (void)system("echo 1 > /sys/class/gpio/gpio119/value");
-      (void)system("echo 119 > /sys/class/gpio/unexport");
-      (void)system(
-          "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart");
-    }
-  } else {
-    ROS_printf("Unsupported board type %d！", board_type);
-    return -1;
-  }
-  return 0;
-}
-
 int MipiDevice::init_param(void) {
   int ret = 0;
   char sensor_name[32] = {0};
@@ -485,9 +408,6 @@ int MipiDevice::init_param(void) {
       }
     }
   }
-
-  // 复位sensor
-  sensor_reset();
 
   // 减少ddr带宽使用量
   m_oX3UsbCam.m_infos.m_vin_info.vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;
