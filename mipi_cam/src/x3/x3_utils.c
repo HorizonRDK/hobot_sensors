@@ -74,17 +74,20 @@ sensor_id_t sensor_id_list[] = {
     {2, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
     {1, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
     {1, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
-		{2, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
+	{2, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
     {1, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
-		{2, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
+	{2, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
+	{3, 0x10, I2C_ADDR_16, 0x0000, "imx219"},  // imx219 for x3-pi
     {1, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
-		{2, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
+	{2, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
+	{3, 0x1a, I2C_ADDR_16, 0x0200, "imx477"},  // imx477 for x3-pi
     {1, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
-		{2, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
+	{2, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
+	{3, 0x36, I2C_ADDR_16, 0x300A, "ov5647"},  // ov5647 for x3-pi
     {2, 0x1a, I2C_ADDR_16, 0x0000, "imx586"},  // imx586
-		{1, 0x1a, I2C_ADDR_16, 0x0000, "imx586"},  // imx586
+	{1, 0x1a, I2C_ADDR_16, 0x0000, "imx586"},  // imx586
     {2, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
-		{1, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
+	{1, 0x29, I2C_ADDR_16, 0x0000, "gc4c33"},  // gc4c33
     // {3, 0x36, I2C_ADDR_16, 0x0100, "ov8856"},  // ov8856
     // {3, 0x10, I2C_ADDR_16, 0x0100, "ov8856"},  // ov8856
     // {2, 0x36, I2C_ADDR_16, 0x0100, "os8a10"},  // os8a10
@@ -156,45 +159,4 @@ int exec_cmd_ex(const char *cmd, char* res, int max)
 	pclose(pp);
 
 	return strlen(res);
-}
-
-int x3_get_hard_capability(hard_capability_t *capability)
-{
-	int i = 0;
-	char cmd[256];
-	char result[1024];
-
-	E_CHIP_TYPE chip_id = x3_get_chip_type();
-	ROS_printf("[%s]->chip_type: %s\n",__func__, chip_id == E_CHIP_X3M ? "X3M" : "X3E");
-	capability->m_chip_type = chip_id;
-
-	/* sdb 生态开发板  ，使能sensor       mclk, 否则i2c 通信不会成功的 */
-	HB_MIPI_EnableSensorClock(0);
-	HB_MIPI_EnableSensorClock(1);
-	HB_MIPI_EnableSensorClock(2); // 需要修改内核dts使能mipihost2的mclk
-	/*
-	for (i = 0; i < ARRAY_SIZE(sensor_id_list); i++) {
-		// 通过i2ctransfer命令读取特定寄存器，判断是否读取成功来判断是否支持相应的sensor
-		memset(cmd, '\0', sizeof(cmd));
-		memset(result, '\0', sizeof(result));
-		if (sensor_id_list[i].i2c_addr_width == I2C_ADDR_8) {
-			sprintf(cmd, "i2ctransfer -y -f %d w1@0x%x 0x%x r1 2>&1", sensor_id_list[i].i2c_bus,
-			sensor_id_list[i].i2c_dev_addr, sensor_id_list[i].det_reg);
-		} else if (sensor_id_list[i].i2c_addr_width == I2C_ADDR_16){
-			sprintf(cmd, "i2ctransfer -y -f %d w2@0x%x 0x%x 0x%x r1 2>&1", sensor_id_list[i].i2c_bus,
-			sensor_id_list[i].i2c_dev_addr,
-			sensor_id_list[i].det_reg >> 8, sensor_id_list[i].det_reg & 0xFF);
-		} else {
-			continue;
-		}
-		//i2ctransfer -y -f 3 w2@0x36 0x1 0x0 r1 2>&1 ;这个命令执行会崩溃
-		exec_cmd_ex(cmd, result, sizeof(result));
-		if (strstr(result, "Error") == NULL && strstr(result, "error") == NULL) { // 返回结果中不带Error, 说明sensor找到了
-			ROS_printf("--------match sensor:%s\n", sensor_id_list[i].sensor_name);
-			capability->m_sensor_list |= sensor_id_list[i].enable_bit;
-		}
-	}*/
-
-	ROS_printf("support sensor: %d\n", capability->m_sensor_list);
-	return 0;
 }

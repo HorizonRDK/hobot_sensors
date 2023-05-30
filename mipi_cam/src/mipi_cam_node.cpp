@@ -32,7 +32,7 @@ extern "C" int ROS_printf(char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
   vsprintf(buf, fmt, args);
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "%s", buf);
+  RCLCPP_INFO(rclcpp::get_logger("mipi_node"), "%s", buf);
   va_end(args);
 }
 #define PUB_BUF_NUM 5
@@ -56,8 +56,6 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
     // throw std::runtime_error("mipi camera already in use.");
   }
 
-  image_pub_ =
-      this->create_publisher<sensor_msgs::msg::Image>("image_raw", PUB_BUF_NUM);
   info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>(
       "camera_info", PUB_BUF_NUM);
   // declare params
@@ -67,7 +65,7 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
   this->declare_parameter("frame_id", "default_cam");
   this->declare_parameter("image_height", 1080);  // 480);
   this->declare_parameter("image_width", 1920);   // 640);
-  this->declare_parameter("io_method", "mmap");
+  this->declare_parameter("io_method", "ros");
   this->declare_parameter("pixel_format", "yuyv");
   this->declare_parameter("out_format", "bgr8");   // nv12
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
@@ -163,18 +161,16 @@ void MipiCamNode::init() {
 
   // 使能sensor mclk
   std::vector<std::string> sys_cmds{
-      "echo 19 > /sys/class/gpio/export",
-      "echo out > /sys/class/gpio/gpio19/direction",
-      "echo 0 > /sys/class/gpio/gpio19/value",
-      "sleep 0.2",
-      "echo 1 > /sys/class/gpio/gpio19/value",
-      "echo 19 > /sys/class/gpio/unexport",
       "echo 1 > /sys/class/vps/mipi_host0/param/snrclk_en",
       "echo 1 > /sys/class/vps/mipi_host1/param/snrclk_en",
+      "echo 1 > /sys/class/vps/mipi_host2/param/snrclk_en",
       "echo 24000000 > /sys/class/vps/mipi_host0/param/snrclk_freq",
       "echo 24000000 > /sys/class/vps/mipi_host1/param/snrclk_freq",
+      "echo 24000000 > /sys/class/vps/mipi_host2/param/snrclk_freq",
       "echo 1 > /sys/class/vps/mipi_host0/param/stop_check_instart",
-      "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart"};
+      "echo 1 > /sys/class/vps/mipi_host1/param/stop_check_instart",
+      "echo 1 > /sys/class/vps/mipi_host2/param/stop_check_instart"
+  };
   for (const auto& sys_cmd : sys_cmds) {
     system(sys_cmd.data());
   }
@@ -186,7 +182,7 @@ void MipiCamNode::init() {
                        "No camera detected! Please check if camera is connected!");
     rclcpp::shutdown();
     return;
-  } else if(strcasecmp(video_device_name_temp.c_str(),video_device_name_.c_str())) { 
+  } else if(strcasecmp(video_device_name_temp.c_str(), video_device_name_.c_str())) { 
     // 与用户传入的video_device不一致，比较不区分大小写
     // 当检测到的sensor与用户传入的不一致时，打开检测到的sensor，并输出log提示用户
     RCLCPP_WARN_ONCE(rclcpp::get_logger("mipi_node"),
@@ -224,6 +220,10 @@ void MipiCamNode::init() {
   // set the IO method
   MipiCam::io_method io_method =
       MipiCam::io_method_from_string(io_method_name_);
+  if (io_method_name_.compare("ros") == 0) {
+    image_pub_ =
+      this->create_publisher<sensor_msgs::msg::Image>("image_raw", PUB_BUF_NUM);
+  }
 #ifdef USING_HBMEM
   if (io_method_name_.compare("shared_mem") == 0) {
     // 创建hbmempub
