@@ -139,7 +139,7 @@ int GetCamI2cDevId(CAM_TYPE_E eCamType, char *pcCamDirection, int *piI2cDevId)
 
 	if ((CAM_TYPE_TOF == eCamType) || (CAM_TYPE_TOF_RGBD == eCamType))
 	{
-		if (5 <= GetBoardType() || 9 >= GetBoardType()) {
+		if (5 <= GetBoardType() && 9 >= GetBoardType()) {
 			*piI2cDevId = 1;
 		} else {
 			*piI2cDevId = 2;
@@ -147,7 +147,7 @@ int GetCamI2cDevId(CAM_TYPE_E eCamType, char *pcCamDirection, int *piI2cDevId)
 	}
 	else if (CAM_TYPE_RGB == eCamType)
 	{
-		if (5 <= GetBoardType() || 9 >= GetBoardType()) {
+		if (5 <= GetBoardType() && 9 >= GetBoardType()) {
 			*piI2cDevId = 1;
 		} else {
 			*piI2cDevId = 2;
@@ -251,7 +251,7 @@ MIPI_SENSOR_INFO_S *GetIrs2381cSensorInfo(void)
 	pstSnsInfo->port = 1; // sensor的逻辑编号，必须从0开始
 	pstSnsInfo->dev_port = 1; // 每路 sensor 操作的驱动节点，一个驱动支持多个节点。 snsinfo 中的dev_port 必须等于pipeId，多目摄像头设置的时候需要特别注意
 	pstSnsInfo->bus_type = 0; // 访问总线类型， 0 是 i2c,1 是 spi
-	if (5 <= GetBoardType() || 9 >= GetBoardType()) {
+	if (5 <= GetBoardType() && 9 >= GetBoardType()) {
 		pstSnsInfo->bus_num = 1; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
 		pstSnsInfo->entry_index = 2; // sensor 使用的 mipi 索引, 0~3，对应mipi host的序号
 	} else {
@@ -389,7 +389,7 @@ MIPI_SENSOR_INFO_S *GetGc2053SensorInfo(void)
 	pstSnsInfo->port = 0; // sensor的逻辑编号，必须从0开始
 	pstSnsInfo->dev_port = 0; // 每路 sensor 操作的驱动节点，一个驱动支持多个节点。 snsinfo 中的dev_port 必须等于pipeId，多目摄像头设置的时候需要特别注意
 	pstSnsInfo->bus_type = 0; // 访问总线类型， 0 是 i2c,1 是 spi
-	if (5 <= GetBoardType() || 9 >= GetBoardType()) {
+	if (5 <= GetBoardType() && 9 >= GetBoardType()) {
 		pstSnsInfo->bus_num = 1; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5
 	} else {
 		pstSnsInfo->bus_num = 2; // 总线号，根据具体板子硬件原理图确定 , 不配置默认 i2c5

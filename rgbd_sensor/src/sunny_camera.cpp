@@ -250,6 +250,7 @@ int Calc_Depth2Tof(void *pCamHdl, TShyFrame *pDataDepthIn, const TShyFrame *pDat
     pDataOut->mOriRes.pu16Confidence = stTmpDepthInfo.pu16Confidence;
     pDataOut->mOriRes.pfNoise = stTmpDepthInfo.pfNoise;
     pDataOut->mOriRes.pDepthData = stTmpDepthInfo.pDepthData;
+
 #ifdef CV_CONVERT_CLR
     cv::Mat imgTmp;
     cv::Mat yuvImg = cv::Mat(RGB_HEIGHT * 3 / 2, RGB_WIDTH, CV_8UC1, pDataYuvIn->pucImageData, 0);

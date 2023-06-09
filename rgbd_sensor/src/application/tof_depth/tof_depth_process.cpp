@@ -1610,7 +1610,6 @@ int TofDepthSdkUnInit(DEPTH_HANDLE_CB_S *pstDepthHandleCb)
 	return 0;
 }
 
-
 int TofDepthProcess(void *pCamHandle, IMAGE_DATA_INFO_S *pstTofRawDataInfo, TOF_DEPTH_DATA_INFO_S *pstTofDepthDataInfo)
 {
 	TOFRET retVal = TOFRET_ERROR_OTHER;
@@ -1652,13 +1651,14 @@ int TofDepthProcess(void *pCamHandle, IMAGE_DATA_INFO_S *pstTofRawDataInfo, TOF_
 	pstTofDepthDataInfo->pfPointData 	= stTofDepthData.pPointData;
 	pstTofDepthDataInfo->grayFormat		= stTofDepthData.grayFormat;
 	pstTofDepthDataInfo->pGrayData		= stTofDepthData.pGrayData;
-	
+
 	pstTofDepthDataInfo->pu16GrayData	= NULL;
 	pstTofDepthDataInfo->pu16Confidence = NULL;
 	pstTofDepthDataInfo->pfNoise 		= NULL;
-	
+
 	return 0;
 }
+
 
 
 int TofDepthProcessExp(void *pCamHandle, IMAGE_DATA_INFO_S *pstTofRawDataInfo, TOF_DEPTH_DATA_INFO_S *pstTofDepthDataInfo, int iDepthHandleIndex)
@@ -1702,11 +1702,11 @@ int TofDepthProcessExp(void *pCamHandle, IMAGE_DATA_INFO_S *pstTofRawDataInfo, T
 	pstTofDepthDataInfo->pfPointData 	= stTofDepthData.pPointData;
 	pstTofDepthDataInfo->grayFormat		= stTofDepthData.grayFormat;
 	pstTofDepthDataInfo->pGrayData		= stTofDepthData.pGrayData;
-	
+
 	pstTofDepthDataInfo->pu16GrayData	= NULL;
 	pstTofDepthDataInfo->pu16Confidence = NULL;
 	pstTofDepthDataInfo->pfNoise 		= NULL;
-	
+
 	return 0;
 }
 

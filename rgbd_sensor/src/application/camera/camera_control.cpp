@@ -11,6 +11,43 @@
 #define RGBD_CALIB_OFFSET		(0x1000)
 
 
+
+typedef struct tagModuleInfoV01
+{
+	unsigned char ucMappingVersion;
+	unsigned char aucModulePartNO[13];
+	unsigned char aucImageSensorID[16];
+	unsigned char aucModuleID[8];
+	unsigned char ucBuildRevision;
+	unsigned char ucSensor;
+	unsigned char ucLens;
+	unsigned char ucVCSEL;
+	unsigned char ucDiffuser;
+	unsigned char ucVCSEL_PCB;
+	unsigned char ucSENSOR_PCB;
+	unsigned char ucMemery;
+	unsigned char ucMemeryVersion;
+	unsigned char ucIR_Filter;
+	unsigned char ucVCSEL_Driver;
+	unsigned char ucEyeSafetyCircuit;
+	unsigned char ucTempertureSensor;
+	unsigned char aucRotation[2];
+	unsigned char ucSystemInfoChecksum_1;
+	unsigned char ucCalibrationStatus;
+	unsigned char ucICM_CalibrationStatus;
+	unsigned char ucCalibrationSolution;
+	unsigned char ucBurn;
+	unsigned char aucMID[2];
+	unsigned char ucDutyCycle;
+	unsigned char ucVILUUM;
+	unsigned char ucStrayLightCalibration;
+	unsigned char ucROI;
+	unsigned char ucWiggling;
+	unsigned char ucSystemInfoChecksum_2;
+	unsigned char aucReserved[190];
+} MODULE_INFO_V01_S;
+
+
 static int R1[256];
 static int G1[256];
 static int G2[256];
@@ -233,6 +270,168 @@ static int ReadCalibData(I2C_CB_S *pstI2cCb, char *pcSavePath, int iStartAddr, i
 	}
 
 	return iRet;
+}
+
+
+void PrintModuleInfoV01(MODULE_INFO_V01_S *pstModuleInfoV01)
+{
+	int i = 0;
+	char acModulePartNO[16];
+	char acImageSensorID[32];
+	char acModuleID[16];
+
+	printf("********************************************\n");
+	printf("Mapping Version: 0x%x\n", pstModuleInfoV01->ucMappingVersion);
+
+	for (i = 0; i < sizeof(pstModuleInfoV01->aucModulePartNO); i++)
+	{
+		if (0xFF == pstModuleInfoV01->aucModulePartNO[i])
+		{
+			pstModuleInfoV01->aucModulePartNO[i] = '\0';
+		}
+	}
+
+	memset(acModulePartNO, 0, sizeof(acModulePartNO));
+	memcpy(acModulePartNO, pstModuleInfoV01->aucModulePartNO, sizeof(pstModuleInfoV01->aucModulePartNO));
+	printf("Module Part NO: %s\n", acModulePartNO);
+
+	memset(acImageSensorID, 0, sizeof(acImageSensorID));
+	snprintf(acImageSensorID, sizeof(acImageSensorID), "xxxx-xxxx-xxxx-xxxx");
+	for (i = 0; i < 4; i++)
+	{
+		memcpy(&acImageSensorID[i*5], &pstModuleInfoV01->aucImageSensorID[i*4], 4);
+	}
+	printf("Image Sensor ID: %s\n", acImageSensorID);
+
+	memset(acModuleID, 0, sizeof(acModuleID));
+	memcpy(acModuleID, pstModuleInfoV01->aucModuleID, sizeof(pstModuleInfoV01->aucModuleID));
+	printf("Module ID: %s\n", acModuleID);
+
+	printf("Build Revision: 0x%x\n", pstModuleInfoV01->ucBuildRevision);
+	printf("Sensor: 0x%x\n", pstModuleInfoV01->ucSensor);
+	printf("Lens: 0x%x\n", pstModuleInfoV01->ucLens);
+	printf("VCSEL: 0x%x\n", pstModuleInfoV01->ucVCSEL);
+	printf("Diffuser: 0x%x\n", pstModuleInfoV01->ucDiffuser);
+	printf("VCSEL PCB: 0x%x\n", pstModuleInfoV01->ucVCSEL_PCB);
+	printf("Sensor PCB: 0x%x\n", pstModuleInfoV01->ucSENSOR_PCB);
+	printf("Memory: 0x%x\n", pstModuleInfoV01->ucMemery);
+	printf("Memory Version: 0x%x\n", pstModuleInfoV01->ucMemeryVersion);
+	printf("IR Filter: 0x%x\n", pstModuleInfoV01->ucIR_Filter);
+	printf("VCSEL Driver: 0x%x\n", pstModuleInfoV01->ucVCSEL_Driver);
+	printf("Eye Safety Circuit: 0x%x\n", pstModuleInfoV01->ucEyeSafetyCircuit);
+	printf("Temperture Sensor: 0x%x\n", pstModuleInfoV01->ucTempertureSensor);
+	printf("Rotation: 0x%x, 0x%x\n", pstModuleInfoV01->aucRotation[0], pstModuleInfoV01->aucRotation[1]);
+	printf("System Info Checksum 1: 0x%x\n", pstModuleInfoV01->ucSystemInfoChecksum_1);
+	printf("Calibration Status: 0x%x\n", pstModuleInfoV01->ucCalibrationStatus);
+	printf("ICM Calibration Status: 0x%x\n", pstModuleInfoV01->ucICM_CalibrationStatus);
+	printf("Calibration Solution: 0x%x\n", pstModuleInfoV01->ucCalibrationSolution);
+	printf("Burn: 0x%x\n", pstModuleInfoV01->ucBurn);
+	printf("MID: 0x%x, 0x%x\n", pstModuleInfoV01->aucMID[0], pstModuleInfoV01->aucMID[1]);
+	printf("Duty Cycle: 0x%x\n", pstModuleInfoV01->ucDutyCycle);
+	printf("VILUUM: 0x%x\n", pstModuleInfoV01->ucVILUUM);
+	printf("Stray Light Calibration: 0x%x\n", pstModuleInfoV01->ucStrayLightCalibration);
+	printf("ROI: 0x%x\n", pstModuleInfoV01->ucROI);
+	printf("Wiggling: 0x%x\n", pstModuleInfoV01->ucWiggling);
+	printf("System Info Checksum 2: 0x%x\n", pstModuleInfoV01->ucSystemInfoChecksum_2);
+	printf("********************************************\n");
+}
+
+#define MODULE_INFO_V01_START_ADDR		(0x1F00)
+#define MODULE_INFO_V01_SIZE			(256)
+MODULE_INFO_V01_S gstModuleInfoV01;
+
+
+int ReadModuleInfoV01(I2C_CB_S *pstI2cCb)
+{
+	int spiReadAddr = 0x0100;
+	int spiWriteAddr = 0x0000;
+	int SF_ReadCMD = 0x03;
+	int SF_ReadLen = MODULE_INFO_V01_SIZE;
+	int SF_StartAddr = MODULE_INFO_V01_START_ADDR;
+	unsigned short u16Status;
+	int value;
+	int i;
+	int offset = 0;
+	int pageSize = 256;
+	int iFd = 0;
+
+	int readLen = (SF_ReadLen - offset) > pageSize ? pageSize : (SF_ReadLen - offset);
+	int cmdReadLen = readLen + 3;
+	int readAddr = SF_StartAddr + offset;
+
+	MODULE_INFO_V01_S *pstModuleInfoV01 = &gstModuleInfoV01;
+	unsigned char *data = (unsigned char*)pstModuleInfoV01;
+
+	irs2381c_stop(pstI2cCb);
+	usleep(500000);
+
+	while (readLen > 0)
+	{
+		#if 1
+		/* read status info */
+		I2cRead(pstI2cCb, 0x9403, &u16Status, I2C_FMT_A16D16);
+
+		/* read ICM status info */
+		I2cRead(pstI2cCb, 0x8423, &u16Status, I2C_FMT_A16D16);
+
+		/* read status info */
+		I2cRead(pstI2cCb, 0x9403, &u16Status, I2C_FMT_A16D16);
+		I2cRead(pstI2cCb, 0xA08C, &u16Status, I2C_FMT_A16D16);
+		#endif
+
+		u16Status = ((SF_ReadCMD << 8) | ((readAddr >> 16) & 0xFF)) & 0xFFFF;
+		I2cWrite(pstI2cCb, spiWriteAddr, u16Status, I2C_FMT_A16D16);
+
+		u16Status = readAddr & 0xFFFF;
+		I2cWrite(pstI2cCb, spiWriteAddr + 1, u16Status, I2C_FMT_A16D16);
+
+		u16Status = 0xC001;
+		I2cWrite(pstI2cCb, 0xA087, u16Status, I2C_FMT_A16D16);
+
+		u16Status = spiWriteAddr;
+		I2cWrite(pstI2cCb, 0xA088, u16Status, I2C_FMT_A16D16);
+		u16Status = spiReadAddr;
+		I2cWrite(pstI2cCb, 0xA089, u16Status, I2C_FMT_A16D16);
+		u16Status = (0x7 << 13) | (cmdReadLen & 0x3FF);
+		I2cWrite(pstI2cCb, 0xA08A, u16Status, I2C_FMT_A16D16);
+
+		u16Status = 0x0002;
+		I2cWrite(pstI2cCb, 0xA08B, u16Status, I2C_FMT_A16D16);
+
+		do
+		{
+			usleep(500);
+		} while (u16Status & 0x1);
+
+	#if 0
+		/* read spi data from read buffer */
+		for (i = 0; i < readLen / 2; i++)
+		{
+			I2cRead(pstI2cCb, spiReadAddr + i, &value, I2C_FMT_A16D16);
+			data[offset + i * 2] = (value >> 8) & 0xFF;
+			data[offset + i * 2 + 1] = value & 0xFF;
+		}
+		/* last byte is spi len is odd */
+		if (i * 2 < readLen)
+		{
+			I2cRead(pstI2cCb, spiReadAddr + i, &value, I2C_FMT_A16D16);
+			data[offset + i * 2] = (value >> 8) & 0xFF;
+		}
+	#else
+		i2c_block_read_eeprom_a16_d8(pstI2cCb, spiReadAddr, data, pageSize);
+		data = data + pageSize;
+	#endif
+
+		offset += readLen;
+		readLen = (SF_ReadLen - offset) > pageSize ? pageSize : (SF_ReadLen - offset);
+		cmdReadLen = readLen + 3;
+		readAddr = SF_StartAddr + offset;
+	}
+
+	irs2381c_start(pstI2cCb);
+
+	PrintModuleInfoV01(pstModuleInfoV01);
+	return 0;
 }
 
 
@@ -765,6 +964,7 @@ void *OpenCamera(CAM_PARAM_S *pstCamParam)
 			printf("read tof calib data failed\n");
 			goto err_i2c_unit;
 		}
+		ReadModuleInfoV01(&pstCameraHandler->stI2cCb);
 	}
 
 	if (eCamType == CAM_TYPE_TOF_RGBD)
