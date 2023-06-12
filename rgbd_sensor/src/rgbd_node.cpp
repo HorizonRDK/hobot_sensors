@@ -317,12 +317,24 @@ void RgbdNode::timer_ros_pub()
         if (_enable_dep) {
           img_dep_->header.stamp.sec = time_start.tv_sec;
           img_dep_->header.stamp.nanosec = time_start.tv_nsec;
-          img_dep_->width = ImgDepth.width;
-          img_dep_->height = nDepthHeight;  // ImgDepth.height;
-          img_dep_->step = ImgDepth.width;
+          img_dep_->width = oResTofPCL.mOriRes.frameWidth;
+          img_dep_->height = oResTofPCL.mOriRes.frameHeight;
+          img_dep_->step = oResTofPCL.mOriRes.frameWidth;
           img_dep_->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
-          img_dep_->data.resize(nDepthSz);  // ImgDepth.size);
-          memcpy(&img_dep_->data[0], ImgDepth.pucImageData + nDepthSz *9, nDepthSz);  // ImgDepth.size);
+          img_dep_->data.resize(oResTofPCL.mOriRes.frameWidth *
+                                oResTofPCL.mOriRes.frameHeight * 2);
+          std::vector<uint16_t> depth_data;
+          auto float_data = oResTofPCL.mPclRgb.pData;
+          for (int i = 0; i < oResTofPCL.mOriRes.frameWidth *
+                                  oResTofPCL.mOriRes.frameHeight;
+               i++) {
+            depth_data.push_back(
+                static_cast<uint16_t>(std::round(float_data->z * 1000.0f)));
+            float_data++;
+          }
+          memcpy(&img_dep_->data[0], depth_data.data(),
+                 oResTofPCL.mOriRes.frameWidth *
+                     oResTofPCL.mOriRes.frameHeight * 2);
           imgDep_pub_->publish(*img_dep_);
         }
         if (_enable_infra) {
