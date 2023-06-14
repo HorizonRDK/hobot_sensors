@@ -18,6 +18,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "mipi_cam/mipi_cam_node.hpp"
 
+#include "stdio.h"
+
 using mipi_cam::MipiCamNode;
 
 int main(int argc, char** argv) {

@@ -43,7 +43,8 @@ int x3_vps_group_init(int vps_grp_id, VPS_GRP_ATTR_S *vps_grp_attr)
 	return ret;
 }
 
-int x3_setpu_gdc(int vps_grp_id, char *gdc_config_file, ROTATION_E enRotation)
+int x3_setpu_gdc(int vps_grp_id, int vps_chn_id,
+        char *gdc_config_file, ROTATION_E enRotation)
 {
 	FILE *gdc_fd = NULL;
 	char *buf = NULL;
@@ -69,10 +70,11 @@ int x3_setpu_gdc(int vps_grp_id, char *gdc_config_file, ROTATION_E enRotation)
 	fread(buf, 1, len, gdc_fd);
 	fclose(gdc_fd);
 
-	ret = HB_VPS_SetGrpGdc(vps_grp_id, buf, len, enRotation);
+	ret = HB_VPS_SetGrpGdc(vps_grp_id, buf, len, 0);
 	if (ret) {
 	    ROS_printf("HB_VPS_SetGrpGdc error!!!\n");
-	    return -3;
+      free(buf);
+      return -3;
 	} else {
 	    ROS_printf("HB_VPS_SetGrpGdc ok: vps_grp_id = %d\n", vps_grp_id);
 	}
@@ -80,10 +82,14 @@ int x3_setpu_gdc(int vps_grp_id, char *gdc_config_file, ROTATION_E enRotation)
 	return 0;
 }
 
-int x3_vps_chn_init(int vps_grp_id, int vps_chn_id, VPS_CHN_ATTR_S *chn_attr) {
+int x3_vps_chn_init(int vps_grp_id, int vps_chn_id, VPS_CHN_ATTR_S *chn_attr,
+                    ROTATION_E enRotation) {
     /*VPS_CHN_ATTR_S chn_attr;*/
     int ret = 0;
 	ret = HB_VPS_SetChnAttr(vps_grp_id, vps_chn_id, chn_attr);
+  if (enRotation != ROTATION_0) {
+    HB_VPS_SetChnRotate(vps_grp_id, vps_chn_id, enRotation);
+  }
 	if (ret) {
 		ROS_printf("[%s]->HB_VPS_SetChnAttr gID=%d,cID=%d,w:h=%d:%d error, ret:%d.\n",
 			__func__,vps_grp_id, vps_chn_id, chn_attr->width,chn_attr->height,ret);

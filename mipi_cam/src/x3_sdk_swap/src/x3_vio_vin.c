@@ -96,7 +96,7 @@ int x3_sensor_init(int devId, x3_vin_info_t *vin_info)
 	ROS_printf("devId is %d\n", devId);
     ret = HB_MIPI_InitSensor(devId, &vin_info->snsinfo);
     if (ret < 0) {
-        ROS_printf("hb mipi init sensor error!\n");
+        ROS_printf("hb mipi init sensor error!, ret: %d\n", ret);
         return ret;
     }
     ROS_printf("hb sensor init success...\n");

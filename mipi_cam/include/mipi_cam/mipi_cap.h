@@ -74,10 +74,12 @@ class MipiDevice : public CVideoComm {
   int mimx219_linear_vin_param_init(x3_vin_info_t* vin_info);
   int mimx477_linear_vin_param_init(x3_vin_info_t* vin_info);
   int mov5647_linear_vin_param_init(x3_vin_info_t* vin_info);
+  int sc132gs_linear_vin_param_init(x3_vin_info_t* vin_info);
   int x3_cam_uninit(void);
   int x3_mipi_cam_stop(void);
   int x3_mipi_cam_start(void);
   int init_param(void);
+  void init_gdcarams();
   int sensor_reset(void);
   // 得到可用的 pipe_id,0-7,进程id 对应
   // pipe_id,假设pipe_id对应的进程已不存在，则使用id，并更新为当前进程id
@@ -107,6 +109,8 @@ class MipiDevice : public CVideoComm {
   unsigned int n_buffers;
   int m_curCaptureIdx;  //正在读取的帧序号
  private:
+  //  adjust timestamp by exposure time
+  bool mAdjustTimeStamp;
 };
 
 #endif  // VIDEO_CAP_H

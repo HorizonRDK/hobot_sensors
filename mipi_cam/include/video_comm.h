@@ -60,6 +60,9 @@ typedef struct _Cam_Info_t{
 	int height;
 	int fps;
 	int fcc;	//mpg,yuv,h264 ...
+	int need_gdc;
+	int rotate_degree;
+	char gdc_file_path[256];
 }TCamInfo;
 
 class CVideoComm

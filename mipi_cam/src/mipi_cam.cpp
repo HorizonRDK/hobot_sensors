@@ -152,7 +152,9 @@ bool MipiCam::uninit_device(void) {
   return true;
 }
 
-bool MipiCam::init_device(int image_width, int image_height, int framerate) {
+bool MipiCam::init_device(int image_width, int image_height, int framerate,
+                          const std::string &gdc_file_path,
+                          int rotate_degree) {
   unsigned int min;
 
   snprintf(m_oCamInfo.devName,
@@ -162,6 +164,12 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate) {
   m_oCamInfo.fps = framerate;
   m_oCamInfo.height = image_height;
   m_oCamInfo.width = image_width;
+  m_oCamInfo.need_gdc = !(gdc_file_path == "empty");
+  if (m_oCamInfo.need_gdc) {
+    m_oCamInfo.rotate_degree = rotate_degree;
+    memcpy(m_oCamInfo.gdc_file_path,
+           gdc_file_path.c_str(), gdc_file_path.size() + 1);
+  }
   int nRet = m_pMipiDev->OpenCamera(&m_oCamInfo);
   ROS_printf("[%s]->cam %s ret=%d.\r\n", __func__, m_oCamInfo.devName, nRet);
   if (-3 == nRet) {  //发布分辨率不支持，返回失败
@@ -211,7 +219,9 @@ bool MipiCam::start(const std::string &dev,
                     pixel_format pixel_format,
                     int image_width,
                     int image_height,
-                    int framerate) {
+                    int framerate,
+                    const std::string &gdc_file_path,
+                    int rotate_degree) {
   camera_dev_ = dev;
   out_format_ = outFormat;
 
@@ -238,7 +248,8 @@ bool MipiCam::start(const std::string &dev,
   if (!open_device()) {
     return false;
   }
-  if (!init_device(image_width, image_height, framerate)) {
+  if (!init_device(image_width, image_height, framerate,
+          gdc_file_path, rotate_degree)) {
     return false;
   }
   if (!start_capturing()) {

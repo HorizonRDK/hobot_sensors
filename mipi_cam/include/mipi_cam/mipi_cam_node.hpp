@@ -84,6 +84,8 @@ public:
   // or guvcview
   std::string pixel_format_name_;
   std::string out_format_name_;
+  std::string gdc_file_path_;
+  int rotate_degree_;
   int image_width_;
   int image_height_;
   int framerate_;

@@ -71,6 +71,7 @@ typedef struct sensor_id {
 sensor_id_t sensor_id_list[] = {
     {2, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
     {1, 0x40, I2C_ADDR_8, 0x0B, "f37"},        // F37
+    {2, 0x30, I2C_ADDR_16, 0x00, "sc132gs"},
     {2, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
     {1, 0x1a, I2C_ADDR_16, 0x0000, "imx415"},  // imx415
     {1, 0x29, I2C_ADDR_16, 0x03f0, "gc4663"},  // GC4663
