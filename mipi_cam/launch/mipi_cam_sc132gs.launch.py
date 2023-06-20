@@ -24,7 +24,7 @@ def generate_launch_description():
             executable='mipi_cam',
             output='screen',
             parameters=[
-                {"camera_calibration_file_path": "/opt/tros/lib/mipi_cam/config/F37_calibration.yaml"},
+                {"camera_calibration_file_path": "/opt/tros/lib/mipi_cam/config/SC132GS_calibration.yaml"},
                 {"out_format": "nv12"},
                 {"image_width": 544},
                 {"image_height": 640},
