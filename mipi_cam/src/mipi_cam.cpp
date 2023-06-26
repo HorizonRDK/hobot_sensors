@@ -165,8 +165,8 @@ bool MipiCam::init_device(int image_width, int image_height, int framerate,
   m_oCamInfo.height = image_height;
   m_oCamInfo.width = image_width;
   m_oCamInfo.need_gdc = !(gdc_file_path == "empty");
+  m_oCamInfo.rotate_degree = rotate_degree;
   if (m_oCamInfo.need_gdc) {
-    m_oCamInfo.rotate_degree = rotate_degree;
     memcpy(m_oCamInfo.gdc_file_path,
            gdc_file_path.c_str(), gdc_file_path.size() + 1);
   }

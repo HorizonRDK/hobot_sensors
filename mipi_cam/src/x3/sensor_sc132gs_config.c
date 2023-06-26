@@ -36,7 +36,8 @@ MIPI_SENSOR_INFO_S SENSOR_SC132GS_30FPS_1280P_LINEAR_INFO = {
                 .deserial_port = 0,
                 .gpio_num = 1,
                 .gpio_pin[0] = 119,
-                .gpio_level[0] = 0
+                .gpio_level[0] = 0,
+                .extra_mode = 4
         }
 };
 
@@ -65,7 +66,7 @@ VIN_DEV_ATTR_S DEV_ATTR_SC132GS_LINEAR_BASE = {
                         0,    /*format*/
                         width, /*width*/
                         height, /*height*/
-                        2     /*pix_length*/
+                        1     /*pix_length*/
                 },
         {
                 .mipiAttr =
