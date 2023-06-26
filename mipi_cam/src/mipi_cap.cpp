@@ -35,6 +35,7 @@
 #include "sensor_imx219_config.h"
 #include "sensor_imx477_config.h"
 #include "sensor_ov5647_config.h"
+#include "sensor_sc132gs_config.h"
 #include "x3_preparam.h"
 
 MipiDevice::MipiDevice() {
@@ -43,6 +44,7 @@ MipiDevice::MipiDevice() {
   this->buffers = NULL;
   this->n_buffers = 0;
   this->m_curCaptureIdx = -1;
+  mAdjustTimeStamp = true;
   mState = 0;
 }
 MipiDevice::~MipiDevice() { x3_cam_uninit();}
@@ -195,6 +197,23 @@ int MipiDevice::mov5647_linear_vin_param_init(x3_vin_info_t* vin_info) {
   vin_info->pipeinfo = PIPE_ATTR_OV5647_LINEAR_BASE;
   vin_info->disinfo = DIS_ATTR_OV5647_LINEAR_BASE;
   vin_info->ldcinfo = LDC_ATTR_OV5647_LINEAR_BASE;
+  vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
+
+  // 单目的使用dev_id 和 pipe_id 都设置成0
+  vin_info->dev_id = 0;
+  vin_info->pipe_id = get_available_pipeid();
+  vin_info->enable_dev_attr_ex = 0;
+
+  return 0;
+}
+
+int MipiDevice::sc132gs_linear_vin_param_init(x3_vin_info_t* vin_info) {
+  vin_info->snsinfo = SENSOR_SC132GS_30FPS_1280P_LINEAR_INFO;
+  vin_info->mipi_attr = MIPI_SENSOR_SC132GS_30FPS_1280P_LINEAR_ATTR;
+  vin_info->devinfo = DEV_ATTR_SC132GS_LINEAR_BASE;
+  vin_info->pipeinfo = PIPE_ATTR_SC132GS_LINEAR_BASE;
+  vin_info->disinfo = DIS_ATTR_SC132GS_BASE;
+  vin_info->ldcinfo = LDC_ATTR_SC132GS_BASE;
   vin_info->vin_vps_mode = VIN_ONLINE_VPS_OFFLINE;  // VIN_OFFLINE_VPS_OFFINE;
 
   // 单目的使用dev_id 和 pipe_id 都设置成0
@@ -388,6 +407,10 @@ int MipiDevice::init_param(void) {
   } else if (strcmp(sensor_name, "OV5647") == 0 ||
              strcmp(sensor_name, "ov5647") == 0) {
     ret = mov5647_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
+  } else if (strcmp(sensor_name, "SC132GS") == 0 ||
+             strcmp(sensor_name, "sc132gs") == 0) {
+    mAdjustTimeStamp = false;
+    ret = sc132gs_linear_vin_param_init(&m_oX3UsbCam.m_infos.m_vin_info);
   } else {
     ROS_printf("[%s]->sensor name not found(%s).\n", __func__, sensor_name);
     m_oX3UsbCam.m_infos.m_vin_enable = 0;
@@ -430,6 +453,7 @@ int MipiDevice::init_param(void) {
       m_oCamInfo.width,
       m_oCamInfo.height,
       m_oCamInfo.fps);
+  init_gdcarams();
 #endif
   ROS_printf(
       "[%s]-> w:h=%d:%d ,fps=%d sucess.\n", __func__, width, height, fps);
@@ -582,14 +606,18 @@ int MipiDevice::GetVpsFrame(
     *nVOutW = width;
     *nVOutH = height;
     *len = width * height * 3 / 2;
-    ISP_AE_PARAM_S stAeParam;
-    stAeParam.GainOpType = static_cast<ISP_OP_TYPE_E>(0);
-    stAeParam.IntegrationOpType = static_cast<ISP_OP_TYPE_E>(0);
-    ret = HB_ISP_GetAeParam(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,
-            &stAeParam);
-    if (ret == 0) {
-      timestamp += stAeParam.u32IntegrationTime / 2 * 1e3;
+
+    if (mAdjustTimeStamp) {
+      ISP_AE_PARAM_S stAeParam;
+      stAeParam.GainOpType = static_cast<ISP_OP_TYPE_E>(0);
+      stAeParam.IntegrationOpType = static_cast<ISP_OP_TYPE_E>(0);
+      ret = HB_ISP_GetAeParam(m_oX3UsbCam.m_infos.m_vin_info.pipe_id,
+                              &stAeParam);
+      if (ret == 0) {
+        timestamp += stAeParam.u32IntegrationTime / 2 * 1e3;
+      }
     }
+
     if (stride == width) {
       memcpy(*frame_buf, vOut.img_addr.addr[0], width * height);
       memcpy(*frame_buf + width * height,
@@ -683,4 +711,26 @@ int MipiDevice::GetFrame(void** frame_buf, unsigned int* len) {
     break;
   } while (1);
   return m_curCaptureIdx;
+}
+
+void MipiDevice::init_gdcarams() {
+  auto &vps_info = m_oX3UsbCam.m_infos.m_vps_infos.m_vps_info[0];
+  vps_info.m_need_gdc = m_oCamInfo.need_gdc;
+  ROTATION_E e;
+  switch (m_oCamInfo.rotate_degree) {
+    case 90:
+      e = ROTATION_E::ROTATION_90;
+      break;
+    case 180:
+      e = ROTATION_E::ROTATION_180;
+      break;
+    case 270:
+      e = ROTATION_E::ROTATION_270;
+      break;
+    default:
+      e = ROTATION_E::ROTATION_0;
+  }
+  memcpy(vps_info.m_gdc_info.m_gdc_config, m_oCamInfo.gdc_file_path,
+          strlen(m_oCamInfo.gdc_file_path) + 1);
+  vps_info.m_gdc_info.m_rotation = e;
 }

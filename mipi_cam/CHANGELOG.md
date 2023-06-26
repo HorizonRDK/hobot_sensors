@@ -1,5 +1,9 @@
 # Changelog for package mipi_cam
 
+tros_2.1.0 (2023-06-14)
+1. mipi_cam 适配 sc132gs
+2. mipi_cam 支持gdc文件校正
+
 tros_2.0.0 (2023-05-11)
 ------------------
 1. 更新package.xml，支持应用独立打包

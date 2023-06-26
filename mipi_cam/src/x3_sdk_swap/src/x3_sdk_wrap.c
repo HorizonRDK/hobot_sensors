@@ -114,21 +114,20 @@ int x3_vps_init_wrap(x3_vps_info_t *vps_info)
 	// 创建group
 	ret = x3_vps_group_init(vps_info->m_vps_grp_id, &vps_info->m_vps_grp_attr);
 	if (ret) return ret;
-#if 0
 	// 初始化gdc
 	if (vps_info->m_need_gdc) {
-		ret = x3_setpu_gdc(vps_info->m_vps_grp_id, vps_info->m_gdc_config, vps_info->m_rotation);
+		ret = x3_setpu_gdc(vps_info->m_vps_grp_id, vps_info->m_vps_chn_attrs->m_chn_id,
+		        vps_info->m_gdc_info.m_gdc_config, vps_info->m_gdc_info.m_rotation);
 		if (ret) {
 			HB_VPS_DestroyGrp(vps_info->m_vps_grp_id);
 			return ret;
 		}
 	}
-#endif
 	// 初始化配置的vps channal
 	for (i = 0; i < vps_info->m_chn_num; i++){
 		if (vps_info->m_vps_chn_attrs[i].m_chn_enable) {
 			ret = x3_vps_chn_init(vps_info->m_vps_grp_id, vps_info->m_vps_chn_attrs[i].m_chn_id,
-				&vps_info->m_vps_chn_attrs[i].m_chn_attr);
+				&vps_info->m_vps_chn_attrs[i].m_chn_attr, vps_info->m_gdc_info.m_rotation);
 			LOGI_print("[%s]->vps chn%d/%d init ret=%d.\n",
 				__func__, vps_info->m_vps_chn_attrs[i].m_chn_id, vps_info->m_chn_num,ret);
 			if (ret) {

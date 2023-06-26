@@ -71,6 +71,8 @@ MipiCamNode::MipiCamNode(const rclcpp::NodeOptions& node_options)
   this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
   this->declare_parameter("camera_calibration_file_path",
                           "/opt/tros/lib/mipi_cam/config/F37_calibration.yaml");
+  this->declare_parameter("gdc_file_path", "empty");
+  this->declare_parameter("rotate_degree", 0);
   get_params();
   init();  //外部可能会调用了
   RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
@@ -96,7 +98,9 @@ void MipiCamNode::get_params() {
                                           "io_method",
                                           "pixel_format",
                                           "video_device",
-                                          "camera_calibration_file_path"})) {
+                                          "camera_calibration_file_path",
+                                          "gdc_file_path",
+                                          "rotate_degree"})) {
     if (parameter.get_name() == "camera_name") {
       RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
                   "camera_name value: %s",
@@ -134,6 +138,10 @@ void MipiCamNode::get_params() {
       video_device_name_ = parameter.value_to_string();
     } else if (parameter.get_name() == "camera_calibration_file_path") {
       camera_calibration_file_path_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "gdc_file_path") {
+      gdc_file_path_ = parameter.value_to_string();
+    } else if (parameter.get_name() == "rotate_degree") {
+      rotate_degree_ = parameter.as_int();
     } else {
       RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
                   "Invalid parameter name: %s",
@@ -208,7 +216,8 @@ void MipiCamNode::init() {
   camera_calibration_info_->header.frame_id = frame_id_;
   RCLCPP_INFO(
       rclcpp::get_logger("mipi_node"),
-      "[MipiCamNode::%s]->Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS",
+      "[MipiCamNode::%s]->Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS "
+      "gdc: %s rotate_degree: %d",
       __func__,
       camera_name_.c_str(),
       video_device_name_.c_str(),
@@ -216,7 +225,9 @@ void MipiCamNode::init() {
       image_height_,
       io_method_name_.c_str(),
       pixel_format_name_.c_str(),
-      framerate_);
+      framerate_,
+      gdc_file_path_.c_str(),
+      rotate_degree_);
   // set the IO method
   MipiCam::io_method io_method =
       MipiCam::io_method_from_string(io_method_name_);
@@ -250,13 +261,15 @@ void MipiCamNode::init() {
              image_width_,
              image_height_);
   // start the camera
-  if (false == mipiCam_.start(video_device_name_.c_str(),
-                              out_format_name_.c_str(),
-                              io_method,
-                              pixel_format,
-                              image_width_,
-                              image_height_,
-                              framerate_)) {
+  if (!mipiCam_.start(video_device_name_,
+                      out_format_name_,
+                      io_method,
+                      pixel_format,
+                      image_width_,
+                      image_height_,
+                      framerate_,
+                      gdc_file_path_,
+                      rotate_degree_)) {
     RCLCPP_ERROR_ONCE(rclcpp::get_logger("mipi_node"),
                       "video dev '%s' start failed!",
                       video_device_name_.c_str());
@@ -271,7 +284,7 @@ void MipiCamNode::init() {
     RCLCPP_WARN(rclcpp::get_logger("mipi_node"),
                 "get camera calibration parameters failed");
   }
-  if (io_method_name_.compare("shared_mem") != 0) {
+  if (io_method_name_ != "shared_mem") {
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(static_cast<int64_t>(period_ms)),
         std::bind(&MipiCamNode::update, this));

@@ -58,7 +58,8 @@ public:
   // start camera
   bool start(
     const std::string & dev, const std::string &outFormat, io_method io, pixel_format pf,
-    int image_width, int image_height, int framerate);
+    int image_width, int image_height, int framerate, const std::string& gdc_file_path,
+    int rotate_degree);
   // shutdown camera
   bool shutdown(void);
 
@@ -106,7 +107,9 @@ private:
   bool mjpeg2rgb(char * MJPEG, int len, char * RGB, int NumPixels);
   bool process_image(const void * src, int len, camera_image_t * dest);
   bool uninit_device(void);
-  bool init_device(int image_width, int image_height, int framerate);
+  bool init_device(int image_width, int image_height, int framerate,
+                   const std::string &gdc_file_path,
+                   int rotate_degree);
   bool close_device(void);
   bool open_device(void);
 
