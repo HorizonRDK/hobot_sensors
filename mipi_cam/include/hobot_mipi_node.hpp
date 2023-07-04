@@ -49,6 +49,7 @@ class MipiCamNode : public rclcpp::Node {
  private:
   void getParams();
   bool sendCalibration(const builtin_interfaces::msg::Time &stamp);
+  void save_yuv(const builtin_interfaces::msg::Time stamp, void *data, int data_size);
 
   std::shared_ptr<MipiCam> mipiCam_ptr_;
 

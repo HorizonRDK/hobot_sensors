@@ -17,15 +17,16 @@
 #include <fstream>
 #include "hobot_mipi_cap.hpp"
 #include "hobot_mipi_cap_iml.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 namespace mipi_cam {
 std::shared_ptr<HobotMipiCap> createMipiCap(const std::string &dev_name) {
   std::shared_ptr<HobotMipiCap> cap_ptr;
-  if (dev_name == "x3pi") {
-    cap_ptr = std::make_shared<HobotMipiCapImlX3pi>();
-  } else if (dev_name == "x3sdb") {
-    cap_ptr = std::make_shared<HobotMipiCapIml>();
+  if (dev_name == "j5pi") {
+    cap_ptr = std::make_shared<HobotMipiCapImlJ5pi>();
+  } else if (dev_name == "j5evm") {
+    cap_ptr = std::make_shared<HobotMipiCapImlJ5Evm>();
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("mipi_factory"),
     "create Mipi Capture failture \n");
@@ -41,21 +42,19 @@ std::string getBoardType() {
     som_name >> board_type;
     auto_detect = true;
   }
-  std::string board_type_str;
+  std::string board_type_str = "";
   if (auto_detect) {
     switch (board_type) {
       case 3:
-      case 4:
-        board_type_str = "x3sdb";
-        break;
-      case 5:
-      case 6:
-        board_type_str = "x3pi";
+        board_type_str = "j5evm";
         break;
       default:
+        board_type_str = "j5pi";
         break;
     }
   }
+  RCLCPP_INFO(rclcpp::get_logger("mipi_factory"),
+    "board_type %s\n", board_type_str.c_str());
   return board_type_str;
 }
 

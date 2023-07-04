@@ -44,7 +44,16 @@ int HobotMipiCapIml::init(MIPI_CAP_INFO_ST &info) {
   int ret = 0;
 
   parseConfig(info.sensor_type, info.width, info.height, info.fps);
-  vin_info_.pipe_id = info.pipeline_idx;
+  int pipeline_id = 0;
+  for (; pipeline_id < 8; pipeline_id++) {
+    if (!checkPipelineOpened(pipeline_id)) {
+      break;
+    }
+  }
+  if (pipeline_id >= 8) {
+    goto vp_err;
+  }
+  vin_info_.pipe_id = pipeline_id;
 
   resetSensor(info.sensor_type);
 
@@ -202,9 +211,6 @@ int HobotMipiCapIml::stop() {
 std::vector<std::string> HobotMipiCapIml::listSensor() {
   std::vector<std::string> device;
   return device;
-}
-bool HobotMipiCapIml::hasListSensor() {
-  return false;
 }
 
 int HobotMipiCapIml::getFrame(int nChnID, int* nVOutW, int* nVOutH,
@@ -460,10 +466,6 @@ std::vector<std::string> HobotMipiCapImlX3pi::listSensor() {
     }
   }
   return device;
-}
-
-bool HobotMipiCapImlX3pi::hasListSensor() {
-  return true;
 }
 
 int HobotMipiCapImlX3pi::resetSensor(std::string sensor) {

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
+cmake_policy(SET CMP0077 NEW)
 project(mipi_cam)
 
 # Default to C++14
@@ -81,10 +82,15 @@ include_directories(include
   include/${PREFIX_PATH}
   ${PROJECT_SOURCE_DIR}
   ${CMAKE_SYSROOT}/usr/
+  ${CMAKE_SYSROOT}/usr/include
+  ../../hobot_perception/mot/deps/jsoncpp/include/
 )
 
 link_directories(
+  ${CMAKE_SYSROOT}/usr/lib
   ${CMAKE_SYSROOT}/usr/lib/hbmedia
+  ${CMAKE_SYSROOT}/usr/lib/system/lib
+  ../../hobot_perception/mot/deps/jsoncpp/lib
 )
 
 add_executable(${PROJECT_NAME}
@@ -96,11 +102,11 @@ add_executable(${PROJECT_NAME}
   ${SRC_PLATFORM_FILE}
 )
 
-set(BASE_LIBRARIES pthread vio cam dl)
+set(BASE_LIBRARIES pthread vio dl)
 if(PLATFORM_X3)
   set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
 elseif(PLATFORM_J5)
-  set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
+  set(X3_HAPI_LIB jsoncpp hb_api_isp vpm vio_client)
 else()
   set(BASE_LIBRARIES pthread vio cam dl)
   set(X3_HAPI_LIB isp_algo z hbmedia isp ion multimedia iar tinyalsa cjson diag gdcbin)
@@ -135,10 +141,18 @@ install(
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY
-  ${PROJECT_SOURCE_DIR}/config/
+if(PLATFORM_X3)
+  install(DIRECTORY
+    ${PROJECT_SOURCE_DIR}/config/x3/
+    DESTINATION lib/${PROJECT_NAME}/config/
+  )
+elseif(PLATFORM_J5)
+  install(DIRECTORY
+    ${PROJECT_SOURCE_DIR}/config/j5/
   DESTINATION lib/${PROJECT_NAME}/config/
 )
+endif()
+
 
 install(DIRECTORY
   launch

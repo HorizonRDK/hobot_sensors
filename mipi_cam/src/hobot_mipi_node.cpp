@@ -45,21 +45,21 @@ MipiCamNode::~MipiCamNode() {
 
 void MipiCamNode::getParams() {
   // declare params
-  this->declare_parameter("camera_name", "x3pi");
+  this->declare_parameter("config_path", "./lib/mipi_cam/config");
   this->declare_parameter("channel", 0);
   this->declare_parameter("camera_info_url", "");
   this->declare_parameter("framerate", 30.0);  // 10.0);
   this->declare_parameter("frame_id", "default_cam");
-  this->declare_parameter("image_height", 480);  // 480);
-  this->declare_parameter("image_width", 640);   // 640);
+  this->declare_parameter("image_height", 1080);  // 480);
+  this->declare_parameter("image_width", 1920);   // 640);
   this->declare_parameter("io_method", "mmap");
   this->declare_parameter("out_format", "bgr8");   // nv12
-  this->declare_parameter("video_device", "F37");  // "IMX415");//"F37");
+  this->declare_parameter("video_device", "");  // "IMX415");//"F37");
   this->declare_parameter("camera_calibration_file_path",
                           "/opt/tros/lib/mipi_cam/config/F37_calibration.yaml");
   auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
   for (auto& parameter :
-       parameters_client->get_parameters({"camera_name",
+       parameters_client->get_parameters({"config_path",
                                           "camera_info_url",
                                           "out_format",
                                           "channel",
@@ -70,11 +70,11 @@ void MipiCamNode::getParams() {
                                           "io_method",
                                           "video_device",
                                           "camera_calibration_file_path"})) {
-    if (parameter.get_name() == "camera_name") {
+    if (parameter.get_name() == "config_path") {
       RCLCPP_INFO(rclcpp::get_logger("mipi_node"),
-                  "camera_name value: %s",
+                  "config_path value: %s",
                   parameter.value_to_string().c_str());
-      nodePare_.camera_name_ = parameter.value_to_string();
+      nodePare_.config_path_ = parameter.value_to_string();
     } else if (parameter.get_name() == "channel") {
       nodePare_.channel_ = parameter.as_int();
     } else if (parameter.get_name() == "camera_info_url") {
@@ -142,7 +142,7 @@ void MipiCamNode::init() {
       rclcpp::get_logger("mipi_node"),
       "[MipiCamNode::%s]->Initing '%s' (%s) at %dx%d via %s at %i FPS",
       __func__,
-      nodePare_.camera_name_.c_str(),
+      nodePare_.config_path_.c_str(),
       nodePare_.video_device_name_.c_str(),
       nodePare_.image_width_,
       nodePare_.image_height_,
@@ -211,6 +211,7 @@ void MipiCamNode::update() {
       RCLCPP_ERROR(rclcpp::get_logger("mipi_node"), "grab failed");
       return;
     }
+    save_yuv(img_->header.stamp, (void *)&img_->data[0], img_->data.size());
     image_pub_->publish(*img_);
     if (sendCalibration(img_->header.stamp)) {
       RCLCPP_INFO(rclcpp::get_logger("mipi_node"), "publish camera info.\n");
@@ -238,6 +239,7 @@ void MipiCamNode::hbmemUpdate() {
                      "hbmemUpdate grab img failed");
         return;
       }
+      save_yuv(msg.time_stamp, (void *)&msg.data, msg.data_size);
       msg.index = mSendIdx++;
       publisher_hbmem_->publish(std::move(loanedMsg));
       if (sendCalibration(msg.time_stamp)) {
@@ -253,4 +255,17 @@ void MipiCamNode::hbmemUpdate() {
   }
 #endif
 }
+
+void MipiCamNode::save_yuv(const builtin_interfaces::msg::Time stamp,
+     void *data, int data_size) {
+  std::string yuv_path = "./yuv/";
+  uint64_t time_stamp = (stamp.sec * 1000 + stamp.nanosec / 1000000);;
+  if (access(yuv_path.c_str(), F_OK) == 0) {
+    std::string yuv_file = "./yuv/" + std::to_string(time_stamp) + ".yuv";
+    std::ofstream out(yuv_file, std::ios::out|std::ios::binary);
+    out.write(reinterpret_cast<char*>(data), data_size);
+    out.close();
+  }
+}
+
 }  // namespace mipi_cam

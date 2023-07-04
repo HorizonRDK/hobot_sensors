@@ -26,7 +26,7 @@ namespace mipi_cam
 {
 
 struct NodePara {
-  std::string camera_name_;
+  std::string config_path_;
   std::string video_device_name_;
   int channel_;
   std::string camera_info_url_;

@@ -64,6 +64,7 @@ int exec_cmd_ex(const char *cmd, char* res, int max) {
   RCLCPP_INFO(rclcpp::get_logger("mipi_cam"),
     "[%s]->cmd %s, fp=0x%x, len=%d.\n", __func__, cmd, pp, max);
   while (fgets(tmp, length, pp) != NULL) {
+    printf("exec_cmd_ex -- tmp:%s\n", tmp);
     sscanf(tmp, "%s", res);
   }
   pclose(pp);
@@ -150,48 +151,25 @@ int MipiCamIml::init(struct NodePara &para) {
     return -1;
   }
   MIPI_CAP_INFO_ST cap_info;
+  cap_info.config_path = nodePare_.config_path_;
   cap_info.sensor_type = nodePare_.video_device_name_;
   cap_info.width = nodePare_.image_width_;
   cap_info.height = nodePare_.image_height_;
   cap_info.fps = nodePare_.framerate_;
 
   mipiCap_ptr_->initEnv(nodePare_.video_device_name_);
-  if (mipiCap_ptr_->hasListSensor()) {
+  if (nodePare_.video_device_name_.length() == 0) {
     bool detect_device = false;
     auto mipicap_v = mipiCap_ptr_->listSensor();
-    for (std::string video_device_name_temp : mipicap_v) {
-      if (video_device_name_temp.empty()) {  // 未检测到有video_device连接
-        RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-          "[%s]->cam %s No camera detected!"
+    if (mipicap_v.size() <= 0) {
+      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
+          "[%s] No camera detected!"
           " Please check if camera is connected.\r\n",
           __func__);
         return -2;
-      } else if (!strcasecmp(video_device_name_temp.c_str(),
-          nodePare_.video_device_name_.c_str())) {
-        detect_device = true;
-        break;
-      }
     }
-    if (detect_device == false) {
-      RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-        "[%s]->cam %s No camera detected!"
-        " Please check if camera is connected.\r\n",
-        __func__, nodePare_.video_device_name_);
-      return -3;
-    }
+    cap_info.sensor_type = mipicap_v[0];
   }
-  int pipeline_id = 0;
-  for (; pipeline_id < 8; pipeline_id++) {
-    if (!mipiCap_ptr_->checkPipelineOpened(pipeline_id)) {
-      break;
-    }
-  }
-  if (pipeline_id >= 8) {
-    RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
-      "[%s]->cam 8 channel pipeline ID was used .\r\n", __func__);
-    return -4;
-  }
-  cap_info.pipeline_idx = pipeline_id;
   if (mipiCap_ptr_->init(cap_info) != 0) {
     RCLCPP_ERROR(rclcpp::get_logger("mipi_cam"),
       "[%s]->cap capture init failture.\r\n", __func__);

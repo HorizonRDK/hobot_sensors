@@ -21,8 +21,8 @@
 namespace mipi_cam {
 
 typedef struct {
+  std::string config_path;
   std::string sensor_type;
-  int pipeline_idx;
   int width;
   int height;
   int fps;
@@ -54,10 +54,6 @@ class HobotMipiCap {
   // 停止相关sensor的VIO pipeline的码流；
   // 返回值：0，停止成功；-1，停止失败。
   virtual int stop() = 0;
-
-  // 判断设备是否支持遍历设备连接的sensor
-  // 返回值：true,支持；false，不支持
-  virtual bool hasListSensor() = 0;
 
   // 遍历设备连接的sensor
   virtual std::vector<std::string> listSensor() = 0;
